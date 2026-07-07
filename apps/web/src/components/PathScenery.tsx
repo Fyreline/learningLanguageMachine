@@ -117,6 +117,69 @@ export function MiniTorii({ s = 1 }: { s?: number }) {
   )
 }
 
+export function Bamboo({ s = 1 }: { s?: number }) {
+  return (
+    <g transform={`scale(${s})`} aria-hidden>
+      {[-5, 0, 5].map((x, i) => (
+        <g key={i}>
+          <rect x={x - 1.1} y={-16 + i * 2} width="2.2" height={22 - i * 2} rx="1" className="fill-olive/80" />
+          <path d={`M${x - 1.1},${-8 + i * 3} h2.2 M${x - 1.1},${-1 + i * 2} h2.2`} className="stroke-paper/60" strokeWidth="0.8" stroke="currentColor" fill="none" />
+          <path d={`M${x},${-15 + i * 2} q3,-3 6,-3.6 M${x},${-15 + i * 2} q-2.5,-2.5 -5,-3`} fill="none" className="stroke-olive/70" strokeWidth="1.1" strokeLinecap="round" />
+        </g>
+      ))}
+    </g>
+  )
+}
+
+/** A small mountain shrine — pitched roof, crossed chigi finials. */
+export function Shrine({ s = 1 }: { s?: number }) {
+  return (
+    <g transform={`scale(${s})`} aria-hidden>
+      <rect x="-9" y="2" width="18" height="10" className="fill-kraft/60" />
+      <rect x="-7" y="12" width="2.5" height="4" className="fill-ink-soft/70" />
+      <rect x="4.5" y="12" width="2.5" height="4" className="fill-ink-soft/70" />
+      <rect x="-2" y="5" width="4" height="7" className="fill-clay/80" />
+      <path d="M-13,3 L0,-6 L13,3 Z" className="fill-ink-soft" />
+      <path d="M-5,-4.5 L-1.5,-9 M5,-4.5 L1.5,-9" className="stroke-ink-soft" strokeWidth="1.4" strokeLinecap="round" stroke="currentColor" fill="none" />
+    </g>
+  )
+}
+
+/** Lingering snow patch for the high slopes. */
+export function Snow({ s = 1, flip = false }: { s?: number; flip?: boolean }) {
+  return (
+    <g transform={`scale(${flip ? -s : s}, ${s})`} aria-hidden>
+      <ellipse cx="0" cy="0" rx="12" ry="3.4" className="fill-night-ink" opacity="0.42" />
+      <ellipse cx="-7" cy="2.4" rx="7" ry="2.4" className="fill-night-ink" opacity="0.3" />
+      <ellipse cx="8" cy="2" rx="5.5" ry="2" className="fill-night-ink" opacity="0.34" />
+    </g>
+  )
+}
+
+/** A drifting sky lantern — the night sky's slow traffic. */
+export function SkyLantern({ s = 1 }: { s?: number }) {
+  return (
+    <g transform={`scale(${s})`} aria-hidden>
+      <circle cx="0" cy="0" r="9" className="fill-kraft/20" />
+      <path d="M-3.4,-4.5 L3.4,-4.5 L4.4,3 L-4.4,3 Z" className="fill-clay" />
+      <path d="M-4.4,3 L4.4,3 L3.2,5 L-3.2,5 Z" className="fill-clay-deep/80" />
+      <path d="M-2.5,-1 Q0,-2 2.5,-1" fill="none" className="stroke-paper/50" strokeWidth="0.7" />
+      <circle cx="0" cy="4" r="1.2" className="fill-kraft" />
+    </g>
+  )
+}
+
+/** A far flock — three brush-stroke birds. */
+export function Birds({ s = 1 }: { s?: number }) {
+  return (
+    <g transform={`scale(${s})`} className="stroke-night-soft" strokeWidth="1.2" strokeLinecap="round" fill="none" aria-hidden>
+      <path d="M-10,0 Q-7,-3 -4,0 Q-7,-2 -10,0" />
+      <path d="M0,-4 Q3,-7 6,-4 Q3,-6 0,-4" />
+      <path d="M8,2 Q10.5,0 13,2 Q10.5,0.5 8,2" />
+    </g>
+  )
+}
+
 /** Moonlit in both themes — the band lives at night altitude, so puffs use
  * the non-flipping night token rather than paper (which goes dark in .dark
  * and vanished against the sky). */
@@ -134,7 +197,7 @@ export function CloudPuff({ s = 1, className = '' }: { s?: number; className?: s
 
 export type Sprite = {
   key: string
-  kind: 'pine' | 'bush' | 'grass' | 'rock' | 'toro' | 'chochin' | 'minitorii' | 'flower'
+  kind: 'pine' | 'bush' | 'grass' | 'rock' | 'toro' | 'chochin' | 'minitorii' | 'flower' | 'bamboo' | 'shrine' | 'snow'
   x: number
   y: number
   s: number
@@ -149,6 +212,9 @@ function pickKind(t: number, r: number): Sprite['kind'] | null {
     bush: 1.1 * (1 - ramp(t, 0.05, 0.5)),
     grass: 0.9 * (1 - ramp(t, 0.1, 0.45)),
     flower: 1.1 * (1 - ramp(t, 0.05, 0.38)),
+    bamboo: 0.9 * (1 - ramp(t, 0.08, 0.35)),
+    shrine: 0.5 * ramp(t, 0.42, 0.5) * (1 - ramp(t, 0.62, 0.72)),
+    snow: 1.4 * ramp(t, 0.8, 0.95),
     rock: 0.4 + 1.1 * ramp(t, 0.15, 0.5) * (1 - 0.7 * ramp(t, 0.65, 0.9)),
     toro: 1.0 * ramp(t, 0.45, 0.6) * (1 - ramp(t, 0.68, 0.8)),
     chochin: 1.3 * ramp(t, 0.72, 0.85),
@@ -166,15 +232,35 @@ function pickKind(t: number, r: number): Sprite['kind'] | null {
   return null
 }
 
-/** Two placement slots per node — one either side of the trail, offset
- * outward but clamped ONTO the mountain body (`halfAt` gives the body's
- * half-width at a given y), so nothing floats in the sky beside the peak. */
+export interface AvoidRect {
+  x0: number
+  x1: number
+  y0: number
+  y1: number
+}
+
+/** Rough footprint radius per sprite kind, for the overlap pass. */
+function spriteR(kind: Sprite['kind'], s: number): number {
+  const base: Record<Sprite['kind'], number> = {
+    pine: 15, bush: 11, grass: 7, flower: 8, rock: 12, toro: 13,
+    chochin: 15, minitorii: 13, bamboo: 13, shrine: 16, snow: 13,
+  }
+  return base[kind] * s
+}
+
+/** Placement slots per node — either side of the trail, clamped ONTO the
+ * mountain body (`halfAt` gives the body's half-width at a given y). Every
+ * candidate is then overlap-checked against already-placed sprites AND
+ * against `avoid` rects (unit headers, landmarks), so nothing sits on
+ * anything else — a rejected candidate is simply a gap, and gaps are part
+ * of the composition. */
 export function buildScenery(
   nodes: { x: number; y: number; i: number }[],
   totalH: number,
   cx: number,
   w: number,
   halfAt: (y: number) => number,
+  avoid: AvoidRect[] = [],
 ): Sprite[] {
   const sprites: Sprite[] = []
   for (const n of nodes) {
@@ -197,14 +283,16 @@ export function buildScenery(
       if (room < 10) continue // the crest is too narrow here — leave it bare
       const x = edge + dir * (52 + hash(seed * 3.7) * room * 0.85)
       if (x < 14 || x > w - 14 || Math.abs(x - cx) > halfAt(y) - 16) continue
-      sprites.push({
-        key: `sp-${seed}`,
-        kind,
-        x,
-        y,
-        s: 0.8 + hash(seed * 13.9) * 0.55,
-        flip: hash(seed * 23.3) > 0.5,
-      })
+      const s = 0.8 + hash(seed * 13.9) * 0.55
+      const r = spriteR(kind, s)
+      // never on text or landmarks
+      if (avoid.some((a) => x + r > a.x0 && x - r < a.x1 && y + r > a.y0 && y - r < a.y1)) continue
+      // never on each other
+      if (sprites.some((o) => {
+        const rr = r + spriteR(o.kind, o.s) + 6
+        return (x - o.x) ** 2 + (y - o.y) ** 2 < rr * rr
+      })) continue
+      sprites.push({ key: `sp-${seed}`, kind, x, y, s, flip: hash(seed * 23.3) > 0.5 })
     }
   }
   return sprites
@@ -216,6 +304,9 @@ export function SpriteGlyph({ sp }: { sp: Sprite }) {
     case 'bush': return <Bush s={sp.s} />
     case 'grass': return <Grass s={sp.s} />
     case 'flower': return <Flower s={sp.s} />
+    case 'bamboo': return <Bamboo s={sp.s} />
+    case 'shrine': return <Shrine s={sp.s} />
+    case 'snow': return <Snow s={sp.s} flip={sp.flip} />
     case 'rock': return <Rock s={sp.s} flip={sp.flip} />
     case 'toro': return <Toro s={sp.s} />
     case 'chochin': return <Chochin s={sp.s} />
@@ -292,23 +383,66 @@ export function Stars({
   )
 }
 
-/** Goraikō — the summit sunrise: torii against the rising sun, the reward at
- * the top of every Fuji climb. Replaces the old Fuji illustration (you're ON
- * the mountain now). */
-export function SummitScene() {
+/** The summit torii — the finish line, sat ON the peak, big enough to mean
+ * it. Rendered inside the scene svg at the apex (origin = base centre), the
+ * goraikō sun rising behind its opening. Replaced the small overlay
+ * SummitScene 2026-07-07 (household request: "big, to signify you finished"). */
+export function SummitTorii({ cx, y }: { cx: number; y: number }) {
   return (
-    <svg viewBox="0 0 160 96" className="h-24 w-40" aria-hidden>
-      <circle cx="80" cy="66" r="30" className="fill-clay/90" />
-      <circle cx="80" cy="66" r="40" className="fill-clay/25" />
-      <path d="M0,66 L160,66 L160,96 L0,96 Z" style={{ fill: 'var(--path-sky-night)' }} />
-      {/* the summit torii, black against the sun */}
-      <g transform="translate(80 62)" className="text-ink-mid dark:text-ink-soft">
-        <path d="M-26,-28 Q0,-35 26,-28 L25,-22 Q0,-28.5 -25,-22 Z" fill="currentColor" />
-        <rect x="-19" y="-16" width="38" height="4.5" fill="currentColor" />
-        <path d="M-20,-24 L-15,4 L-10.5,4 L-14.8,-24 Z" fill="currentColor" />
-        <path d="M20,-24 L15,4 L10.5,4 L14.8,-24 Z" fill="currentColor" />
-        <rect x="-2.5" y="-13" width="5" height="5" fill="currentColor" />
-      </g>
-    </svg>
+    <g transform={`translate(${cx} ${y})`} className="text-clay" aria-hidden>
+      {/* goraikō — the sun in the gateway */}
+      <circle cx="0" cy="-58" r="46" className="fill-clay/15" />
+      <circle cx="0" cy="-58" r="32" className="fill-clay/30" />
+      <circle cx="0" cy="-58" r="21" className="fill-clay/70" />
+      {/* pillar base stones */}
+      <rect x="-56" y="-6" width="16" height="10" rx="2" className="fill-cloud/70" />
+      <rect x="40" y="-6" width="16" height="10" rx="2" className="fill-cloud/70" />
+      {/* pillars, splayed */}
+      <path d="M-50,-96 L-53,-2 L-43,-2 L-42,-96 Z" fill="currentColor" />
+      <path d="M50,-96 L53,-2 L43,-2 L42,-96 Z" fill="currentColor" />
+      {/* nuki + gakuzuka */}
+      <rect x="-58" y="-78" width="116" height="9" fill="currentColor" />
+      <rect x="-6" y="-98" width="12" height="14" fill="currentColor" />
+      {/* shimaki + kasagi, tips swept skyward */}
+      <path d="M-60,-100 L60,-100 L58,-92 L-58,-92 Z" fill="currentColor" />
+      <path d="M-72,-102 Q0,-118 72,-102 L69,-95 Q0,-110 -69,-95 Z" fill="currentColor" />
+    </g>
   )
+}
+
+/** Drifting sky lanterns for the upper night sky (band-limited HTML layer,
+ * same convention as Stars.asHtml). */
+export function SkyLanterns({
+  totalH,
+  w,
+  bandFrac,
+}: {
+  totalH: number
+  w: number
+  bandFrac: number
+}) {
+  const out = []
+  for (let k = 0; k < 11; k++) {
+    const t = 0.7 + hash(k * 6.7 + 40) * 0.28
+    if (hash(k * 15.1) > 0.85) continue
+    const x = 0.04 * w + hash(k * 3.9 + 9) * 0.92 * w
+    const s = 0.8 + hash(k * 8.3) * 0.9
+    out.push(
+      <svg
+        key={`skl-${k}`}
+        viewBox="-10 -10 20 20"
+        className="lantern-float absolute"
+        style={{
+          left: `${(x / w) * 100}%`,
+          top: `${(((1 - t) * totalH) / totalH / bandFrac) * 100}%`,
+          width: `${((20 * s) / w) * 100}%`,
+          animationDelay: `${hash(k * 12.7) * 9}s`,
+          animationDuration: `${7 + hash(k * 4.1) * 6}s`,
+        }}
+      >
+        <SkyLantern />
+      </svg>,
+    )
+  }
+  return <>{out}</>
 }

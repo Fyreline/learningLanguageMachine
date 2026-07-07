@@ -91,10 +91,15 @@
   .cloud-drift-far { animation: cloud-drift 44s ease-in-out infinite alternate-reverse; }
   .star-twinkle { animation: star-twinkle 3.8s ease-in-out infinite; }
   .lantern-sway { transform-box: fill-box; transform-origin: 50% 0%; animation: lantern-sway 5.2s ease-in-out infinite alternate; }
+  .lantern-float { animation: lantern-float 9s ease-in-out infinite; }
 }
 @keyframes cloud-drift { from { transform: translateX(-14px); } to { transform: translateX(14px); } }
 @keyframes star-twinkle { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 @keyframes lantern-sway { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
+@keyframes lantern-float {
+  0%, 100% { transform: translate(0, 0) rotate(-2deg); }
+  50% { transform: translate(6px, -14px) rotate(2.5deg); }
+}
 
 html,
 body,

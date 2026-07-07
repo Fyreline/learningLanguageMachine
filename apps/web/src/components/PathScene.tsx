@@ -17,10 +17,11 @@ import { motion as m, useReducedMotion, useScroll, useTransform } from 'motion/r
 import type { PathLesson, PathManifest, PathUnit } from '../pathData'
 import { AnimatedKitsune } from './AnimatedKitsune'
 import { MichiMark } from './MichiMark'
-import { buildScenery, CloudPuff, hash, ramp, SpriteGlyph, Stars, SummitScene } from './PathScenery'
+import { Birds, buildScenery, CloudPuff, hash, ramp, SkyLanterns, SpriteGlyph, Stars, SummitTorii } from './PathScenery'
 
 const STEP = 132 // vertical px between nodes ≈ the ~140px arc of the spec
 const TOP_PAD = 300 // room for the summit block
+const PEAK_Y = 150 // the crest line the summit torii stands on
 const BOT_PAD = 190 // room for the front door
 
 /** Text on the upper mountain sits on night sky in BOTH themes — flip unit
@@ -344,36 +345,57 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
     currentRef.current?.scrollIntoView({ block: 'center' })
   }, [])
 
-  // Unit header/landmark overlay positions from the same geometry, plus each
-  // header's altitude so text flips to the night tokens on the upper mountain.
+  // The mountain body: converging sides, sampled top→bottom each side with a
+  // hashed wobble so the edges read hand-cut, not ruled.
+  const halfAtY = useMemo(() => {
+    return (y: number) => {
+      const p = Math.max(0, Math.min(1, 1 - (y - PEAK_Y) / (totalH - BOT_PAD * 0.4 - PEAK_Y)))
+      return bodyHalfAt(p, W)
+    }
+  }, [totalH, W])
+
+  // Unit header/landmark overlay positions from the same geometry: headers
+  // flip to night tokens on the upper mountain; landmarks anchor to the
+  // body's edge at their altitude (computed here so the scenery pass can
+  // also avoid them).
   const unitMeta = useMemo(() => {
     let cursor = 0
     return units.map((u) => {
       const first = nodes[cursor]
       const mid = nodes[Math.min(cursor + 3, cursor + u.lessons.length - 1)]
       cursor += u.lessons.length
+      const landmarkDir = mid.x < CX ? -1 : 1
+      const off = Math.max(96, Math.min(halfAtY(mid.y) - 52, W / 2 - 44))
       return {
         unit: u,
         headerTopPct: (first.y / totalH) * 100,
         headerSide: first.x < CX ? 'right' : 'left',
+        headerY: first.y,
         landmarkTopPct: ((mid.y - 20) / totalH) * 100,
-        landmarkSide: mid.x < CX ? 'left' : 'right',
+        landmarkX: CX + landmarkDir * off,
+        landmarkY: mid.y,
         night: 1 - first.y / totalH > NIGHT_LINE,
       }
     })
-  }, [units, nodes, totalH, CX])
+  }, [units, nodes, totalH, CX, W, halfAtY])
 
-  // The mountain body: converging sides, sampled top→bottom each side with a
-  // hashed wobble so the edges read hand-cut, not ruled.
-  const halfAtY = useMemo(() => {
-    const peakY = 150
-    return (y: number) => {
-      const p = Math.max(0, Math.min(1, 1 - (y - peakY) / (totalH - BOT_PAD * 0.4 - peakY)))
-      return bodyHalfAt(p, W)
+  // Keep-out zones for the scenery pass: header text blocks + landmarks.
+  const avoid = useMemo(() => {
+    const headerW = Math.min(0.3 * W, 195)
+    const rects = []
+    for (const um of unitMeta) {
+      rects.push(
+        um.headerSide === 'left'
+          ? { x0: 0.015 * W, x1: 0.015 * W + headerW, y0: um.headerY - 10, y1: um.headerY + 155 }
+          : { x0: W - 0.015 * W - headerW, x1: W, y0: um.headerY - 10, y1: um.headerY + 155 },
+      )
+      if (um.unit.landmark !== 'fuji') {
+        rects.push({ x0: um.landmarkX - 44, x1: um.landmarkX + 44, y0: um.landmarkY - 26, y1: um.landmarkY + 62 })
+      }
     }
-  }, [totalH, W])
+    return rects
+  }, [unitMeta, W])
   const bodyPath = useMemo(() => {
-    const peakY = 150
     const baseY = totalH
     const STEPS = 84
     // Rugged flanks: two octaves of ridged noise per side (independent
@@ -393,17 +415,25 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
     const right: string[] = []
     const left: string[] = []
     for (let k = 0; k <= STEPS; k++) {
-      const y = peakY + ((baseY - peakY) * k) / STEPS
-      const taper = Math.min(1, k / 5) // calm the crest tip so the peak stays a peak
+      const y = PEAK_Y + ((baseY - PEAK_Y) * k) / STEPS
+      const taper = 0.35 + 0.65 * Math.min(1, k / 5) // jagged even at the tip, wilder below
       right.push(`${(CX + halfAtY(y) + flank(k, 0) * taper).toFixed(1)} ${y.toFixed(1)}`)
       left.push(`${(CX - halfAtY(y) - flank(k, 500) * taper).toFixed(1)} ${y.toFixed(1)}`)
     }
-    // crest → down the right flank → base → up the left flank → close
-    return `M ${CX} ${peakY - 26} L ${right.join(' L ')} L ${left.reverse().join(' L ')} Z`
+    // The crest itself is a jagged ridge line spanning the full width — no
+    // more clean triangle tip; the summit torii sits astride these teeth.
+    const crest = [
+      [-52, -8], [-30, -20], [-12, -14], [-2, -30], [16, -12], [34, -22], [52, -6],
+    ].map(([dx, dy]) => `${(CX + dx).toFixed(1)} ${(PEAK_Y + dy).toFixed(1)}`)
+    // down the right flank → base → up the left flank → across the crest → close
+    return `M ${right[0]} L ${right.slice(1).join(' L ')} L ${left.reverse().join(' L ')} L ${crest.join(' L ')} Z`
   }, [totalH, W, CX, halfAtY])
 
   // Scenery + atmosphere (PathScenery.tsx). Deterministic, memoized.
-  const scenery = useMemo(() => buildScenery(nodes, totalH, CX, W, halfAtY), [nodes, totalH, CX, W, halfAtY])
+  const scenery = useMemo(
+    () => buildScenery(nodes, totalH, CX, W, halfAtY, avoid),
+    [nodes, totalH, CX, W, halfAtY, avoid],
+  )
   const clouds = useMemo(() => {
     const out: { key: string; x: number; y: number; s: number; far: boolean; fg: boolean }[] = []
     for (let k = 0; k < 48; k++) {
@@ -521,6 +551,7 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
         aria-hidden
       >
         <Stars totalH={totalH} w={W} asHtml bandFrac={0.34} />
+        <SkyLanterns totalH={totalH} w={W} bandFrac={0.34} />
       </m.div>
 
       {/* far ridges — each its own small motion element */}
@@ -563,6 +594,25 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
             <CloudPuff />
           </svg>
         ))}
+        {/* far flocks riding the same air as the clouds */}
+        {[0, 1, 2].map((k) => {
+          const t = 0.52 + hash(k * 9.1 + 3) * 0.14
+          return (
+            <svg
+              key={`bird-${k}`}
+              viewBox="-14 -10 30 16"
+              className="cloud-drift-far absolute"
+              style={{
+                left: `${8 + hash(k * 5.3 + 1) * 78}%`,
+                top: `${(((1 - t) - 0.1) / 0.44) * 100}%`,
+                width: `${(34 / W) * 100}%`,
+                opacity: 0.7,
+              }}
+            >
+              <Birds />
+            </svg>
+          )
+        })}
       </m.div>
 
       {/* the mountain itself, in raster-budget-sized slices */}
@@ -597,6 +647,7 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
             {/* the trail (full + walked overlay) — clipped by the viewBox */}
             <path d={full} fill="none" className="stroke-trail" strokeWidth="14" strokeLinecap="round" />
             <path d={walked} fill="none" className="stroke-trail-done" strokeWidth="14" strokeLinecap="round" />
+            {si === 0 && <SummitTorii cx={CX} y={PEAK_Y - 6} />}
             {renderSegmentNodes(within)}
           </svg>
         )
@@ -625,9 +676,11 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
         ))}
       </m.div>
 
-      {/* summit block — goraikō sunrise and the trip-readiness meter */}
-      <div className="absolute inset-x-0 top-0 flex flex-col items-center gap-2 pt-2 text-center">
-        <SummitScene />
+      {/* the trip-readiness meter, just below the summit torii */}
+      <div
+        className="absolute inset-x-0 flex flex-col items-center text-center"
+        style={{ top: `${((PEAK_Y + 26) / totalH) * 100}%` }}
+      >
         <div className="w-56 max-w-[70%]">
           <div className="h-2 overflow-hidden rounded-full bg-night-ink/20">
             <div className="h-full rounded-full bg-clay transition-[width] duration-700" style={{ width: `${summit.trip_ready_pct}%` }} />
@@ -641,7 +694,7 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
 
       {/* unit headers + landmarks (HTML overlays; same geometry). Above the
           night line the sky is dark in both themes → night tokens. */}
-      {unitMeta.map(({ unit: u, headerTopPct, headerSide, landmarkTopPct, landmarkSide, night }) => (
+      {unitMeta.map(({ unit: u, headerTopPct, headerSide, landmarkTopPct, landmarkX, night }) => (
         <div key={u.id}>
           <div
             className={`absolute w-[30%] max-w-[230px] ${headerSide === 'left' ? 'left-[2%] text-left' : 'right-[2%] text-right'}`}
@@ -664,12 +717,7 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
                 top: `${landmarkTopPct}%`,
                 // anchored to the mountain's edge at this altitude — never
                 // floating in the side sky beside the narrowing peak
-                left: `${(() => {
-                  const y = (landmarkTopPct / 100) * totalH + 20
-                  const dir = landmarkSide === 'left' ? -1 : 1
-                  const off = Math.max(96, Math.min(halfAtY(y) - 52, W / 2 - 44))
-                  return ((CX + dir * off) / W) * 100
-                })()}%`,
+                left: `${(landmarkX / W) * 100}%`,
               }}
               aria-hidden
             >

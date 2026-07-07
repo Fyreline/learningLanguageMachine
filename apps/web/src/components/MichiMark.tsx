@@ -70,7 +70,7 @@ export function MichiMark({
       <rect x="5" y="8.6" width="3" height="23.4" rx="1" fill="currentColor" />
       <rect x="28" y="8.6" width="3" height="23.4" rx="1" fill="currentColor" />
       {/* the cat, sat in the gateway */}
-      <g transform="translate(10.4,15.2) scale(0.55)">
+      <g transform="translate(9.2,15.2) scale(0.55)">
         <CatFace />
       </g>
     </svg>
