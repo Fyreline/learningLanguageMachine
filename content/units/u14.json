@@ -1,0 +1,173 @@
+{
+  "id": "u14",
+  "items": [],
+  "lessons": [
+    { "id": "u14.l1", "title": "Arrival: airport to hotel", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "listen-pick", "item": "u08.yoyaku_shiteimasu" },
+      { "type": "listen-pick-jp", "item": "u05.made_onegai" },
+      { "type": "match-pairs", "items": ["u05.eki", "u05.kippu", "u08.kagi", "u08.nimotsu", "u08.furonto"] },
+      { "type": "tile-arrange", "item": "u08.wifi_pasuwado" },
+      { "type": "speak", "item": "u08.yoyaku_shiteimasu" },
+      { "type": "dialogue", "dialogue": "u14.d1" }
+    ] },
+    { "id": "u14.l2", "title": "Izakaya night", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "listen-pick", "item": "u04.futari_desu" },
+      { "type": "match-pairs", "items": ["u04.biru", "u04.mizu", "u04.ocha", "u04.osake", "u04.menyu"] },
+      { "type": "listen-pick-jp", "item": "u12.taberaremasen" },
+      { "type": "tile-arrange", "item": "u04.osusume_wa" },
+      { "type": "speak", "item": "u04.biru_nihai" },
+      { "type": "dialogue", "dialogue": "u14.d2" }
+    ] },
+    { "id": "u14.l3", "title": "Day-trip by train", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "listen-pick", "item": "u05.nanbansen" },
+      { "type": "match-pairs", "items": ["u05.katamichi", "u05.oufuku", "u05.jiyuuseki", "u05.shiteiseki", "u05.norikae"] },
+      { "type": "listen-pick-jp", "item": "u09.nanji" },
+      { "type": "tile-arrange", "item": "u05.made_onegai" },
+      { "type": "speak", "item": "u05.kippu_nimai" },
+      { "type": "dialogue", "dialogue": "u14.d3" }
+    ] },
+    { "id": "u14.l4", "title": "The shopping run", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "listen-pick", "item": "u07.kore_wa_ikura" },
+      { "type": "match-pairs", "items": ["u07.fukuro", "u07.omiyage", "u07.menzei", "u03.genkin", "u03.kado"] },
+      { "type": "listen-pick-jp", "item": "u07.miteiru_dake" },
+      { "type": "tile-arrange", "item": "u07.menzei_dekimasu" },
+      { "type": "speak", "item": "u07.fukuro_onegai" },
+      { "type": "dialogue", "dialogue": "u14.d4" }
+    ] },
+    { "id": "u14.l5", "title": "Feeling unwell", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "listen-pick", "item": "u11.itai" },
+      { "type": "match-pairs", "items": ["u11.kusuri", "u11.itamidome", "u11.bansoukou", "u11.netsu", "u11.kaze"] },
+      { "type": "listen-pick-jp", "item": "u11.onaka_itai" },
+      { "type": "tile-arrange", "item": "u11.kusuri_arimasu" },
+      { "type": "speak", "item": "u11.koko_ga" },
+      { "type": "dialogue", "dialogue": "u14.d5" }
+    ] },
+    { "id": "u14.check", "title": "Last-night thank-yous", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "listen-pick", "item": "u13.osewa_ni" },
+      { "type": "match-pairs", "items": ["u13.douzo", "u13.shitsurei", "u13.otsukaresama", "u13.mata_kimasu", "u13.okagesama"] },
+      { "type": "listen-pick-jp", "item": "u04.gochisosama" },
+      { "type": "tile-arrange", "item": "u13.osewa_ni" },
+      { "type": "speak", "item": "u04.oishikatta" },
+      { "type": "speak", "item": "u13.mata_kimasu" },
+      { "type": "dialogue", "dialogue": "u14.d6" }
+    ] }
+  ],
+  "dialogues": [
+    {
+      "id": "u14.d1",
+      "scene": "Haneda arrivals, 3pm, thirteen hours of plane in your bones. The ticket counter first, then — somehow — a hotel front desk by nightfall. This is the run you rehearsed for.",
+      "turns": [
+        { "speaker": "npc", "jp": "こんにちは。どちらまで いきますか？", "romaji": "konnichiwa. dochira made ikimasu ka?", "en": "hello. where are you headed?" },
+        { "speaker": "you", "expect_item": "u05.made_onegai", "mode": "speak", "stakes": "Two rucksacks, one destination. Ask for tickets to Tokyo." },
+        { "speaker": "npc", "jp": "とうきょうえきですね。きっぷは にまいですか？", "romaji": "Tōkyō-eki desu ne. kippu wa nimai desu ka?", "en": "Tokyo station, got it. two tickets?" },
+        { "speaker": "you", "expect_item": "u01.hai", "mode": "pick", "stakes": "Both of you, always. Confirm it." },
+        { "speaker": "npc", "jp": "ぜんぶで さんぜんえんに なります。", "romaji": "zenbu de sanzen-en ni narimasu.", "en": "that'll be 3,000 yen altogether." },
+        { "speaker": "you", "expect_item": "u03.kado_de", "mode": "pick", "stakes": "You've no yen yet — the exchange desk had a queue. Ask if card is OK." },
+        { "speaker": "npc", "jp": "はい、だいじょうぶです。ホームは にばんせんです。", "romaji": "hai, daijōbu desu. hōmu wa niban-sen desu.", "en": "yes, that's fine. your platform is number two." },
+        { "speaker": "you", "expect_item": "u01.arigatogozaimasu", "mode": "pick", "stakes": "First transaction in Japan: survived. Thank her." },
+        { "speaker": "npc", "jp": "こんばんは。ホテルさくらへ ようこそ。", "romaji": "konbanwa. hoteru Sakura e yōkoso.", "en": "good evening. welcome to Hotel Sakura." },
+        { "speaker": "you", "expect_item": "u08.yoyaku_shiteimasu", "mode": "speak", "stakes": "Two trains later, you made it. Tell him you have a reservation." },
+        { "speaker": "npc", "jp": "はい、ございます。おへやは ごかいです。かぎを どうぞ。", "romaji": "hai, gozaimasu. o-heya wa gokai desu. kagi o dōzo.", "en": "yes, here it is. your room is on the fifth floor — here's your key." },
+        { "speaker": "you", "expect_item": "u08.wifi_pasuwado", "mode": "pick", "stakes": "One thing left before you can tell everyone you landed. Ask for the wifi password." },
+        { "speaker": "npc", "jp": "こちらに かいて あります。ごゆっくり どうぞ。", "romaji": "kochira ni kaite arimasu. go-yukkuri dōzo.", "en": "it's written here. please rest well." },
+        { "speaker": "you", "expect_item": "u01.doumo", "mode": "pick", "stakes": "Day zero, complete. A light, tired thanks — then that bed." }
+      ]
+    },
+    {
+      "id": "u14.d2",
+      "scene": "A lantern-lit izakaya down a Shinjuku side street, 8pm, your first proper night out. No booking, one shellfish allergy between you, and the smell of the grill pulling you in.",
+      "turns": [
+        { "speaker": "npc", "jp": "いらっしゃいませ！ごよやくですか？", "romaji": "irasshaimase! go-yoyaku desu ka?", "en": "welcome! do you have a reservation?" },
+        { "speaker": "you", "expect_item": "u01.iie", "mode": "pick", "stakes": "You just followed the smell of the grill. Admit it — no booking." },
+        { "speaker": "npc", "jp": "なんめいさまですか？", "romaji": "nanmei-sama desu ka?", "en": "how many of you?" },
+        { "speaker": "you", "expect_item": "u04.futari_desu", "mode": "speak", "stakes": "The eternal answer. Table for two." },
+        { "speaker": "npc", "jp": "カウンターせきなら ございます。どうぞ！", "romaji": "kauntā-seki nara gozaimasu. dōzo!", "en": "we have counter seats. this way!" },
+        { "speaker": "you", "expect_item": "u04.menyu_onegai", "mode": "pick", "stakes": "Seated at the counter, chef in view. Ask for the menu." },
+        { "speaker": "npc", "jp": "はい、どうぞ。おのみものは なにに しますか？", "romaji": "hai, dōzo. o-nomimono wa nani ni shimasu ka?", "en": "here you are. what will you have to drink?" },
+        { "speaker": "you", "expect_item": "u04.biru_nihai", "mode": "speak", "stakes": "You've waited nine weeks and one long flight for this. Two beers." },
+        { "speaker": "npc", "jp": "はい！きょうは かにが おすすめですよ。", "romaji": "hai! kyō wa kani ga osusume desu yo.", "en": "coming up! today the crab is excellent, by the way." },
+        { "speaker": "you", "expect_item": "u12.taberaremasen", "mode": "pick", "stakes": "The allergy. One of you can't eat shellfish — say it clearly before anything's ordered." },
+        { "speaker": "npc", "jp": "しょうちしました。では、とりにくの くしは いかがですか？", "romaji": "shōchi shimashita. dewa, toriniku no kushi wa ikaga desu ka?", "en": "understood. how about chicken skewers instead?" },
+        { "speaker": "you", "expect_item": "u04.kore_futatsu", "mode": "pick", "stakes": "Perfect and safe. Order two of those." },
+        { "speaker": "npc", "jp": "はい、なまビール おまたせしました！", "romaji": "hai, nama-bīru o-matase shimashita!", "en": "here we are — two draught beers, sorry for the wait!" },
+        { "speaker": "you", "expect_item": "u04.kanpai", "mode": "pick", "stakes": "Cold glasses, warm room, the whole trip ahead. You know the word." }
+      ]
+    },
+    {
+      "id": "u14.d3",
+      "scene": "Shinjuku station, 9:50am, day-trip day. Somewhere beyond the crowds is a train to the mountains — and you'd both quite like to be on it.",
+      "turns": [
+        { "speaker": "npc", "jp": "おはようございます。どうしましたか？", "romaji": "ohayō gozaimasu. dō shimashita ka?", "en": "good morning. can I help?" },
+        { "speaker": "you", "expect_item": "u05.nanbansen", "mode": "speak", "stakes": "The board says Hakone but not where from. Ask which platform." },
+        { "speaker": "npc", "jp": "はこねゆきですね。ごばんせんです。つぎは じゅうじはんです。", "romaji": "Hakone-yuki desu ne. goban-sen desu. tsugi wa jū-ji han desu.", "en": "for Hakone? platform five. the next one is at half ten." },
+        { "speaker": "you", "expect_item": "u09.nanji", "mode": "pick", "stakes": "Neither of you has checked a clock since breakfast. Ask the time." },
+        { "speaker": "npc", "jp": "いま くじごじゅっぷんです。じかんは じゅうぶん ありますよ。", "romaji": "ima ku-ji gojuppun desu. jikan wa jūbun arimasu yo.", "en": "it's nine fifty. you've plenty of time." },
+        { "speaker": "you", "expect_item": "u05.kippu_nimai", "mode": "speak", "stakes": "Relief. Now the tickets — ask for two." },
+        { "speaker": "npc", "jp": "かたみちですか、おうふくですか？", "romaji": "katamichi desu ka, ōfuku desu ka?", "en": "one-way or return?" },
+        { "speaker": "you", "expect_item": "u05.oufuku", "mode": "pick", "stakes": "You're due back for dinner in the city. Return, please." },
+        { "speaker": "npc", "jp": "おうふく にまいで よんせんえんです。ごばんせんへ どうぞ。", "romaji": "ōfuku nimai de yonsen-en desu. goban-sen e dōzo.", "en": "two returns, 4,000 yen. platform five is that way." },
+        { "speaker": "you", "expect_item": "u06.wa_doko", "mode": "speak", "stakes": "One more thing before the mountains: ask where it is — the lake bus stop at the other end. (Drop your place into the slot.)" },
+        { "speaker": "npc", "jp": "はこねえきの まえですよ。みぎに まがって ください。", "romaji": "Hakone-eki no mae desu yo. migi ni magatte kudasai.", "en": "right outside Hakone station. turn right as you come out." },
+        { "speaker": "you", "expect_item": "u01.wakarimashita", "mode": "pick", "stakes": "Platform five, half ten, right out of the station. Show her it's all landed." }
+      ]
+    },
+    {
+      "id": "u14.d4",
+      "scene": "A blazing-bright Don Quijote, three floors of everything, two days before you fly home. There are people back in Scotland who expect treasure — and it's started raining outside.",
+      "turns": [
+        { "speaker": "npc", "jp": "いらっしゃいませ！なにか おさがしですか？", "romaji": "irasshaimase! nanika o-sagashi desu ka?", "en": "welcome! looking for anything in particular?" },
+        { "speaker": "you", "expect_item": "u07.sagashite", "mode": "pick", "stakes": "Half of Scotland wants a present. Tell her you're souvenir-hunting." },
+        { "speaker": "npc", "jp": "おみやげなら こちらが にんきですよ。", "romaji": "omiyage nara kochira ga ninki desu yo.", "en": "for souvenirs, these are the popular ones." },
+        { "speaker": "you", "expect_item": "u07.kore_wa_ikura", "mode": "speak", "stakes": "A beautiful box of matcha biscuits with no visible price. Ask how much." },
+        { "speaker": "npc", "jp": "にせんごひゃくえんです。", "romaji": "nisen gohyaku-en desu.", "en": "2,500 yen." },
+        { "speaker": "you", "expect_item": "u07.menzei_dekimasu", "mode": "pick", "stakes": "Your basket has crossed the tax-free threshold. Ask if you can get it." },
+        { "speaker": "npc", "jp": "はい、できます。パスポートを おねがいします。", "romaji": "hai, dekimasu. pasupōto o onegaishimasu.", "en": "yes, you can. your passport, please." },
+        { "speaker": "you", "expect_item": "u13.douzo", "mode": "pick", "stakes": "Passport at the ready, like a seasoned traveller. Hand it over with the right word." },
+        { "speaker": "npc", "jp": "ありがとうございます。おしはらいは どう なさいますか？", "romaji": "arigatō gozaimasu. o-shiharai wa dō nasaimasu ka?", "en": "thank you. and how will you pay?" },
+        { "speaker": "you", "expect_item": "u03.genkin", "mode": "pick", "stakes": "The card's been sulking since this morning. Cash it is." },
+        { "speaker": "npc", "jp": "レシートと おつりです。トレーから どうぞ。", "romaji": "reshīto to otsuri desu. torē kara dōzo.", "en": "your receipt and change — on the tray there." },
+        { "speaker": "you", "expect_item": "u07.fukuro_onegai", "mode": "speak", "stakes": "Rain outside, fragile gifts inside. Ask for a bag." },
+        { "speaker": "npc", "jp": "はい、どうぞ。ありがとうございました！", "romaji": "hai, dōzo. arigatō gozaimashita!", "en": "of course, here you are. thank you very much!" },
+        { "speaker": "you", "expect_item": "u01.doumo", "mode": "pick", "stakes": "Mission accomplished, presents secured. A light thanks on the way out." }
+      ]
+    },
+    {
+      "id": "u14.d5",
+      "scene": "A drugstore under the station lights, 7pm. Last night's street food has picked a fight with your partner's stomach, and you're the one who has to do the talking.",
+      "turns": [
+        { "speaker": "npc", "jp": "こんばんは。どうしましたか？", "romaji": "konbanwa. dō shimashita ka?", "en": "good evening. what's the trouble?" },
+        { "speaker": "you", "expect_item": "u11.kibun", "mode": "pick", "stakes": "Your partner's gone grey by the door. Explain — feeling unwell." },
+        { "speaker": "npc", "jp": "それは いけませんね。ねつは ありますか？", "romaji": "sore wa ikemasen ne. netsu wa arimasu ka?", "en": "oh dear. is there a fever?" },
+        { "speaker": "you", "expect_item": "u01.iie", "mode": "pick", "stakes": "You checked their forehead twice on the walk here. No fever." },
+        { "speaker": "npc", "jp": "どこか いたい ところは ありますか？", "romaji": "dokoka itai tokoro wa arimasu ka?", "en": "any pain anywhere?" },
+        { "speaker": "you", "expect_item": "u11.onaka_itai", "mode": "speak", "stakes": "Say it for them — it's the stomach." },
+        { "speaker": "npc", "jp": "では、この くすりが いいですよ。しょくごに ひとつ です。", "romaji": "dewa, kono kusuri ga ii desu yo. shokugo ni hitotsu desu.", "en": "then this medicine is good. one tablet after meals." },
+        { "speaker": "you", "expect_item": "u01.moichido", "mode": "pick", "stakes": "Dosage is not the thing to guess at. Ask her to say it once more." },
+        { "speaker": "npc", "jp": "しょくごに、ひとつ、です。みずで のんで ください。", "romaji": "shokugo ni, hitotsu, desu. mizu de nonde kudasai.", "en": "after meals — one tablet. take it with water." },
+        { "speaker": "you", "expect_item": "u01.wakarimashita", "mode": "pick", "stakes": "One after meals, with water. Confirm you've got it." },
+        { "speaker": "npc", "jp": "おだいじに。", "romaji": "o-daiji ni.", "en": "get well soon." },
+        { "speaker": "you", "expect_item": "u01.arigatogozaimasu", "mode": "speak", "stakes": "She's just rescued your evening. Thank her properly, and go play nurse." }
+      ]
+    },
+    {
+      "id": "u14.d6",
+      "scene": "The ryokan entrance, last morning, bags by the door. The okami who has fed you, fixed your yukata, and laughed at your Japanese all week comes to see you off.",
+      "turns": [
+        { "speaker": "npc", "jp": "おはようございます。きょうは ごしゅっぱつですね。", "romaji": "ohayō gozaimasu. kyō wa go-shuppatsu desu ne.", "en": "good morning. so today you set off." },
+        { "speaker": "you", "expect_item": "u08.chekkuauto", "mode": "pick", "stakes": "The bags are packed, the trip is ending. Tell her — check-out." },
+        { "speaker": "npc", "jp": "かしこまりました。ごりょこうは いかがでしたか？", "romaji": "kashikomarimashita. go-ryokō wa ikaga deshita ka?", "en": "of course. and how was your trip?" },
+        { "speaker": "you", "expect_item": "u10.subarashii", "mode": "pick", "stakes": "Nine weeks of study, two weeks of magic. Give the trip the word it deserves." },
+        { "speaker": "npc", "jp": "うれしいです。けさの あさごはんは いかがでしたか？", "romaji": "ureshii desu. kesa no asagohan wa ikaga deshita ka?", "en": "I'm so glad. and this morning's breakfast?" },
+        { "speaker": "you", "expect_item": "u04.oishikatta", "mode": "speak", "stakes": "Grilled fish, miso, that perfect rice. Past tense, from the heart." },
+        { "speaker": "npc", "jp": "おふたりに あえて、ほんとうに よかったです。", "romaji": "o-futari ni aete, hontō ni yokatta desu.", "en": "it has been a true pleasure to meet you both." },
+        { "speaker": "you", "expect_item": "u13.osewa_ni", "mode": "speak", "stakes": "The phrase you saved for this exact doorway. Thank her for looking after you." },
+        { "speaker": "npc", "jp": "いえいえ、こちらこそ。えきまで タクシーを よびましょうか？", "romaji": "ie ie, kochira koso. eki made takushī o yobimashō ka?", "en": "not at all — the pleasure was ours. shall I call you a taxi to the station?" },
+        { "speaker": "you", "expect_item": "u01.onegaishimasu", "mode": "pick", "stakes": "The bags are heavy and the train won't wait. Accept gratefully." },
+        { "speaker": "npc", "jp": "スコットランドまで、どうぞ おきをつけて。", "romaji": "Sukottorando made, dōzo o-ki o tsukete.", "en": "safe travels, all the way to Scotland." },
+        { "speaker": "you", "expect_item": "u13.mata_kimasu", "mode": "speak", "stakes": "You both already know it's true. Promise her you'll come back." },
+        { "speaker": "npc", "jp": "おまちして おります。いってらっしゃい！", "romaji": "o-machi shite orimasu. itterasshai!", "en": "we'll be waiting. off you go!" },
+        { "speaker": "you", "expect_item": "u01.sayonara", "mode": "pick", "stakes": "The taxi door is open. Say the goodbye you've kept for the very end." }
+      ]
+    }
+  ]
+}

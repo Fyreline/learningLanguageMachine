@@ -1,0 +1,603 @@
+{
+  "id": "u11",
+  "items": [
+    {
+      "id": "u11.tasukete",
+      "jp": "たすけて",
+      "romaji": "tasukete",
+      "en": "help!",
+      "note": "The word you shout. Loud is fine — it cuts through any noise.",
+      "tags": [
+        "emergency",
+        "trip_core"
+      ],
+      "trip_core": true,
+      "distractors": [
+        "u11.keisatsu",
+        "u11.kaji",
+        "u11.itai"
+      ]
+    },
+    {
+      "id": "u11.tasukete_kudasai",
+      "jp": "たすけて ください",
+      "romaji": "tasukete kudasai",
+      "en": "please help me",
+      "note": "The calmer version, to one person. Follow it with what's wrong.",
+      "tags": [
+        "emergency",
+        "trip_core"
+      ],
+      "trip_core": true,
+      "distractors": [
+        "u11.kyuukyuusha",
+        "u11.michi_mayoi",
+        "u11.kusuri"
+      ]
+    },
+    {
+      "id": "u11.keisatsu",
+      "jp": "けいさつ",
+      "romaji": "keisatsu",
+      "en": "police",
+      "note": "'keisatsu o yonde kudasai' = 'please call the police'.",
+      "tags": [
+        "emergency",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u11.kyuukyuusha",
+      "jp": "きゅうきゅうしゃ",
+      "romaji": "kyūkyūsha",
+      "en": "ambulance",
+      "note": "'kyūkyūsha o yonde kudasai' = 'please call an ambulance'.",
+      "tags": [
+        "emergency"
+      ]
+    },
+    {
+      "id": "u11.kaji",
+      "jp": "かじ",
+      "romaji": "kaji",
+      "en": "fire",
+      "note": "Shout 'kaji da!' to raise the alarm. Rare, but the word to have.",
+      "tags": [
+        "emergency"
+      ]
+    },
+    {
+      "id": "u11.hyaku_toban",
+      "jp": "ひゃくとおばん",
+      "romaji": "hyaku-tōban",
+      "en": "110 (emergency call)",
+      "note": "Dial 110 for police, 119 for fire and ambulance. Free from any phone.",
+      "tags": [
+        "emergency",
+        "culture"
+      ]
+    },
+    {
+      "id": "u11.itai",
+      "jp": "いたいです",
+      "romaji": "itai desu",
+      "en": "it hurts",
+      "note": "Point as you say it. 'koko ga itai desu' = 'it hurts here'.",
+      "tags": [
+        "health",
+        "trip_core"
+      ],
+      "trip_core": true,
+      "distractors": [
+        "u11.kusuri",
+        "u11.netsu",
+        "u11.saifu"
+      ]
+    },
+    {
+      "id": "u11.byouki",
+      "jp": "びょうきです",
+      "romaji": "byōki desu",
+      "en": "I'm ill",
+      "note": "The general 'I'm sick'. Add where it hurts to be understood fast.",
+      "tags": [
+        "health",
+        "trip_core"
+      ],
+      "trip_core": true,
+      "distractors": [
+        "u11.itai",
+        "u11.kusuri",
+        "u11.pasupooto"
+      ]
+    },
+    {
+      "id": "u11.kibun",
+      "jp": "きぶんが わるいです",
+      "romaji": "kibun ga warui desu",
+      "en": "I feel unwell",
+      "note": "For queasy, faint, off-colour. The catch-all for 'not right'.",
+      "tags": [
+        "health"
+      ],
+      "distractors": [
+        "u11.atama",
+        "u11.kusuri",
+        "u11.michi_mayoi"
+      ]
+    },
+    {
+      "id": "u11.netsu",
+      "jp": "ねつが あります",
+      "romaji": "netsu ga arimasu",
+      "en": "I have a fever",
+      "note": "A pharmacist's first question. Pair it with 'kaze' for a cold.",
+      "tags": [
+        "health"
+      ]
+    },
+    {
+      "id": "u11.kaze",
+      "jp": "かぜを ひきました",
+      "romaji": "kaze o hikimashita",
+      "en": "I've caught a cold",
+      "note": "'kaze' is a cold; the deeper 'kaze-gusuri' is cold medicine.",
+      "tags": [
+        "health"
+      ]
+    },
+    {
+      "id": "u11.onaka_itai",
+      "jp": "おなかが いたいです",
+      "romaji": "onaka ga itai desu",
+      "en": "I have a stomachache",
+      "note": "onaka = stomach. Swap in atama for a headache: atama ga itai desu.",
+      "tags": [
+        "health",
+        "body"
+      ]
+    },
+    {
+      "id": "u11.atama",
+      "jp": "あたま",
+      "romaji": "atama",
+      "en": "head",
+      "note": "'atama ga itai desu' = 'I have a headache'.",
+      "tags": [
+        "body"
+      ]
+    },
+    {
+      "id": "u11.onaka",
+      "jp": "おなか",
+      "romaji": "onaka",
+      "en": "stomach / belly",
+      "note": "The soft everyday word for the whole belly area.",
+      "tags": [
+        "body"
+      ]
+    },
+    {
+      "id": "u11.nodo",
+      "jp": "のど",
+      "romaji": "nodo",
+      "en": "throat",
+      "note": "'nodo ga itai desu' = 'I have a sore throat'. A common traveller's grumble.",
+      "tags": [
+        "body"
+      ]
+    },
+    {
+      "id": "u11.koshi",
+      "jp": "こし",
+      "romaji": "koshi",
+      "en": "lower back",
+      "note": "The word for the small of the back — sore after long train days.",
+      "tags": [
+        "body"
+      ]
+    },
+    {
+      "id": "u11.ashi",
+      "jp": "あし",
+      "romaji": "ashi",
+      "en": "leg / foot",
+      "note": "Covers both leg and foot. Point to say which.",
+      "tags": [
+        "body"
+      ]
+    },
+    {
+      "id": "u11.koko_ga",
+      "jp": "ここが いたいです",
+      "romaji": "koko ga itai desu",
+      "en": "it hurts here",
+      "note": "The safe move: point and say it. Works with any body part.",
+      "tags": [
+        "health"
+      ],
+      "slots": {
+        "pattern": "{X} ga itai desu",
+        "fills": [
+          "u11.atama",
+          "u11.onaka",
+          "u11.nodo",
+          "u11.koshi",
+          "u11.ashi"
+        ]
+      }
+    },
+    {
+      "id": "u11.kusuri",
+      "jp": "くすり",
+      "romaji": "kusuri",
+      "en": "medicine",
+      "note": "The general word for medicine. 'kusuri o kudasai' = 'medicine, please'.",
+      "tags": [
+        "health",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u11.yakkyoku",
+      "jp": "やっきょく",
+      "romaji": "yakkyoku",
+      "en": "pharmacy",
+      "note": "A dispensing pharmacy; the big chains are 'doraggusutoa'. Both help.",
+      "tags": [
+        "health",
+        "place",
+        "trip_core"
+      ],
+      "trip_core": true,
+      "distractors": [
+        "u11.keisatsu",
+        "u11.kusuri",
+        "u11.byouki"
+      ]
+    },
+    {
+      "id": "u11.doraggusutoa",
+      "jp": "ドラッグストア",
+      "romaji": "doraggusutoa",
+      "en": "drugstore",
+      "note": "Matsukiyo and friends: medicine, plasters, snacks, everything. Open late.",
+      "tags": [
+        "health",
+        "place"
+      ],
+      "distractors": [
+        "u11.kyuukyuusha",
+        "u11.itamidome",
+        "u11.pasupooto"
+      ]
+    },
+    {
+      "id": "u11.itamidome",
+      "jp": "いたみどめ",
+      "romaji": "itamidome",
+      "en": "painkiller",
+      "note": "Ask for it by name at the counter. Literally 'pain-stopper'.",
+      "tags": [
+        "health"
+      ]
+    },
+    {
+      "id": "u11.bansoukou",
+      "jp": "ばんそうこう",
+      "romaji": "bansōkō",
+      "en": "plaster / sticking plaster",
+      "note": "For the blister the new shoes gave you on day one.",
+      "tags": [
+        "health"
+      ]
+    },
+    {
+      "id": "u11.kusuri_arimasu",
+      "jp": "かぜぐすりは ありますか",
+      "romaji": "kazegusuri wa arimasu ka",
+      "en": "do you have cold medicine?",
+      "note": "Swap kazegusuri for itamidome or any remedy you need.",
+      "tags": [
+        "health",
+        "question",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u11.nakushimashita",
+      "jp": "パスポートを なくしました",
+      "romaji": "pasupōto o nakushimashita",
+      "en": "I've lost my passport",
+      "note": "'X o nakushimashita' = 'I've lost X'. Say it at a kōban straight away.",
+      "tags": [
+        "emergency",
+        "trip_core"
+      ],
+      "trip_core": true,
+      "slots": {
+        "pattern": "{X} o nakushimashita",
+        "fills": [
+          "u11.pasupooto",
+          "u11.saifu",
+          "u08.kagi"
+        ]
+      },
+      "distractors": [
+        "u11.michi_mayoi",
+        "u11.tasukete_kudasai",
+        "u11.kusuri_arimasu"
+      ]
+    },
+    {
+      "id": "u11.pasupooto",
+      "jp": "パスポート",
+      "romaji": "pasupōto",
+      "en": "passport",
+      "note": "Carry it or a copy at all times — it's the law here.",
+      "tags": [
+        "emergency"
+      ]
+    },
+    {
+      "id": "u11.saifu",
+      "jp": "さいふ",
+      "romaji": "saifu",
+      "en": "wallet / purse",
+      "note": "Lost wallets famously come back in Japan — report it and hope.",
+      "tags": [
+        "emergency"
+      ]
+    },
+    {
+      "id": "u11.michi_mayoi",
+      "jp": "みちに まよいました",
+      "romaji": "michi ni mayoimashita",
+      "en": "I'm lost",
+      "note": "'I've strayed from the path.' The honest opener at any kōban.",
+      "tags": [
+        "emergency",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u11.koban_e",
+      "jp": "こうばんへ いきましょう",
+      "romaji": "kōban e ikimashō",
+      "en": "let's go to the police box",
+      "note": "Lost, robbed, hurt, or just bewildered — the kōban handles all of it, and lost property too.",
+      "tags": [
+        "place",
+        "emergency",
+        "culture"
+      ]
+    },
+    {
+      "id": "u11.otoshimono",
+      "jp": "おとしものを しました",
+      "romaji": "otoshimono o shimashita",
+      "en": "I've dropped / lost something",
+      "note": "The phrase at a lost-and-found. Stations keep a 'wasuremono' desk too.",
+      "tags": [
+        "emergency"
+      ],
+      "distractors": [
+        "u11.koban_e",
+        "u11.keisatsu",
+        "u11.saifu"
+      ]
+    }
+  ],
+  "lessons": [
+    {
+      "id": "u11.l1",
+      "title": "Help, police, ambulance",
+      "kind": "teach",
+      "new_items": [
+        "u11.tasukete",
+        "u11.tasukete_kudasai",
+        "u11.keisatsu",
+        "u11.kyuukyuusha",
+        "u11.kaji",
+        "u11.hyaku_toban"
+      ]
+    },
+    {
+      "id": "u11.l2",
+      "title": "It hurts",
+      "kind": "teach",
+      "new_items": [
+        "u11.itai",
+        "u11.byouki",
+        "u11.kibun",
+        "u11.netsu",
+        "u11.kaze",
+        "u11.onaka_itai"
+      ]
+    },
+    {
+      "id": "u11.l3",
+      "title": "Body parts",
+      "kind": "teach",
+      "new_items": [
+        "u11.atama",
+        "u11.onaka",
+        "u11.nodo",
+        "u11.koshi",
+        "u11.ashi",
+        "u11.koko_ga"
+      ]
+    },
+    {
+      "id": "u11.l4",
+      "title": "Pharmacy and medicine",
+      "kind": "teach",
+      "new_items": [
+        "u11.kusuri",
+        "u11.yakkyoku",
+        "u11.doraggusutoa",
+        "u11.itamidome",
+        "u11.bansoukou",
+        "u11.kusuri_arimasu"
+      ]
+    },
+    {
+      "id": "u11.l5",
+      "title": "I lost my passport",
+      "kind": "teach",
+      "new_items": [
+        "u11.nakushimashita",
+        "u11.pasupooto",
+        "u11.saifu",
+        "u11.michi_mayoi",
+        "u11.koban_e",
+        "u11.otoshimono"
+      ]
+    },
+    {
+      "id": "u11.check",
+      "title": "At the koban",
+      "kind": "checkpoint",
+      "new_items": [],
+      "steps": [
+        {
+          "type": "listen-pick",
+          "item": "u11.tasukete_kudasai"
+        },
+        {
+          "type": "listen-pick",
+          "item": "u11.keisatsu",
+          "distractors": [
+            "u11.kyuukyuusha",
+            "u11.kaji",
+            "u11.yakkyoku"
+          ]
+        },
+        {
+          "type": "match-pairs",
+          "items": [
+            "u11.atama",
+            "u11.onaka",
+            "u11.nodo",
+            "u11.koshi",
+            "u11.ashi"
+          ]
+        },
+        {
+          "type": "listen-pick-jp",
+          "item": "u11.itai"
+        },
+        {
+          "type": "tile-arrange",
+          "item": "u11.koko_ga"
+        },
+        {
+          "type": "match-pairs",
+          "items": [
+            "u11.kusuri",
+            "u11.yakkyoku",
+            "u11.itamidome",
+            "u11.bansoukou",
+            "u11.netsu"
+          ]
+        },
+        {
+          "type": "listen-type-romaji",
+          "item": "u11.itai"
+        },
+        {
+          "type": "listen-pick-jp",
+          "item": "u11.michi_mayoi"
+        },
+        {
+          "type": "tile-arrange",
+          "item": "u11.nakushimashita"
+        },
+        {
+          "type": "speak",
+          "item": "u11.tasukete"
+        },
+        {
+          "type": "speak",
+          "item": "u11.kusuri_arimasu"
+        },
+        {
+          "type": "dialogue",
+          "dialogue": "u11.d1"
+        }
+      ]
+    }
+  ],
+  "dialogues": [
+    {
+      "id": "u11.d1",
+      "scene": "A koban on a corner, late afternoon. You've just realised your passport isn't in your bag. The officer sets down his tea and looks up, calm and kind.",
+      "turns": [
+        {
+          "speaker": "npc",
+          "jp": "こんにちは。どうしましたか？",
+          "romaji": "konnichiwa. dō shimashita ka?",
+          "en": "hello. what's happened?"
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u11.tasukete_kudasai",
+          "mode": "pick",
+          "stakes": "Heart pounding. Ask him to help you."
+        },
+        {
+          "speaker": "npc",
+          "jp": "おちついて。なにが ありましたか？",
+          "romaji": "ochitsuite. nani ga arimashita ka?",
+          "en": "take a breath. what's the matter?"
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u11.nakushimashita",
+          "mode": "speak",
+          "stakes": "Say the hard thing plainly — you've lost your passport."
+        },
+        {
+          "speaker": "npc",
+          "jp": "どこで なくしましたか？",
+          "romaji": "doko de nakushimashita ka?",
+          "en": "where did you lose it?"
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u01.wakarimasen",
+          "mode": "pick",
+          "stakes": "You genuinely have no idea. Admit you don't know."
+        },
+        {
+          "speaker": "npc",
+          "jp": "だいじょうぶ。ホテルの ばんごうを おしえて ください。",
+          "romaji": "daijōbu. hoteru no bangō o oshiete kudasai.",
+          "en": "it's all right. give me your hotel's number."
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u01.moichido",
+          "mode": "pick",
+          "stakes": "He spoke quickly and you're rattled. Ask him to say it once more."
+        },
+        {
+          "speaker": "npc",
+          "jp": "おとしものは よく もどりますよ。しんぱい ないです。",
+          "romaji": "otoshimono wa yoku modorimasu yo. shinpai nai desu.",
+          "en": "lost things usually turn up here. don't worry."
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u01.arigatogozaimasu",
+          "mode": "speak",
+          "stakes": "The first steady breath in an hour. Thank him."
+        }
+      ]
+    }
+  ]
+}

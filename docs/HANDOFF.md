@@ -9,7 +9,7 @@ the delta: what exists, what's next, and where the bodies are buried.
 | Piece | State |
 |---|---|
 | Phase 1 scaffold (both apps, shared-identity auth) | ✅ done, verified, committed. 30 server tests green. Real login round-trips through Mishka Hub. |
-| Phase 2 content | ⚠️ **u01–u09 + kana + manifest done (258 items); u10–u14 missing.** `validate_content.py` output = the TODO list. Use skill `continue-course-content`. |
+| Phase 2 content | ✅ **Complete (2026-07-07): 369 items, 115 trip_core, 84 lessons, 19 dialogues incl. six u14 dress rehearsals; validator green.** TTS spot-listen list in the phase-2 agent report (u11.hyaku_toban, u13 long vowels, へ-particle lines). |
 | Phase 3 engine (lesson player, exercises, TTS/STT full, SRS writes, progress/reviews endpoints) | ❌ not started — the big one. docs/phases/PHASE-3-engine.md. Note: `/api/curriculum/manifest`, `/api/stats/*` already exist (built with phase 5); phase 3 still owes `/api/curriculum/lessons/{id}`, `/api/lessons/{id}/complete`, `/api/reviews/*`, `/api/placement/complete`, and `app/srs.py`. |
 | Phase 4 practice/phrasebook/settings/placement | ❌ not started, composition over phase 3's pieces. |
 | Phase 5 Path + Stats (Fable's) | ✅ done: PathScene/PathPage/StatsPage + manifest/stats endpoints. `?mock` previews a dressed path. **Deferred polish:** lesson-complete walk animation + torii confetti moment (specs in DESIGN §5/§7) wire up when phase 3's score screen exists; kana spur is a card, not a literal branch path. |
@@ -18,7 +18,7 @@ the delta: what exists, what's next, and where the bodies are buried.
 
 ## Recommended order
 
-1. Content u10–u14 (Opus, skill `continue-course-content`) — unblocks everything else's
+1. ~~Content u10–u14~~ done 2026-07-07.
    realism.
 2. Phase 3 engine (Opus; its doc is precise, the u01–u09 content is real to build against).
 3. Phase 4 (Sonnet).

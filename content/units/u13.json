@@ -1,0 +1,492 @@
+{
+  "id": "u13",
+  "items": [
+    {
+      "id": "u13.okane",
+      "jp": "おかね",
+      "romaji": "o-kane",
+      "en": "money (polite)",
+      "note": "The o- softens everyday words: o-mizu, o-hashi, o-kane. Receive it as politeness, not grammar.",
+      "tags": [
+        "politeness",
+        "money",
+        "pattern"
+      ]
+    },
+    {
+      "id": "u13.okyakusama",
+      "jp": "おきゃくさま",
+      "romaji": "o-kyaku-sama",
+      "en": "guest / customer (honorific)",
+      "note": "How staff address you everywhere. The -sama outranks -san; enjoy it.",
+      "tags": [
+        "politeness",
+        "culture"
+      ]
+    },
+    {
+      "id": "u13.goyukkuri",
+      "jp": "ごゆっくり どうぞ",
+      "romaji": "go-yukkuri dōzo",
+      "en": "please take your time",
+      "note": "The go- twin of o-. Staff say it as they leave your table; no reply needed, a nod is plenty.",
+      "tags": [
+        "politeness",
+        "set-phrase"
+      ]
+    },
+    {
+      "id": "u13.omatase",
+      "jp": "おまたせしました",
+      "romaji": "o-matase shimashita",
+      "en": "sorry to keep you waiting",
+      "note": "Said as your food lands, even after ninety seconds. Recognition only — just smile.",
+      "tags": [
+        "politeness",
+        "set-phrase"
+      ]
+    },
+    {
+      "id": "u13.douzo",
+      "jp": "どうぞ",
+      "romaji": "dōzo",
+      "en": "please, go ahead / here you are",
+      "note": "The giving word — offered with a seat, a plate, a held door. Answer with dōmo.",
+      "tags": [
+        "politeness",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u13.shitsurei",
+      "jp": "しつれいします",
+      "romaji": "shitsurei shimasu",
+      "en": "excuse me (entering or leaving)",
+      "literal": "'I commit a rudeness'",
+      "note": "For slipping past someone, entering a room, or hanging up a call. A gentle all-rounder.",
+      "tags": [
+        "politeness",
+        "set-phrase",
+        "trip_core"
+      ],
+      "trip_core": true,
+      "distractors": [
+        "u13.douzo",
+        "u13.otsukaresama",
+        "u13.ki_o_tsukete"
+      ]
+    },
+    {
+      "id": "u13.osaki_ni",
+      "jp": "おさきに しつれいします",
+      "romaji": "o-saki ni shitsurei shimasu",
+      "en": "excuse me for going first",
+      "note": "Leaving before others — the onsen, the lift, the dinner table. Kindness for queue-jumps you were given.",
+      "tags": [
+        "politeness",
+        "set-phrase",
+        "culture"
+      ],
+      "distractors": [
+        "u13.okyakusama",
+        "u13.goyukkuri",
+        "u13.omatase"
+      ]
+    },
+    {
+      "id": "u13.ojama",
+      "jp": "おじゃまします",
+      "romaji": "o-jama shimasu",
+      "en": "excuse the intrusion (entering a home)",
+      "literal": "'I am a hindrance'",
+      "note": "Said at the genkan as you step up into someone's home or a small ryokan.",
+      "tags": [
+        "politeness",
+        "set-phrase",
+        "culture"
+      ],
+      "distractors": [
+        "u13.douzo",
+        "u13.torei",
+        "u13.okane"
+      ]
+    },
+    {
+      "id": "u13.moushiwake",
+      "jp": "もうしわけありません",
+      "romaji": "mōshiwake arimasen",
+      "en": "I'm terribly sorry (formal)",
+      "note": "The deep apology staff give you when something's sold out. Recognition — you'll rarely need to say it.",
+      "tags": [
+        "politeness",
+        "set-phrase"
+      ],
+      "distractors": [
+        "u13.ie_ie",
+        "u13.okagesama",
+        "u13.goyukkuri"
+      ]
+    },
+    {
+      "id": "u13.sumimasen_arigato",
+      "jp": "すみません、ありがとうございます",
+      "romaji": "sumimasen, arigatō gozaimasu",
+      "en": "sorry for the trouble — thank you",
+      "note": "Sumimasen's third life: thanks for a favour that cost someone effort. Very Japanese, very warm.",
+      "tags": [
+        "politeness",
+        "culture"
+      ],
+      "distractors": [
+        "u13.moushiwake",
+        "u13.shitsurei",
+        "u13.omatase"
+      ]
+    },
+    {
+      "id": "u13.ie_ie",
+      "jp": "いえいえ",
+      "romaji": "ie ie",
+      "en": "no, no — it was nothing",
+      "note": "The modest wave-off when you're thanked. Deflecting praise is the polite reflex here.",
+      "tags": [
+        "politeness",
+        "smalltalk"
+      ]
+    },
+    {
+      "id": "u13.ojigi",
+      "jp": "おじぎ",
+      "romaji": "o-jigi",
+      "en": "bow (the gesture)",
+      "note": "A small nod-bow amplifies any sumimasen or arigatō. Deep bows are for big moments — don't overdo it.",
+      "tags": [
+        "culture"
+      ]
+    },
+    {
+      "id": "u13.kutsu",
+      "jp": "くつ",
+      "romaji": "kutsu",
+      "en": "shoes",
+      "note": "Off at ryokan, temples, fitting rooms, some restaurants. The raised step (genkan) is the signal.",
+      "tags": [
+        "culture",
+        "place",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u13.kutsu_o",
+      "jp": "くつを ぬいで ください",
+      "romaji": "kutsu o nuide kudasai",
+      "en": "please take off your shoes",
+      "note": "You'll hear it, not say it. Slippers usually wait for you at the step.",
+      "tags": [
+        "culture",
+        "place"
+      ]
+    },
+    {
+      "id": "u13.torei",
+      "jp": "トレー",
+      "romaji": "torē",
+      "en": "cash tray",
+      "note": "The little dish by every till. Money goes on the tray, not hand to hand. Change often does the same.",
+      "tags": [
+        "culture",
+        "money",
+        "shopping"
+      ]
+    },
+    {
+      "id": "u13.esukareta",
+      "jp": "エスカレーター",
+      "romaji": "esukarētā",
+      "en": "escalator",
+      "note": "Stand left in Tokyo, right in Osaka. Watch the locals for two seconds and copy.",
+      "tags": [
+        "culture",
+        "place",
+        "transport"
+      ]
+    },
+    {
+      "id": "u13.retsu",
+      "jp": "れつ",
+      "romaji": "retsu",
+      "en": "queue / line",
+      "note": "Queue at the painted marks on the platform; let riders off first. It's choreography, and it works.",
+      "tags": [
+        "culture",
+        "transport"
+      ]
+    },
+    {
+      "id": "u13.otsukaresama",
+      "jp": "おつかれさまです",
+      "romaji": "o-tsukaresama desu",
+      "en": "good work today / you must be tired",
+      "note": "Say it to your travel partner at day's end. Half greeting, half hug.",
+      "tags": [
+        "politeness",
+        "smalltalk",
+        "set-phrase",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u13.ki_o_tsukete",
+      "jp": "きを つけて",
+      "romaji": "ki o tsukete",
+      "en": "take care",
+      "note": "The parting kindness — you'll hear it from hosts and kōban officers alike.",
+      "tags": [
+        "politeness",
+        "smalltalk"
+      ]
+    },
+    {
+      "id": "u13.osewa_ni",
+      "jp": "おせわに なりました",
+      "romaji": "o-sewa ni narimashita",
+      "en": "thank you for looking after us",
+      "note": "The checkout gold. Said to your ryokan hosts as you leave, it lands like a gift.",
+      "tags": [
+        "politeness",
+        "set-phrase",
+        "hotel",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u13.mata_kimasu",
+      "jp": "また きます",
+      "romaji": "mata kimasu",
+      "en": "I'll come again",
+      "note": "For the shop or counter you loved. It's a compliment, and they'll remember you.",
+      "tags": [
+        "smalltalk",
+        "set-phrase",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u13.okagesama",
+      "jp": "おかげさまで",
+      "romaji": "o-kage-sama de",
+      "en": "thanks to you, all is well",
+      "literal": "'thanks to your shadow'",
+      "note": "The graceful reply to 'how was your stay?'. Modest gratitude, distilled.",
+      "tags": [
+        "politeness",
+        "set-phrase"
+      ]
+    }
+  ],
+  "lessons": [
+    {
+      "id": "u13.l1",
+      "title": "Honorific o- and go-",
+      "kind": "teach",
+      "new_items": [
+        "u13.okane",
+        "u13.okyakusama",
+        "u13.goyukkuri",
+        "u13.omatase"
+      ]
+    },
+    {
+      "id": "u13.l2",
+      "title": "Before you eat and leave",
+      "kind": "teach",
+      "new_items": [
+        "u13.douzo",
+        "u13.shitsurei",
+        "u13.osaki_ni",
+        "u13.ojama"
+      ]
+    },
+    {
+      "id": "u13.l3",
+      "title": "Sorry vs sorry",
+      "kind": "teach",
+      "new_items": [
+        "u13.moushiwake",
+        "u13.sumimasen_arigato",
+        "u13.ie_ie",
+        "u13.ojigi"
+      ]
+    },
+    {
+      "id": "u13.l4",
+      "title": "Trays, shoes, escalators",
+      "kind": "teach",
+      "new_items": [
+        "u13.kutsu",
+        "u13.kutsu_o",
+        "u13.torei",
+        "u13.esukareta",
+        "u13.retsu"
+      ]
+    },
+    {
+      "id": "u13.l5",
+      "title": "Small gracious phrases",
+      "kind": "teach",
+      "new_items": [
+        "u13.otsukaresama",
+        "u13.ki_o_tsukete",
+        "u13.osewa_ni",
+        "u13.mata_kimasu",
+        "u13.okagesama"
+      ]
+    },
+    {
+      "id": "u13.check",
+      "title": "Along the torii avenue",
+      "kind": "checkpoint",
+      "new_items": [],
+      "steps": [
+        {
+          "type": "listen-pick",
+          "item": "u13.douzo"
+        },
+        {
+          "type": "match-pairs",
+          "items": [
+            "u13.okane",
+            "u13.okyakusama",
+            "u13.goyukkuri",
+            "u13.omatase",
+            "u13.douzo"
+          ]
+        },
+        {
+          "type": "listen-pick",
+          "item": "u13.shitsurei",
+          "distractors": [
+            "u13.ojama",
+            "u13.moushiwake",
+            "u13.osaki_ni"
+          ]
+        },
+        {
+          "type": "listen-pick-jp",
+          "item": "u13.osewa_ni"
+        },
+        {
+          "type": "match-pairs",
+          "items": [
+            "u13.kutsu",
+            "u13.torei",
+            "u13.esukareta",
+            "u13.retsu",
+            "u13.ojigi"
+          ]
+        },
+        {
+          "type": "listen-pick",
+          "item": "u13.otsukaresama"
+        },
+        {
+          "type": "listen-pick-jp",
+          "item": "u13.mata_kimasu"
+        },
+        {
+          "type": "listen-type-romaji",
+          "item": "u13.douzo"
+        },
+        {
+          "type": "tile-arrange",
+          "item": "u13.osaki_ni"
+        },
+        {
+          "type": "speak",
+          "item": "u13.otsukaresama"
+        },
+        {
+          "type": "speak",
+          "item": "u13.osewa_ni"
+        },
+        {
+          "type": "dialogue",
+          "dialogue": "u13.d1"
+        }
+      ]
+    }
+  ],
+  "dialogues": [
+    {
+      "id": "u13.d1",
+      "scene": "A small teahouse at the foot of the torii avenue, near closing. The owner has kept the kettle on just for you two, and now it's time to go.",
+      "turns": [
+        {
+          "speaker": "npc",
+          "jp": "おきゃくさま、おちゃの おかわりは いかがですか？",
+          "romaji": "o-kyaku-sama, o-cha no okawari wa ikaga desu ka?",
+          "en": "would you care for another tea, honoured guests?"
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u01.kekkou",
+          "mode": "pick",
+          "stakes": "It's closing time and she's being kind. Decline gently."
+        },
+        {
+          "speaker": "npc",
+          "jp": "きょうは とおくから ようこそ。",
+          "romaji": "kyō wa tōku kara yōkoso.",
+          "en": "thank you for coming all this way today."
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u13.sumimasen_arigato",
+          "mode": "pick",
+          "stakes": "She stayed open late for you. Thank her for the trouble, the Japanese way."
+        },
+        {
+          "speaker": "npc",
+          "jp": "いえいえ。たびは たのしいですか？",
+          "romaji": "ie ie. tabi wa tanoshii desu ka?",
+          "en": "not at all. are you enjoying the trip?"
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u10.tanoshii",
+          "mode": "pick",
+          "stakes": "The torii at dusk, warm tea in your hands. Tell her honestly."
+        },
+        {
+          "speaker": "npc",
+          "jp": "よかった。どうぞ、おきをつけて。",
+          "romaji": "yokatta. dōzo, o-ki o tsukete.",
+          "en": "I'm glad. please take care on your way."
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u13.mata_kimasu",
+          "mode": "speak",
+          "stakes": "You mean it — you'd cross the world for this cup again. Tell her you'll be back."
+        },
+        {
+          "speaker": "npc",
+          "jp": "おまちして おります。",
+          "romaji": "o-machi shite orimasu.",
+          "en": "we'll be waiting for you."
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u13.shitsurei",
+          "mode": "pick",
+          "stakes": "Shoes on at the genkan, the door half open. Take your leave politely."
+        }
+      ]
+    }
+  ]
+}

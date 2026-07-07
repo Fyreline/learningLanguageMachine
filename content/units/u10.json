@@ -1,0 +1,579 @@
+{
+  "id": "u10",
+  "items": [
+    {
+      "id": "u10.tanoshii",
+      "jp": "たのしいです",
+      "romaji": "tanoshii desu",
+      "en": "it's fun / I'm having a great time",
+      "note": "The whole-trip word. Say it to anyone who made a moment better.",
+      "tags": [
+        "feeling"
+      ],
+      "distractors": [
+        "u10.samui",
+        "u10.atsui",
+        "u10.onaka_suita"
+      ]
+    },
+    {
+      "id": "u10.samui",
+      "jp": "さむいです",
+      "romaji": "samui desu",
+      "en": "it's cold",
+      "note": "For the weather or the onsen changing room. atsui is its opposite.",
+      "tags": [
+        "feeling"
+      ]
+    },
+    {
+      "id": "u10.atsui",
+      "jp": "あついです",
+      "romaji": "atsui desu",
+      "en": "it's hot",
+      "note": "Weather-hot. Bath-hot too — a fair warning by the onsen.",
+      "tags": [
+        "feeling"
+      ]
+    },
+    {
+      "id": "u10.tsukareta",
+      "jp": "つかれました",
+      "romaji": "tsukaremashita",
+      "en": "I'm tired",
+      "note": "Past-tense verb, present feeling. The honest end-of-day line.",
+      "tags": [
+        "feeling",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u10.onaka_suita",
+      "jp": "おなかが すきました",
+      "romaji": "onaka ga sukimashita",
+      "en": "I'm hungry",
+      "note": "Literally 'my stomach emptied'. The cue to go hunt dinner.",
+      "tags": [
+        "feeling"
+      ]
+    },
+    {
+      "id": "u10.nodo_kawaita",
+      "jp": "のどが かわきました",
+      "romaji": "nodo ga kawakimashita",
+      "en": "I'm thirsty",
+      "note": "'My throat's dried'. A vending machine is never far.",
+      "tags": [
+        "feeling"
+      ]
+    },
+    {
+      "id": "u10.suki",
+      "jp": "すきです",
+      "romaji": "suki desu",
+      "en": "I like it",
+      "note": "Put a thing first: 'sushi ga suki desu' = 'I like sushi'.",
+      "tags": [
+        "feeling",
+        "trip_core"
+      ],
+      "trip_core": true,
+      "slots": {
+        "pattern": "{X} ga suki desu",
+        "fills": [
+          "u04.biru",
+          "u04.osake",
+          "u04.ocha",
+          "u08.onsen"
+        ]
+      },
+      "distractors": [
+        "u10.tanoshii",
+        "u10.kirei",
+        "u10.ikitai"
+      ]
+    },
+    {
+      "id": "u10.daisuki",
+      "jp": "だいすきです",
+      "romaji": "daisuki desu",
+      "en": "I love it",
+      "note": "One notch up from suki. For the thing that made your trip.",
+      "tags": [
+        "feeling"
+      ],
+      "distractors": [
+        "u10.samui",
+        "u10.atsui",
+        "u10.tabetai"
+      ]
+    },
+    {
+      "id": "u10.nigate",
+      "jp": "ちょっと にがてです",
+      "romaji": "chotto nigate desu",
+      "en": "it's not really for me",
+      "note": "The gentle 'no thanks' for a food or plan. Softer than 'I dislike it'.",
+      "tags": [
+        "feeling"
+      ]
+    },
+    {
+      "id": "u10.tabetai",
+      "jp": "たべたいです",
+      "romaji": "tabetai desu",
+      "en": "I want to eat (it)",
+      "note": "'-tai desu' turns a verb into a wish. ikitai = 'want to go'.",
+      "tags": [
+        "food",
+        "feeling"
+      ]
+    },
+    {
+      "id": "u10.ikitai",
+      "jp": "いきたいです",
+      "romaji": "ikitai desu",
+      "en": "I want to go",
+      "note": "Point at a map or a photo and say it. Plans get made this way.",
+      "tags": [
+        "feeling"
+      ]
+    },
+    {
+      "id": "u10.ii_ne",
+      "jp": "いいですね",
+      "romaji": "ii desu ne",
+      "en": "that sounds lovely",
+      "note": "The warm 'yes, nice idea'. The ne invites your companion to agree.",
+      "tags": [
+        "smalltalk"
+      ]
+    },
+    {
+      "id": "u10.kirei",
+      "jp": "きれいです",
+      "romaji": "kirei desu",
+      "en": "it's beautiful",
+      "note": "Also means 'clean' — one word for the view and the room.",
+      "tags": [
+        "feeling",
+        "trip_core"
+      ],
+      "trip_core": true,
+      "distractors": [
+        "u10.atsui",
+        "u10.tanoshimi",
+        "u10.yokatta"
+      ]
+    },
+    {
+      "id": "u10.sugoi",
+      "jp": "すごいです",
+      "romaji": "sugoi desu",
+      "en": "amazing / wow",
+      "note": "Your all-purpose delight, from the castle to the vending machine.",
+      "tags": [
+        "smalltalk",
+        "trip_core"
+      ],
+      "trip_core": true,
+      "distractors": [
+        "u10.tsukareta",
+        "u10.samui",
+        "u10.tabetai"
+      ]
+    },
+    {
+      "id": "u10.kawaii",
+      "jp": "かわいいです",
+      "romaji": "kawaii desu",
+      "en": "it's cute",
+      "note": "You will say this hourly, entirely against your will.",
+      "tags": [
+        "smalltalk"
+      ]
+    },
+    {
+      "id": "u10.subarashii",
+      "jp": "すばらしいです",
+      "romaji": "subarashii desu",
+      "en": "it's wonderful",
+      "note": "A weightier praise than sugoi. For the meal, the view, the day.",
+      "tags": [
+        "smalltalk"
+      ],
+      "distractors": [
+        "u10.onaka_suita",
+        "u10.nodo_kawaita",
+        "u10.ikitai"
+      ]
+    },
+    {
+      "id": "u10.tanoshimi",
+      "jp": "たのしみです",
+      "romaji": "tanoshimi desu",
+      "en": "I'm looking forward to it",
+      "note": "Said before a plan you're excited about. Warms up any small talk.",
+      "tags": [
+        "feeling"
+      ],
+      "distractors": [
+        "u10.nodo_kawaita",
+        "u10.ikitai",
+        "u10.yokatta"
+      ]
+    },
+    {
+      "id": "u10.yokatta",
+      "jp": "よかったです",
+      "romaji": "yokatta desu",
+      "en": "I'm glad / that was good",
+      "note": "Relief and delight in one word. 'Made it — yokatta.'",
+      "tags": [
+        "feeling"
+      ]
+    },
+    {
+      "id": "u10.hajimemashite",
+      "jp": "はじめまして",
+      "romaji": "hajimemashite",
+      "en": "nice to meet you",
+      "note": "The opener when you meet someone for the first time. A small bow suits it.",
+      "tags": [
+        "greeting",
+        "trip_core"
+      ],
+      "trip_core": true,
+      "distractors": [
+        "u10.onamae",
+        "u10.watashi_wa",
+        "u10.doko_kara"
+      ]
+    },
+    {
+      "id": "u10.onamae",
+      "jp": "おなまえは なんですか",
+      "romaji": "o-namae wa nan desu ka",
+      "en": "what's your name?",
+      "note": "The o- is courtesy on their name, not yours. Warm, not nosy.",
+      "tags": [
+        "question",
+        "smalltalk"
+      ]
+    },
+    {
+      "id": "u10.watashi_wa",
+      "jp": "わたしは スミスです",
+      "romaji": "watashi wa Sumisu desu",
+      "en": "I'm Smith",
+      "note": "Swap in your own name. Family name is the norm on introductions.",
+      "tags": [
+        "smalltalk"
+      ]
+    },
+    {
+      "id": "u10.yoroshiku",
+      "jp": "どうぞ よろしく おねがいします",
+      "romaji": "dōzo yoroshiku onegaishimasu",
+      "en": "pleased to meet you",
+      "note": "Follows hajimemashite. An untranslatable 'let's get along' — just say it.",
+      "tags": [
+        "greeting",
+        "set-phrase"
+      ],
+      "distractors": [
+        "u10.doko_kara",
+        "u10.igirisu",
+        "u10.issho"
+      ]
+    },
+    {
+      "id": "u10.kochira_koso",
+      "jp": "こちらこそ",
+      "romaji": "kochira koso",
+      "en": "likewise / the pleasure's mine",
+      "note": "The graceful reply when they thank or greet you first.",
+      "tags": [
+        "smalltalk",
+        "politeness"
+      ]
+    },
+    {
+      "id": "u10.doko_kara",
+      "jp": "どこから きましたか",
+      "romaji": "doko kara kimashita ka",
+      "en": "where are you from?",
+      "note": "The friendliest question you'll be asked. Have your answer ready.",
+      "tags": [
+        "question",
+        "smalltalk",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u10.kara_kimashita",
+      "jp": "スコットランドから きました",
+      "romaji": "Sukottorando kara kimashita",
+      "en": "I'm from Scotland",
+      "note": "Swap the country. 'X kara kimashita' = 'I came from X'.",
+      "tags": [
+        "smalltalk",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u10.igirisu",
+      "jp": "イギリス",
+      "romaji": "Igirisu",
+      "en": "the UK / Britain",
+      "note": "From Portuguese 'Inglês'. Sukottorando is understood too.",
+      "tags": [
+        "place",
+        "smalltalk"
+      ]
+    },
+    {
+      "id": "u10.shashin",
+      "jp": "しゃしんを とって もらえますか",
+      "romaji": "shashin o totte moraemasu ka",
+      "en": "could you take a photo?",
+      "note": "Hold the phone out with it. '-te moraemasu ka' politely asks a favour.",
+      "tags": [
+        "question",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u10.issho",
+      "jp": "いっしょに とりましょう",
+      "romaji": "issho ni torimashō",
+      "en": "let's take one together",
+      "note": "Offer it back after someone photographs you. -mashō = 'let's'.",
+      "tags": [
+        "smalltalk"
+      ]
+    },
+    {
+      "id": "u10.hai_chizu",
+      "jp": "はい、チーズ",
+      "romaji": "hai, chīzu",
+      "en": "say cheese",
+      "note": "The photo countdown here too. Some say 'san, ni, ichi' first.",
+      "tags": [
+        "smalltalk",
+        "culture"
+      ]
+    }
+  ],
+  "lessons": [
+    {
+      "id": "u10.l1",
+      "title": "Fun, tired, cold, hot",
+      "kind": "teach",
+      "new_items": [
+        "u10.tanoshii",
+        "u10.samui",
+        "u10.atsui",
+        "u10.tsukareta",
+        "u10.onaka_suita",
+        "u10.nodo_kawaita"
+      ]
+    },
+    {
+      "id": "u10.l2",
+      "title": "I like it",
+      "kind": "teach",
+      "new_items": [
+        "u10.suki",
+        "u10.daisuki",
+        "u10.nigate",
+        "u10.tabetai",
+        "u10.ikitai",
+        "u10.ii_ne"
+      ]
+    },
+    {
+      "id": "u10.l3",
+      "title": "Beautiful, amazing",
+      "kind": "teach",
+      "new_items": [
+        "u10.kirei",
+        "u10.sugoi",
+        "u10.kawaii",
+        "u10.subarashii",
+        "u10.tanoshimi",
+        "u10.yokatta"
+      ]
+    },
+    {
+      "id": "u10.l4",
+      "title": "Nice to meet you",
+      "kind": "teach",
+      "new_items": [
+        "u10.hajimemashite",
+        "u10.onamae",
+        "u10.watashi_wa",
+        "u10.yoroshiku",
+        "u10.kochira_koso"
+      ]
+    },
+    {
+      "id": "u10.l5",
+      "title": "Where are you from?",
+      "kind": "teach",
+      "new_items": [
+        "u10.doko_kara",
+        "u10.kara_kimashita",
+        "u10.igirisu",
+        "u10.shashin",
+        "u10.issho",
+        "u10.hai_chizu"
+      ]
+    },
+    {
+      "id": "u10.check",
+      "title": "A chat in the onsen town",
+      "kind": "checkpoint",
+      "new_items": [],
+      "steps": [
+        {
+          "type": "listen-pick",
+          "item": "u10.tsukareta"
+        },
+        {
+          "type": "match-pairs",
+          "items": [
+            "u10.tanoshii",
+            "u10.samui",
+            "u10.atsui",
+            "u10.onaka_suita",
+            "u10.nodo_kawaita"
+          ]
+        },
+        {
+          "type": "listen-pick",
+          "item": "u10.suki",
+          "distractors": [
+            "u10.kirei",
+            "u10.sugoi",
+            "u10.tsukareta"
+          ]
+        },
+        {
+          "type": "listen-pick-jp",
+          "item": "u10.kirei"
+        },
+        {
+          "type": "match-pairs",
+          "items": [
+            "u10.kirei",
+            "u10.sugoi",
+            "u10.kawaii",
+            "u10.subarashii",
+            "u10.yokatta"
+          ]
+        },
+        {
+          "type": "tile-arrange",
+          "item": "u10.doko_kara"
+        },
+        {
+          "type": "listen-pick-jp",
+          "item": "u10.hajimemashite"
+        },
+        {
+          "type": "listen-type-romaji",
+          "item": "u10.sugoi"
+        },
+        {
+          "type": "tile-arrange",
+          "item": "u10.kara_kimashita"
+        },
+        {
+          "type": "speak",
+          "item": "u10.suki"
+        },
+        {
+          "type": "speak",
+          "item": "u10.shashin"
+        },
+        {
+          "type": "dialogue",
+          "dialogue": "u10.d1"
+        }
+      ]
+    }
+  ],
+  "dialogues": [
+    {
+      "id": "u10.d1",
+      "scene": "A wooden footbath on the edge of the onsen town at dusk. Steam, lantern light, the river below. A friendly local eases in beside you.",
+      "turns": [
+        {
+          "speaker": "npc",
+          "jp": "こんばんは。いい おゆですね。",
+          "romaji": "konbanwa. ii o-yu desu ne.",
+          "en": "evening. lovely hot water, isn't it?"
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u10.ii_ne",
+          "mode": "pick",
+          "stakes": "Your feet are in heaven. Agree warmly — it is lovely."
+        },
+        {
+          "speaker": "npc",
+          "jp": "どちらから いらしたんですか？",
+          "romaji": "dochira kara irashitan desu ka?",
+          "en": "where have you come from?"
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u10.kara_kimashita",
+          "mode": "speak",
+          "stakes": "The friendly question. Tell them you're from Scotland."
+        },
+        {
+          "speaker": "npc",
+          "jp": "スコットランド！とおいですね。",
+          "romaji": "Sukottorando! tōi desu ne.",
+          "en": "Scotland — that's far!"
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u10.tanoshii",
+          "mode": "pick",
+          "stakes": "Far, but worth it. Tell them you're having a wonderful time."
+        },
+        {
+          "speaker": "npc",
+          "jp": "うれしいです。しゃしん、とりましょうか？",
+          "romaji": "ureshii desu. shashin, torimashō ka?",
+          "en": "that makes me happy. shall I take your photo?"
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u10.shashin",
+          "mode": "pick",
+          "stakes": "Yes! The two of you, the lanterns behind. Ask them to take it."
+        },
+        {
+          "speaker": "npc",
+          "jp": "はい、チーズ！いいですね。",
+          "romaji": "hai, chīzu! ii desu ne.",
+          "en": "say cheese! that's a good one."
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u01.arigatogozaimasu",
+          "mode": "speak",
+          "stakes": "A stranger's small kindness. Thank them properly."
+        }
+      ]
+    }
+  ]
+}

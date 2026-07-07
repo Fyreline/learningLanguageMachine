@@ -1,0 +1,571 @@
+{
+  "id": "u12",
+  "items": [
+    {
+      "id": "u12.ramen",
+      "jp": "ラーメン",
+      "romaji": "rāmen",
+      "en": "ramen",
+      "note": "Slurping is correct and expected — it cools the noodles and flatters the cook.",
+      "tags": [
+        "food",
+        "menu"
+      ]
+    },
+    {
+      "id": "u12.sushi",
+      "jp": "すし",
+      "romaji": "sushi",
+      "en": "sushi",
+      "note": "Written 寿司 or 鮨 on signs. o-sushi with the polite o- is common too.",
+      "tags": [
+        "food",
+        "menu"
+      ]
+    },
+    {
+      "id": "u12.udon",
+      "jp": "うどん",
+      "romaji": "udon",
+      "en": "udon (thick wheat noodles)",
+      "note": "Thick, soft, comforting. Kansai udon broth is lighter than Tokyo's.",
+      "tags": [
+        "food",
+        "menu"
+      ]
+    },
+    {
+      "id": "u12.soba",
+      "jp": "そば",
+      "romaji": "soba",
+      "en": "soba (buckwheat noodles)",
+      "note": "Buckwheat — a real allergen for some. Served hot or chilled on a mat.",
+      "tags": [
+        "food",
+        "menu"
+      ]
+    },
+    {
+      "id": "u12.gyoza",
+      "jp": "ぎょうざ",
+      "romaji": "gyōza",
+      "en": "gyoza (dumplings)",
+      "note": "Usually pork inside. Order them with everything.",
+      "tags": [
+        "food",
+        "menu"
+      ]
+    },
+    {
+      "id": "u12.tempura",
+      "jp": "てんぷら",
+      "romaji": "tenpura",
+      "en": "tempura",
+      "note": "Battered and fried, lighter than it sounds. ebi tempura is the star.",
+      "tags": [
+        "food",
+        "menu"
+      ]
+    },
+    {
+      "id": "u12.aji",
+      "jp": "あじ",
+      "romaji": "aji",
+      "en": "taste / flavour",
+      "note": "'aji wa dō desu ka' = 'how does it taste?' — you'll hear it from proud cooks.",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "u12.amai",
+      "jp": "あまいです",
+      "romaji": "amai desu",
+      "en": "it's sweet",
+      "tags": [
+        "food",
+        "feeling"
+      ]
+    },
+    {
+      "id": "u12.karai",
+      "jp": "からいです",
+      "romaji": "karai desu",
+      "en": "it's spicy",
+      "note": "Also 'salty-hot' in some regions. If you fear heat, ask before you order.",
+      "tags": [
+        "food",
+        "feeling",
+        "trip_core"
+      ],
+      "trip_core": true,
+      "distractors": [
+        "u12.amai",
+        "u12.suppai",
+        "u12.aji"
+      ]
+    },
+    {
+      "id": "u12.shoppai",
+      "jp": "しょっぱいです",
+      "romaji": "shoppai desu",
+      "en": "it's salty",
+      "tags": [
+        "food",
+        "feeling"
+      ],
+      "distractors": [
+        "u12.amai",
+        "u12.suppai",
+        "u12.gohan"
+      ]
+    },
+    {
+      "id": "u12.suppai",
+      "jp": "すっぱいです",
+      "romaji": "suppai desu",
+      "en": "it's sour",
+      "note": "For umeboshi (pickled plum) — a rite of passage. Brace yourself.",
+      "tags": [
+        "food",
+        "feeling"
+      ]
+    },
+    {
+      "id": "u12.karai_no",
+      "jp": "からいのは ちょっと",
+      "romaji": "karai no wa chotto...",
+      "en": "spicy food isn't really for me",
+      "note": "The trailing chotto does the declining for you. Universally understood.",
+      "tags": [
+        "food",
+        "politeness"
+      ]
+    },
+    {
+      "id": "u12.teishoku",
+      "jp": "ていしょく",
+      "romaji": "teishoku",
+      "en": "set meal",
+      "note": "Main + rice + miso soup + pickles at a fair price. The traveller's best friend.",
+      "tags": [
+        "food",
+        "menu",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u12.gohan",
+      "jp": "ごはん",
+      "romaji": "gohan",
+      "en": "rice / a meal",
+      "note": "Means both cooked rice and 'meal' — asagohan is literally 'morning rice'.",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "u12.misoshiru",
+      "jp": "みそしる",
+      "romaji": "miso-shiru",
+      "en": "miso soup",
+      "note": "Sip it straight from the bowl; the spoon is optional here.",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "u12.tsukemono",
+      "jp": "つけもの",
+      "romaji": "tsukemono",
+      "en": "pickles",
+      "note": "The little colourful sides in every teishoku. Kyoto's are famous.",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "u12.okawari",
+      "jp": "おかわり",
+      "romaji": "okawari",
+      "en": "refill / seconds",
+      "note": "'gohan okawari dekimasu ka' — many teishoku places refill rice free.",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "u12.bento",
+      "jp": "べんとう",
+      "romaji": "bentō",
+      "en": "boxed lunch",
+      "note": "Ekiben — station bento — turn any train ride into a picnic.",
+      "tags": [
+        "food",
+        "menu"
+      ]
+    },
+    {
+      "id": "u12.nan_no_niku",
+      "jp": "これは なんの にくですか",
+      "romaji": "kore wa nan no niku desu ka",
+      "en": "what meat is this?",
+      "note": "The label-less skewer question. Point first, then ask.",
+      "tags": [
+        "food",
+        "question",
+        "trip_core"
+      ],
+      "trip_core": true
+    },
+    {
+      "id": "u12.toriniku",
+      "jp": "とりにく",
+      "romaji": "toriniku",
+      "en": "chicken",
+      "note": "tori alone means bird; yakitori is chicken on a stick.",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "u12.butaniku",
+      "jp": "ぶたにく",
+      "romaji": "butaniku",
+      "en": "pork",
+      "note": "The hidden default in gyoza, ramen broth, and curry. Worth knowing.",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "u12.gyuniku",
+      "jp": "ぎゅうにく",
+      "romaji": "gyūniku",
+      "en": "beef",
+      "note": "The wagyū one. gyūdon (beef bowl) is the cheap weeknight version.",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "u12.yasai",
+      "jp": "やさい",
+      "romaji": "yasai",
+      "en": "vegetables",
+      "note": "'yasai dake' = 'just vegetables'. Note dashi (fish stock) still hides in much.",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "u12.tamago",
+      "jp": "たまご",
+      "romaji": "tamago",
+      "en": "egg",
+      "note": "Raw egg on rice is a beloved breakfast — perfectly safe in Japan.",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "u12.ebi",
+      "jp": "えび",
+      "romaji": "ebi",
+      "en": "prawn / shrimp",
+      "note": "In tempura, sushi, crackers, and hidden in fried snacks. Allergy-relevant.",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "u12.kani",
+      "jp": "かに",
+      "romaji": "kani",
+      "en": "crab",
+      "note": "kanikama is imitation crab — actually fish. Check if it matters to you.",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "u12.nattsu",
+      "jp": "ナッツ",
+      "romaji": "nattsu",
+      "en": "nuts",
+      "note": "Peanut specifically is pīnattsu. Both words work at the counter.",
+      "tags": [
+        "food",
+        "health"
+      ]
+    },
+    {
+      "id": "u12.haitte_imasu",
+      "jp": "たまごは はいって いますか",
+      "romaji": "tamago wa haitte imasu ka",
+      "en": "does it contain egg?",
+      "note": "The deeper allergy check. Swap in any ingredient you must avoid.",
+      "tags": [
+        "food",
+        "health",
+        "question",
+        "trip_core"
+      ],
+      "trip_core": true,
+      "slots": {
+        "pattern": "{X} wa haitte imasu ka",
+        "fills": [
+          "u12.tamago",
+          "u12.ebi",
+          "u12.kani",
+          "u12.nattsu",
+          "u04.niku"
+        ]
+      }
+    },
+    {
+      "id": "u12.taberaremasen",
+      "jp": "えびが たべられません",
+      "romaji": "ebi ga taberaremasen",
+      "en": "I can't eat prawns",
+      "note": "'X ga taberaremasen' = 'I can't eat X' — allergy or otherwise. Firm and polite.",
+      "tags": [
+        "food",
+        "health",
+        "trip_core"
+      ],
+      "trip_core": true,
+      "slots": {
+        "pattern": "{X} ga taberaremasen",
+        "fills": [
+          "u12.ebi",
+          "u12.kani",
+          "u12.nattsu",
+          "u12.tamago",
+          "u04.niku"
+        ]
+      }
+    },
+    {
+      "id": "u12.daijobu_desu_ka",
+      "jp": "これは だいじょうぶですか",
+      "romaji": "kore wa daijōbu desu ka",
+      "en": "is this one OK (for me)?",
+      "note": "After naming your allergy, point and ask. Staff take it seriously.",
+      "tags": [
+        "food",
+        "health",
+        "question"
+      ]
+    }
+  ],
+  "lessons": [
+    {
+      "id": "u12.l1",
+      "title": "Dishes you'll want",
+      "kind": "teach",
+      "new_items": [
+        "u12.ramen",
+        "u12.sushi",
+        "u12.udon",
+        "u12.soba",
+        "u12.gyoza",
+        "u12.tempura"
+      ]
+    },
+    {
+      "id": "u12.l2",
+      "title": "Sweet, spicy, salty",
+      "kind": "teach",
+      "new_items": [
+        "u12.aji",
+        "u12.amai",
+        "u12.karai",
+        "u12.shoppai",
+        "u12.suppai",
+        "u12.karai_no"
+      ]
+    },
+    {
+      "id": "u12.l3",
+      "title": "Set meals and sides",
+      "kind": "teach",
+      "new_items": [
+        "u12.teishoku",
+        "u12.gohan",
+        "u12.misoshiru",
+        "u12.tsukemono",
+        "u12.okawari",
+        "u12.bento"
+      ]
+    },
+    {
+      "id": "u12.l4",
+      "title": "What meat is this?",
+      "kind": "teach",
+      "new_items": [
+        "u12.nan_no_niku",
+        "u12.toriniku",
+        "u12.butaniku",
+        "u12.gyuniku",
+        "u12.yasai",
+        "u12.tamago"
+      ]
+    },
+    {
+      "id": "u12.l5",
+      "title": "Allergies, deeper",
+      "kind": "teach",
+      "new_items": [
+        "u12.ebi",
+        "u12.kani",
+        "u12.nattsu",
+        "u12.haitte_imasu",
+        "u12.taberaremasen",
+        "u12.daijobu_desu_ka"
+      ]
+    },
+    {
+      "id": "u12.check",
+      "title": "At the Kyoto market",
+      "kind": "checkpoint",
+      "new_items": [],
+      "steps": [
+        {
+          "type": "listen-pick",
+          "item": "u12.nan_no_niku"
+        },
+        {
+          "type": "match-pairs",
+          "items": [
+            "u12.ramen",
+            "u12.sushi",
+            "u12.udon",
+            "u12.soba",
+            "u12.tempura"
+          ]
+        },
+        {
+          "type": "listen-pick",
+          "item": "u12.karai",
+          "distractors": [
+            "u12.amai",
+            "u12.shoppai",
+            "u12.suppai"
+          ]
+        },
+        {
+          "type": "listen-pick-jp",
+          "item": "u12.teishoku"
+        },
+        {
+          "type": "match-pairs",
+          "items": [
+            "u12.toriniku",
+            "u12.butaniku",
+            "u12.gyuniku",
+            "u12.yasai",
+            "u12.tamago"
+          ]
+        },
+        {
+          "type": "tile-arrange",
+          "item": "u12.haitte_imasu"
+        },
+        {
+          "type": "listen-pick-jp",
+          "item": "u12.taberaremasen"
+        },
+        {
+          "type": "listen-type-romaji",
+          "item": "u12.gohan"
+        },
+        {
+          "type": "tile-arrange",
+          "item": "u12.nan_no_niku"
+        },
+        {
+          "type": "speak",
+          "item": "u12.karai"
+        },
+        {
+          "type": "speak",
+          "item": "u12.haitte_imasu"
+        },
+        {
+          "type": "dialogue",
+          "dialogue": "u12.d1"
+        }
+      ]
+    }
+  ],
+  "dialogues": [
+    {
+      "id": "u12.d1",
+      "scene": "Nishiki Market, Kyoto, mid-morning. A stall of golden skewers with no labels. The stallholder catches you looking and grins.",
+      "turns": [
+        {
+          "speaker": "npc",
+          "jp": "いらっしゃい！やきたてですよ。",
+          "romaji": "irasshai! yakitate desu yo.",
+          "en": "come on in! fresh off the grill."
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u12.nan_no_niku",
+          "mode": "speak",
+          "stakes": "No labels anywhere. Point at the skewer and ask what meat it is."
+        },
+        {
+          "speaker": "npc",
+          "jp": "とりにくです。すこし からいですよ。",
+          "romaji": "toriniku desu. sukoshi karai desu yo.",
+          "en": "chicken. it's a little spicy, mind."
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u12.haitte_imasu",
+          "mode": "pick",
+          "stakes": "The glaze looks eggy and one of you can't risk it. Ask if egg's in it."
+        },
+        {
+          "speaker": "npc",
+          "jp": "いいえ、たまごは つかって いません。",
+          "romaji": "iie, tamago wa tsukatte imasen.",
+          "en": "no, there's no egg in it."
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u04.kore_futatsu",
+          "mode": "pick",
+          "stakes": "Safe, spicy, perfect. Order two of them."
+        },
+        {
+          "speaker": "npc",
+          "jp": "はい、どうぞ。あじは どうですか？",
+          "romaji": "hai, dōzo. aji wa dō desu ka?",
+          "en": "here you go. how's the taste?"
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u12.karai",
+          "mode": "pick",
+          "stakes": "He wasn't joking about the heat. Tell him, eyes watering, that it's spicy."
+        },
+        {
+          "speaker": "npc",
+          "jp": "ははは！でも おいしいでしょう？",
+          "romaji": "hahaha! demo oishii deshō?",
+          "en": "haha! but it's good, right?"
+        },
+        {
+          "speaker": "you",
+          "expect_item": "u04.oishii",
+          "mode": "speak",
+          "stakes": "It really is. Tell him it's delicious."
+        }
+      ]
+    }
+  ]
+}
