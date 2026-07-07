@@ -77,10 +77,11 @@ Japanese typography rules:
 ## 3. App shell & navigation
 
 Sticky header, `bg-paper/95`, 1px `border-line` bottom — same skeleton as Mishka. Left:
-the **MichiMark** — Mishka's two-eared cat silhouette wearing a tiny knotted travel
-bindle over one shoulder (one extra path in the SVG; `currentColor` so it follows clay and
+the **MichiMark** — Mishka's two-eared cat silhouette sat inside a torii gate (variant
+`torii`; the bare `cat` variant walks the Path scene; `currentColor` so it follows clay and
 theme; also exported flat to `public/michi-icon.svg` with hardcoded colours for the
-favicon) — then "Michi" in `font-display` with 道 in clay after it. Right: streak pill
+favicon; superseded the bindle 2026-07-07 by household request) — then "Michi" in
+`font-display` with 道 in clay after it. Right: streak pill
 (mono, flame replaced by a paw print 🐾 rendered as an inline SVG, count in clay), theme
 toggle, user avatar dot (user 1 = clay, user 2 = sky — same assignment as Mishka Hub).
 
