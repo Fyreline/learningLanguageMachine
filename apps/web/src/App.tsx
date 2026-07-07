@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { bootstrap, getUser, logout, subscribe, type AuthUser } from './auth'
+import { fetchReviewsDue } from './curriculum/loader'
+import { loadSettings } from './settings'
 import { LoginScreen } from './components/LoginScreen'
 import { MichiMark } from './components/MichiMark'
 import { PathPage } from './components/PathPage'
 import { PhrasebookPage } from './components/PhrasebookPage'
+import { PlacementProbe } from './components/PlacementProbe'
 import { PracticePage } from './components/PracticePage'
 import { SettingsPage } from './components/SettingsPage'
 import { StatsPage } from './components/StatsPage'
@@ -162,8 +165,51 @@ export default function App() {
   return <AuthenticatedApp user={user} />
 }
 
+/** Clay due-review pill (CURRICULUM §6: "an invitation, never a guilt trip
+ * — no red, cap display at 20+"). Renders nothing at zero. */
+function DueBadge({ count, className = '' }: { count: number | null; className?: string }) {
+  if (!count) return null
+  return (
+    <span
+      aria-label={`${count} review${count === 1 ? '' : 's'} due`}
+      className={`rounded-full bg-clay/15 px-1.5 py-0.5 font-mono text-[10px] font-medium leading-none text-clay ${className}`}
+    >
+      {count > 20 ? '20+' : count}
+    </span>
+  )
+}
+
 function AuthenticatedApp({ user }: { user: AuthUser }) {
   const [tab, setTab] = useState<Tab>('path')
+  const [dueCount, setDueCount] = useState<number | null>(null)
+  const [settingsReady, setSettingsReady] = useState(false)
+  const [showPlacement, setShowPlacement] = useState(false)
+  const [pathVersion, setPathVersion] = useState(0)
+
+  useEffect(() => {
+    loadSettings().then(
+      (s) => {
+        setSettingsReady(true)
+        setShowPlacement(!s.placement_done)
+      },
+      () => setSettingsReady(true), // fail open — no offer if settings can't load
+    )
+  }, [])
+
+  const refreshDueCount = useCallback(() => {
+    fetchReviewsDue().then((d) => setDueCount(d.counts.today), () => undefined)
+  }, [])
+
+  useEffect(() => {
+    refreshDueCount()
+    const id = setInterval(refreshDueCount, 60_000)
+    return () => clearInterval(id)
+  }, [refreshDueCount])
+
+  useEffect(() => {
+    refreshDueCount()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab])
 
   return (
     <div className="flex min-h-full flex-col bg-paper text-ink">
@@ -183,13 +229,14 @@ function AuthenticatedApp({ user }: { user: AuthUser }) {
                 type="button"
                 onClick={() => setTab(t.id)}
                 aria-current={tab === t.id ? 'page' : undefined}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
                   tab === t.id
                     ? 'text-ink border-b-2 border-clay'
                     : 'text-ink-mid hover:bg-oat'
                 }`}
               >
                 {t.label}
+                {t.id === 'practice' && <DueBadge count={dueCount} />}
               </button>
             ))}
           </nav>
@@ -215,7 +262,7 @@ function AuthenticatedApp({ user }: { user: AuthUser }) {
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 pb-24 pt-8 sm:pb-10">
-        {tab === 'path' && <PathPage />}
+        {tab === 'path' && <PathPage key={pathVersion} />}
         {tab === 'practice' && <PracticePage />}
         {tab === 'phrasebook' && <PhrasebookPage />}
         {tab === 'stats' && <StatsPage />}
@@ -230,15 +277,29 @@ function AuthenticatedApp({ user }: { user: AuthUser }) {
             type="button"
             onClick={() => setTab(t.id)}
             aria-current={tab === t.id ? 'page' : undefined}
-            className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition ${
+            className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition ${
               tab === t.id ? 'text-clay' : 'text-ink-soft'
             }`}
           >
-            <TabIcon tab={t.id} />
+            <span className="relative inline-flex">
+              <TabIcon tab={t.id} />
+              {t.id === 'practice' && dueCount ? (
+                <span className="absolute -right-1.5 -top-1.5 h-2 w-2 rounded-full bg-clay" aria-hidden />
+              ) : null}
+            </span>
             {t.label}
           </button>
         ))}
       </nav>
+
+      {settingsReady && showPlacement && (
+        <PlacementProbe
+          onDone={() => {
+            setShowPlacement(false)
+            setPathVersion((v) => v + 1)
+          }}
+        />
+      )}
     </div>
   )
 }

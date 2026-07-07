@@ -127,6 +127,15 @@ def get_item(item_id: str) -> dict[str, Any] | None:
     return _index()["items"].get(item_id)
 
 
+def all_items() -> list[dict[str, Any]]:
+    """The full item bank, each item tagged with its owning unit id or kana
+    deck name (Phase 4: Phrasebook/Practice/KanaTrainer need item content that
+    isn't necessarily inside any single unlocked lesson payload — the only
+    other content route is per-lesson)."""
+    idx = _index()
+    return [{**item, "unit": idx["item_owner"].get(iid)} for iid, item in idx["items"].items()]
+
+
 def get_lesson(lesson_id: str) -> dict[str, Any] | None:
     return _index()["lessons"].get(lesson_id)
 

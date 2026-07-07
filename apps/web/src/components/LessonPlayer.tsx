@@ -27,7 +27,7 @@ import { TileArrange } from './exercises/TileArrange'
 import { TeachCard } from './exercises/TeachCard'
 import { InlineReplay, type ExerciseResult, type Verdict } from './exercises/shared'
 
-interface Feedback {
+export interface Feedback {
   verdict: Verdict
   given?: string
   item: Item | null
@@ -262,15 +262,26 @@ export function LessonPlayer({ lessonId, onClose }: LessonPlayerProps) {
 }
 
 /* ------------------------------- chrome --------------------------------- */
+// Takeover/ShakeOnMiss/FeedbackStrip/StepView are exported so the Practice
+// tab's ReviewPlayer (Phase 4: due reviews, free drills, lightning review)
+// can reuse this exact chrome + exercise dispatch instead of duplicating it
+// — the two players differ only in where the session's steps come from and
+// what they POST on completion.
 
-function Takeover({
+export function Takeover({
   children,
   progress,
   onClose,
+  closeLabel = 'Leave the lesson',
+  /** optional chrome next to the progress bar — the lightning review's
+   * countdown, additive so ordinary lessons are unaffected. */
+  rightSlot,
 }: {
   children: React.ReactNode
   progress: number
   onClose: () => void
+  closeLabel?: string
+  rightSlot?: React.ReactNode
 }) {
   // lock body scroll while the takeover is up
   useEffect(() => {
@@ -288,14 +299,14 @@ function Takeover({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Leave the lesson"
+            aria-label={closeLabel}
             className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition hover:bg-oat hover:text-ink"
           >
             <svg viewBox="0 0 20 20" aria-hidden width="16" height="16">
               <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
             </svg>
           </button>
-          <div className="h-1 flex-1 overflow-hidden rounded-full bg-paper-deep" role="progressbar" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Lesson progress">
+          <div className="h-1 flex-1 overflow-hidden rounded-full bg-paper-deep" role="progressbar" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Progress">
             <motion.div
               className="h-full rounded-full bg-clay"
               initial={false}
@@ -303,6 +314,7 @@ function Takeover({
               transition={{ type: 'spring', stiffness: 200, damping: 26 }}
             />
           </div>
+          {rightSlot}
         </div>
       </div>
       {children}
@@ -310,7 +322,7 @@ function Takeover({
   )
 }
 
-function ShakeOnMiss({
+export function ShakeOnMiss({
   shake,
   reduced,
   children,
@@ -331,7 +343,7 @@ function ShakeOnMiss({
 
 /* ------------------------------ step view ------------------------------- */
 
-function StepView({
+export function StepView({
   step,
   itemsById,
   dialoguesById,
@@ -441,7 +453,7 @@ function StepView({
 
 /* ---------------------------- feedback strip ----------------------------- */
 
-function FeedbackStrip({
+export function FeedbackStrip({
   feedback,
   reduced,
   onContinue,

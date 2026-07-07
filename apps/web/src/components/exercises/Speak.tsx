@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { detectSttCapability, startListening, type SttSession } from '../../audio/stt'
 import { gradeSpeech } from '../../engine/grading'
+import { getSettings } from '../../settings'
 import { AudioStage, JapaneseLine, PromptLine, type ExerciseProps, type Verdict } from './shared'
 
 function MicGlyph() {
@@ -17,7 +18,10 @@ function MicGlyph() {
 }
 
 export function Speak({ item, locked, onResult }: ExerciseProps) {
-  const canListen = detectSttCapability()
+  // Settings: STT mode "shadow" forces the ungraded listen-and-repeat flow
+  // even on capable devices — an override for anyone who finds the mic
+  // fiddly rather than helpful (docs/phases/PHASE-4-practice.md §4).
+  const canListen = getSettings().stt_mode !== 'shadow' && detectSttCapability()
   return canListen ? (
     <MicMode item={item} locked={locked} onResult={onResult} />
   ) : (
@@ -75,7 +79,7 @@ function MicMode({ item, locked, onResult }: Pick<ExerciseProps, 'item' | 'locke
     <div>
       <PromptLine>Say it aloud</PromptLine>
       <div className="mb-6">
-        <JapaneseLine jp={item.jp} furigana={item.furigana} romaji={item.romaji} />
+        <JapaneseLine jp={item.jp} furigana={item.furigana} romaji={item.romaji} strength={item.strength} />
       </div>
       <AudioStage text={item.jp} size="sm" />
       <div className="mt-8 flex flex-col items-center gap-3">
@@ -128,7 +132,12 @@ function ShadowMode({ item, locked, onResult }: Pick<ExerciseProps, 'item' | 'lo
       <PromptLine>Listen, then say it aloud yourself</PromptLine>
       <AudioStage text={item.jp} />
       <div className="my-6">
-        <JapaneseLine jp={item.jp} furigana={item.furigana} romaji={revealed ? item.romaji : undefined} />
+        <JapaneseLine
+          jp={item.jp}
+          furigana={item.furigana}
+          romaji={revealed ? item.romaji : undefined}
+          strength={item.strength}
+        />
       </div>
       {!revealed ? (
         <button

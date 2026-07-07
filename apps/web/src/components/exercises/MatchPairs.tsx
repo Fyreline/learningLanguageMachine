@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import type { Item } from '../../curriculum/types'
 import { speak } from '../../audio/tts'
 import { shuffled } from '../../engine/grading'
+import { getSettings } from '../../settings'
 import { PromptLine } from './shared'
 
 export interface MatchPairsProps {
@@ -23,7 +24,7 @@ export function MatchPairs({ items, locked, onComplete }: MatchPairsProps) {
 
   function tapJp(item: Item) {
     if (locked || matched.has(item.id)) return
-    void speak(item.jp)
+    void speak(item.jp, { rate: getSettings().tts_rate })
     setPickedJp(item.id)
   }
 

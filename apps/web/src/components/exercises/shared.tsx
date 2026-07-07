@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Item } from '../../curriculum/types'
 import { speak, subscribeSpeaking } from '../../audio/tts'
+import { useSettings } from '../../settings'
 
 export type Verdict = 'pass' | 'close' | 'miss'
 
@@ -62,13 +63,18 @@ function TurtleGlyph() {
 export function AudioStage({ text, autoPlay = true, size = 'lg' }: { text: string; autoPlay?: boolean; size?: 'lg' | 'sm' }) {
   const [speaking, setSpeaking] = useState(false)
   const played = useRef(false)
+  const { tts_rate: rate } = useSettings()
 
   useEffect(() => subscribeSpeaking(setSpeaking), [])
   useEffect(() => {
     if (autoPlay && !played.current) {
       played.current = true
-      void speak(text)
+      void speak(text, { rate })
     }
+    // rate intentionally excluded — autoplay fires once per mount, at
+    // whatever rate is current then; changing the setting mid-exercise
+    // shouldn't retrigger a surprise replay.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoPlay, text])
 
   const big = size === 'lg'
@@ -84,7 +90,7 @@ export function AudioStage({ text, autoPlay = true, size = 'lg' }: { text: strin
         )}
         <button
           type="button"
-          onClick={() => void speak(text)}
+          onClick={() => void speak(text, { rate })}
           aria-label="Play the Japanese audio"
           className={`relative inline-flex items-center justify-center rounded-full bg-clay text-paper transition active:scale-95 ${
             big ? 'h-[88px] w-[88px]' : 'h-12 w-12'
@@ -108,11 +114,12 @@ export function AudioStage({ text, autoPlay = true, size = 'lg' }: { text: strin
 
 /** Small inline replay pair for the feedback strip ("listen again"). */
 export function InlineReplay({ text }: { text: string }) {
+  const { tts_rate: rate } = useSettings()
   return (
     <span className="inline-flex items-center gap-1.5">
       <button
         type="button"
-        onClick={() => void speak(text)}
+        onClick={() => void speak(text, { rate })}
         className="underline decoration-dotted underline-offset-2 hover:text-ink"
       >
         listen again
@@ -135,21 +142,36 @@ export function InlineReplay({ text }: { text: string }) {
 /* --------------------------- Japanese text ------------------------------- */
 
 /** Kana/kanji line per docs/DESIGN.md §2: font-jp, larger than UI text,
- * real <ruby> furigana when the item has kanji, romaji italic below. */
+ * real <ruby> furigana when the item has kanji, romaji italic below.
+ *
+ * Romaji visibility is driven by two things: `showRomaji` (a hard per-call-
+ * site override — choice cards pass `false` because romaji would give the
+ * answer away, regardless of the learner's setting) and, when that allows
+ * it, the live Settings romaji mode (docs/DESIGN.md §2: show / fade after
+ * first exposure / hide). "Fade" reads `strength` — 0 means this is the
+ * item's first exposure (still teaching), so romaji shows once, then the
+ * setting hides it on every exposure after. */
 export function JapaneseLine({
   jp,
   furigana,
   romaji,
   size = 'lg',
   showRomaji = true,
+  strength,
 }: {
   jp: string
   furigana?: string
   romaji?: string
   size?: 'lg' | 'md'
   showRomaji?: boolean
+  /** the item's current SRS strength — only used by romaji "fade" mode */
+  strength?: number
 }) {
+  const { romaji: romajiMode } = useSettings()
   const jpClass = size === 'lg' ? 'text-[34px]' : 'text-[22px]'
+  const firstExposure = (strength ?? 0) === 0
+  const romajiVisible =
+    showRomaji && (romajiMode === 'show' || (romajiMode === 'fade' && firstExposure))
   return (
     <div className="text-center">
       <p lang="ja" className={`font-jp ${jpClass} leading-[1.4] text-ink`}>
@@ -162,7 +184,7 @@ export function JapaneseLine({
           jp
         )}
       </p>
-      {showRomaji && romaji && (
+      {romajiVisible && romaji && (
         <p className="mt-1 font-sans text-sm italic text-ink-soft">{romaji}</p>
       )}
     </div>
@@ -214,9 +236,11 @@ export function ChoiceCards({
     return () => window.removeEventListener('keydown', onKey)
   })
 
+  const { tts_rate: rate } = useSettings()
+
   function handleTap(key: string) {
     const choice = choices.find((c) => c.key === key)
-    if (choice?.speakText) void speak(choice.speakText)
+    if (choice?.speakText) void speak(choice.speakText, { rate })
     if (confirm === 'immediate') {
       onChoose(key)
     } else {

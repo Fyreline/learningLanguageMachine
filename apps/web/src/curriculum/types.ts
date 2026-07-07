@@ -92,6 +92,12 @@ export interface LessonCompleteResponse {
   leveled_items: { item_id: string; strength: number }[]
 }
 
+/** GET /api/curriculum/items (Phase 4 addition, docs/API.md) — the full item
+ * bank, each item tagged with its owning unit id or kana deck name. */
+export interface BankItem extends Item {
+  unit: string | null
+}
+
 export interface ReviewsDue {
   due: { item_id: string; strength: number; due_at: string; overdue_days: number }[]
   counts: { today: number; week: number[] }

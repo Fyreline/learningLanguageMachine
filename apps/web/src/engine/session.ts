@@ -79,8 +79,10 @@ export interface BuildOptions {
 }
 
 /** Production drill choice: tile-arrange when the sentence has parts to
- * arrange, else speak (short single words are best said aloud). */
-function productionType(item: Item): 'tile-arrange' | 'speak' {
+ * arrange, else speak (short single words are best said aloud). Exported for
+ * the Practice tab's review-session builder (CURRICULUM §6:
+ * "production-biased for strength >= 3 items" reuses this exact rule). */
+export function productionType(item: Item): 'tile-arrange' | 'speak' {
   return tilesFor(item.jp).length >= 2 ? 'tile-arrange' : 'speak'
 }
 

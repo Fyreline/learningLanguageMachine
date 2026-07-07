@@ -2,6 +2,7 @@
 // Direction is chosen per mount; grading exact.
 import { useMemo, useState } from 'react'
 import { speak } from '../../audio/tts'
+import { getSettings } from '../../settings'
 import { AudioStage, ChoiceCards, PromptLine, useShuffledOnce, type ExerciseProps } from './shared'
 
 export function KanaGlyph({ item, options, locked, onResult }: ExerciseProps) {
@@ -63,7 +64,7 @@ export function KanaGlyph({ item, options, locked, onResult }: ExerciseProps) {
           chosenKey={chosen}
           onChoose={(key) => {
             const picked = shuffledOptions.find((o) => o.id === key)
-            if (picked) void speak(picked.jp)
+            if (picked) void speak(picked.jp, { rate: getSettings().tts_rate })
             choose(key)
           }}
         />

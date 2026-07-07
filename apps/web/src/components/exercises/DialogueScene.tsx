@@ -6,6 +6,7 @@ import type { Dialogue, DialogueTurnNpc, DialogueTurnYou, Item } from '../../cur
 import { speak } from '../../audio/tts'
 import { detectSttCapability, startListening, type SttSession } from '../../audio/stt'
 import { gradeSpeech, shuffled } from '../../engine/grading'
+import { getSettings } from '../../settings'
 import { ChoiceCards, JapaneseLine, type Verdict } from './shared'
 
 const NPC_RATE = 0.85
@@ -140,7 +141,7 @@ function YourTurn({
   onLand: (item: Item, verdict: Verdict, mode: string) => void
 }) {
   const item = itemsById.get(turn.expect_item)
-  const canListen = detectSttCapability()
+  const canListen = getSettings().stt_mode !== 'shadow' && detectSttCapability()
   const mode: 'pick' | 'speak' = turn.mode === 'speak' && canListen ? 'speak' : 'pick'
 
   const options = useMemo(() => {

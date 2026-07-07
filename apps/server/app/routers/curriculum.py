@@ -5,6 +5,7 @@ phase-3 scope and intentionally absent.
 
 from __future__ import annotations
 
+import json
 from datetime import date, datetime, timezone
 from typing import Any
 
@@ -106,10 +107,27 @@ def _completed_lesson_ids(db: Session, user_id: int) -> set[str]:
     }
 
 
+_PLACEMENT_UNITS = {"u01", "u02", "u03"}  # docs/CURRICULUM.md §5 probe scope
+
+
+def _placement_done(db: Session, user_id: int) -> bool:
+    user = db.get(User, user_id)
+    settings = json.loads((user.settings_json if user else None) or "{}")
+    return bool(settings.get("placement_done"))
+
+
 def lesson_is_locked(db: Session, user_id: int, lesson_id: str) -> bool:
     """Path-order enforcement (docs/API.md, docs/DATA_MODEL.md "Path state").
     A main-path lesson opens once the lesson immediately before it is done;
-    done lessons stay open (relaxed replay); kana lessons never gate."""
+    done lessons stay open (relaxed replay); kana lessons never gate.
+
+    Phase-4 addition: the onboarding placement probe (CURRICULUM.md §5) reads
+    across u01-u03 content to build its adaptive item pool, but a brand-new
+    account otherwise only has u01.l1 unlocked — every other lesson in that
+    range would 403 before the probe could ever run. Reading (not writing)
+    lesson content in the probe's unit range stays open until the account's
+    own placement_done flips true; nothing about actual path progression
+    changes."""
     if content.is_kana_lesson(lesson_id):
         return False
     order = content.main_lesson_order()
@@ -117,6 +135,8 @@ def lesson_is_locked(db: Session, user_id: int, lesson_id: str) -> bool:
         return False  # not a gated main-path lesson (shouldn't happen once found)
     done = _completed_lesson_ids(db, user_id)
     if lesson_id in done:
+        return False
+    if not _placement_done(db, user_id) and content.unit_id_for_lesson(lesson_id) in _PLACEMENT_UNITS:
         return False
     idx = order.index(lesson_id)
     prev_done = idx == 0 or order[idx - 1] in done
@@ -239,6 +259,34 @@ def get_lesson_content(
         "steps": lesson.get("steps"),
         "dialogues": dialogues,
     }
+
+
+@router.get("/items")
+def get_all_items(
+    user_id: int = Depends(current_user), db: Session = Depends(get_session)
+) -> dict[str, Any]:
+    """The full item bank (read-only content passthrough, docs/API.md
+    conventions), merged with the caller's strength/due_at. Phase 4 addition:
+    Phrasebook (browse everything) and Practice (review-session distractor
+    pool, kana reference grid) both need item content outside any single
+    lesson payload, which the lesson-scoped endpoint above can't offer."""
+    strengths = {
+        r.item_id: r
+        for r in db.execute(
+            select(ItemProgress).where(ItemProgress.user_id == user_id)
+        ).scalars()
+    }
+    items = []
+    for base in content.all_items():
+        row = strengths.get(base["id"])
+        items.append(
+            {
+                **base,
+                "strength": row.strength if row else 0,
+                "due_at": row.due_at if row else None,
+            }
+        )
+    return {"items": items}
 
 
 def current_lesson_id(db: Session, user_id: int) -> str | None:

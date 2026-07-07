@@ -28,6 +28,15 @@ GET /api/curriculum/lessons/{lesson_id} → the lesson's full content slice:
    {lesson:{id,title,kind}, items:[Item...] (new + a server-picked warm-up/review set with
     current strengths), steps: Step[] | null, dialogues: [...] when referenced}
   → 404 unknown_lesson · 403 lesson_locked (path order enforced server-side)
+  Phase 4: u01-u03 lesson content reads are exempt from lock enforcement while the
+  caller's settings.placement_done is false — the placement probe (§5) needs to read
+  ahead of the caller's actual path position to build its item pool. Closes once
+  placement_done flips true; every other lock rule (and every write) is unaffected.
+GET /api/curriculum/items          → {items: [Item... + {unit}]}  the full item bank
+  (read-only passthrough, added Phase 4), merged with the caller's strength/due_at.
+  `unit` is the owning unit id (`u04`) or kana deck name (`hiragana`/`katakana`). Used
+  by Phrasebook (browse everything), Practice (review-session distractor pool), and
+  KanaTrainer's reference grid — none of which can assume a relevant lesson is unlocked.
 ```
 The session builder runs client-side (engine/session.ts) from this payload; the server
 only decides *which* review items ride along (SRS-weakest 3–5 due-or-weak items).

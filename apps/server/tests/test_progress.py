@@ -48,8 +48,10 @@ def test_get_unknown_lesson_404(authed):
 
 def test_locked_lesson_403(authed):
     client, _uid, headers = authed
-    # u01.l3 is locked until u01.l2 is done (nothing completed yet).
-    res = client.get("/api/curriculum/lessons/u01.l3", headers=headers)
+    # u04.l2 is locked until u04.l1 is done (nothing completed yet). u01-u03
+    # are deliberately exempt from this check pre-placement (docs/CURRICULUM
+    # §5 placement probe needs to read ahead there — see test_curriculum.py).
+    res = client.get("/api/curriculum/lessons/u04.l2", headers=headers)
     assert res.status_code == 403
     assert res.json()["code"] == "lesson_locked"
 

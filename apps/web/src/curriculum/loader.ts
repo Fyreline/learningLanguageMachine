@@ -3,6 +3,7 @@
 
 import { get, post } from '../api'
 import type {
+  BankItem,
   LessonCompleteResponse,
   LessonContent,
   ReviewCompleteResponse,
@@ -12,6 +13,21 @@ import type {
 
 export function fetchLesson(lessonId: string): Promise<LessonContent> {
   return get<LessonContent>(`/api/curriculum/lessons/${encodeURIComponent(lessonId)}`)
+}
+
+/** The full item bank (docs/API.md, Phase 4 addition) — Phrasebook, the
+ * review-session distractor pool, and the kana reference grid all need item
+ * content that isn't necessarily inside any single unlocked lesson payload.
+ * Cached in-module for the session: it's ~370 small items, effectively
+ * static content, and every consumer wants the same snapshot. */
+let itemsCache: Promise<BankItem[]> | null = null
+
+export function fetchAllItems(opts: { fresh?: boolean } = {}): Promise<BankItem[]> {
+  if (opts.fresh) itemsCache = null
+  if (!itemsCache) {
+    itemsCache = get<{ items: BankItem[] }>('/api/curriculum/items').then((r) => r.items)
+  }
+  return itemsCache
 }
 
 /** The user's local calendar day — sent with every progress write so streaks
