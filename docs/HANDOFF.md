@@ -37,3 +37,24 @@ the delta: what exists, what's next, and where the bodies are buried.
   state needed auditing. Always run `michi-verify` after any delegated phase.
 - Two Mishka repos exist: `Dev/MishkaHub` (real) and `Dev/mishka-hub copy` (stale copy —
   ignore it).
+
+
+## Phase 6 verification sweep — 2026-07-07, complete
+
+Everything below observed live, not reported: 62 pytest / 48 vitest / typecheck /
+build / content validator all green; no argon2 in app code; golden path passed
+against the running API (lesson → stars → stats → forged-clock reviews → review
+session); Mishka-down resilience per AUTH §5 (login 503 with the friendly copy,
+existing-session refresh 200); public tunnel + CORS verified from the Pages origin;
+streak rest-day bug fixed (trailing gap no longer consumes it); health
+content_version now reports the manifest course id.
+
+**Left for humans (cannot be verified from here):**
+1. Real login on the public site with household credentials (mechanism verified
+   end-to-end with a wrong-password 401 through Mishka; the happy path needs the real password).
+2. Password-change propagation (AUTH §5 box 2) — run Mishka's set_password.py once
+   and re-login to Michi; by construction it must work, but tick the box.
+3. The content agent's TTS listen-through list (u11.hyaku_toban, u13 long-vowel
+   katakana, へ-particle lines) — needs ears.
+4. Lighthouse a11y ≥95 (DESIGN §9) — not run; keyboard operability and reduced-motion
+   are implemented and unit-verified but unscored.
