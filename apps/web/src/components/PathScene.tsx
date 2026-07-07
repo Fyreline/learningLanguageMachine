@@ -375,14 +375,28 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
   const bodyPath = useMemo(() => {
     const peakY = 150
     const baseY = totalH
-    const STEPS = 26
+    const STEPS = 84
+    // Rugged flanks: two octaves of ridged noise per side (independent
+    // seeds), so the silhouette reads hand-cut rock, not a ruler. The
+    // coarse octave interpolates between knots every 6 samples; |noise|
+    // is folded (ridged) for the occasional sharp spur or notch.
+    const flank = (k: number, seed: number) => {
+      const knot = Math.floor(k / 6)
+      const f = (k % 6) / 6
+      const a = (hash((knot + seed) * 13.7) - 0.5) * 2
+      const b = (hash((knot + 1 + seed) * 13.7) - 0.5) * 2
+      const coarse = (a + (b - a) * f) * 26
+      const fine = (Math.abs(hash((k + seed) * 71.3)) - 0.5) * 13
+      const spur = Math.pow(Math.abs(hash((k + seed) * 29.9)), 6) * 34
+      return coarse + fine + spur
+    }
     const right: string[] = []
     const left: string[] = []
     for (let k = 0; k <= STEPS; k++) {
       const y = peakY + ((baseY - peakY) * k) / STEPS
-      const half = halfAtY(y) + (hash(k * 51.7) - 0.5) * 14
-      right.push(`${(CX + half).toFixed(1)} ${y.toFixed(1)}`)
-      left.push(`${(CX - half).toFixed(1)} ${y.toFixed(1)}`)
+      const taper = Math.min(1, k / 5) // calm the crest tip so the peak stays a peak
+      right.push(`${(CX + halfAtY(y) + flank(k, 0) * taper).toFixed(1)} ${y.toFixed(1)}`)
+      left.push(`${(CX - halfAtY(y) - flank(k, 500) * taper).toFixed(1)} ${y.toFixed(1)}`)
     }
     // crest → down the right flank → base → up the left flank → close
     return `M ${CX} ${peakY - 26} L ${right.join(' L ')} L ${left.reverse().join(' L ')} Z`
@@ -645,8 +659,18 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
           </div>
           {u.landmark !== 'fuji' /* the summit block owns the peak */ && (
             <div
-              className={`absolute ${landmarkSide === 'left' ? 'left-[3%]' : 'right-[3%]'}`}
-              style={{ top: `${landmarkTopPct}%` }}
+              className="absolute -translate-x-1/2"
+              style={{
+                top: `${landmarkTopPct}%`,
+                // anchored to the mountain's edge at this altitude — never
+                // floating in the side sky beside the narrowing peak
+                left: `${(() => {
+                  const y = (landmarkTopPct / 100) * totalH + 20
+                  const dir = landmarkSide === 'left' ? -1 : 1
+                  const off = Math.max(96, Math.min(halfAtY(y) - 52, W / 2 - 44))
+                  return ((CX + dir * off) / W) * 100
+                })()}%`,
+              }}
               aria-hidden
             >
               <Landmark kind={u.landmark} />

@@ -43,6 +43,17 @@ export function Bush({ s = 1 }: { s?: number }) {
   )
 }
 
+export function Flower({ s = 1 }: { s?: number }) {
+  return (
+    <g transform={`scale(${s})`} aria-hidden>
+      <path d="M-3,4 Q-3.5,-1 -4,-3 M1,4 Q1.5,-2 2,-5 M4,4 Q5,0 6,-2" fill="none" className="stroke-olive/60" strokeWidth="1.2" strokeLinecap="round" />
+      <circle cx="-4" cy="-4" r="1.7" className="fill-fig/70" />
+      <circle cx="2" cy="-6" r="1.9" className="fill-clay/60" />
+      <circle cx="6" cy="-3" r="1.5" className="fill-fig/50" />
+    </g>
+  )
+}
+
 export function Grass({ s = 1 }: { s?: number }) {
   return (
     <g transform={`scale(${s})`} className="stroke-olive/70" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
@@ -123,7 +134,7 @@ export function CloudPuff({ s = 1, className = '' }: { s?: number; className?: s
 
 export type Sprite = {
   key: string
-  kind: 'pine' | 'bush' | 'grass' | 'rock' | 'toro' | 'chochin' | 'minitorii'
+  kind: 'pine' | 'bush' | 'grass' | 'rock' | 'toro' | 'chochin' | 'minitorii' | 'flower'
   x: number
   y: number
   s: number
@@ -137,6 +148,7 @@ function pickKind(t: number, r: number): Sprite['kind'] | null {
     pine: 1.5 * (1 - ramp(t, 0.1, 0.55)),
     bush: 1.1 * (1 - ramp(t, 0.05, 0.5)),
     grass: 0.9 * (1 - ramp(t, 0.1, 0.45)),
+    flower: 1.1 * (1 - ramp(t, 0.05, 0.38)),
     rock: 0.4 + 1.1 * ramp(t, 0.15, 0.5) * (1 - 0.7 * ramp(t, 0.65, 0.9)),
     toro: 1.0 * ramp(t, 0.45, 0.6) * (1 - ramp(t, 0.68, 0.8)),
     chochin: 1.3 * ramp(t, 0.72, 0.85),
@@ -167,16 +179,20 @@ export function buildScenery(
   const sprites: Sprite[] = []
   for (const n of nodes) {
     const t = 1 - n.y / totalH
-    for (const side of [0, 1] as const) {
-      const seed = n.i * 2 + side + 1
+    // the lush lower mountain gets a third placement slot per node — more
+    // going on at the base, thinning naturally with altitude
+    const slots: (0 | 1 | 2)[] = t < 0.4 ? [0, 1, 2] : [0, 1]
+    for (const side of slots) {
+      const seed = n.i * 3 + side + 1
       const r1 = hash(seed)
       const kind = pickKind(t, r1)
       if (!kind) continue
-      const dir = side === 0 ? -1 : 1
+      // slot 2 alternates sides by node so the extra base growth spreads
+      const dir = side === 2 ? (n.i % 2 === 0 ? -1 : 1) : side === 0 ? -1 : 1
       const y = n.y + (hash(seed * 7.3) - 0.5) * 100
       const bodyEdge = cx + dir * (halfAt(y) - 20)
       // between the trail's swing on this side and the body's edge, jittered
-      const edge = side === 0 ? Math.min(n.x, cx) : Math.max(n.x, cx)
+      const edge = dir < 0 ? Math.min(n.x, cx) : Math.max(n.x, cx)
       const room = Math.abs(bodyEdge - (edge + dir * 52))
       if (room < 10) continue // the crest is too narrow here — leave it bare
       const x = edge + dir * (52 + hash(seed * 3.7) * room * 0.85)
@@ -199,6 +215,7 @@ export function SpriteGlyph({ sp }: { sp: Sprite }) {
     case 'pine': return <Pine s={sp.s} />
     case 'bush': return <Bush s={sp.s} />
     case 'grass': return <Grass s={sp.s} />
+    case 'flower': return <Flower s={sp.s} />
     case 'rock': return <Rock s={sp.s} flip={sp.flip} />
     case 'toro': return <Toro s={sp.s} />
     case 'chochin': return <Chochin s={sp.s} />
