@@ -1,0 +1,55 @@
+# Deploys apps/web to GitHub Pages on every push to main
+# (docs/ARCHITECTURE.md §5). The API stays on the household machine; set the
+# repo variable VITE_API_BASE to the Cloudflare Tunnel hostname (e.g.
+# https://michi-api.example.com) so the deployed SPA can reach it — until
+# then it defaults to localhost:8100, i.e. the Pages build only works from a
+# machine that runs the API locally.
+name: deploy-pages
+
+on:
+  push:
+    branches: [main]
+    paths: ['apps/web/**', 'content/**', '.github/workflows/deploy-pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+        working-directory: apps/web
+      - run: npm run typecheck
+        working-directory: apps/web
+      - run: npm run build
+        working-directory: apps/web
+        env:
+          VITE_BASE: /learningLanguageMachine/
+          VITE_API_BASE: ${{ vars.VITE_API_BASE || 'http://127.0.0.1:8100' }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
