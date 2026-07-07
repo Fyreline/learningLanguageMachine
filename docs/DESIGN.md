@@ -1,5 +1,13 @@
 # Michi — Design System
 
+> **Palette superseded 2026-07-07 — "Aizome".** The household moved off the
+> Anthropic-derived hues to its own woodblock-print palette (hanko crimson
+> #c33c54, Hokusai indigo #254e70, steel #37718e, cyan #8ee3ef, mint #aef3e7).
+> Canonical values: `apps/web/src/theme.css` (shared with MishkaHub via
+> `scripts/sync-theme.sh`). **Token names below are unchanged and still law**
+> (`clay` = the crimson accent now); every structural/component/motion spec in
+> this doc stands. Read colour *values* from theme.css, everything else from here.
+
 Michi inherits Mishka Hub's visual contract wholesale — **Anthropic's editorial warmth:
 calm ivory surfaces, near-black ink, one clay accent, hairline borders instead of shadows,
 generous whitespace** — and swaps Mishka's poster density for Michi's own signature

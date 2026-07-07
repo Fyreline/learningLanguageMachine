@@ -92,7 +92,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
-function get<T>(path: string): Promise<T> {
+/** Exported for feature modules (pathData.ts, ...) that own their response
+ * types — keeps this file to plumbing + the small auth surface. */
+export function get<T>(path: string): Promise<T> {
   return request<T>(path)
 }
 

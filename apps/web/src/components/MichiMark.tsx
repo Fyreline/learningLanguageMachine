@@ -3,9 +3,28 @@
  * PHASE-1-scaffold.md, plus one extra path drawing a tiny knotted travel
  * bindle over one shoulder — the one addition that makes the mark Michi's
  * own. `currentColor` so it follows clay and theme, same as Mishka's mark. */
-export function MichiMark({ className = 'h-9 w-10' }: { className?: string }) {
+export function MichiMark({
+  className = 'h-9 w-10',
+  width,
+  height,
+}: {
+  className?: string
+  /** Explicit SVG attributes for when the mark is nested inside another SVG
+   * (PathScene) — CSS class sizing doesn't reach a nested <svg> reliably. */
+  width?: number
+  height?: number
+}) {
   return (
-    <svg viewBox="0 0 38 28" aria-hidden className={`text-clay ${className}`}>
+    <svg
+      viewBox="0 0 38 28"
+      aria-hidden
+      width={width}
+      height={height}
+      // default clay unless the caller brings its own text-* colour (the
+      // partner's ghost cat is sky) — appending both risks stylesheet-order
+      // roulette between two same-specificity utilities
+      className={className.includes('text-') ? className : `text-clay ${className}`}
+    >
       <path
         d="M4,9 L2,1.5 L10,7.5 Q16,4 22,7.5 L30,1.5 L28,9 Q30.5,14.5 28,20 Q24.5,26 16,26 Q7.5,26 4,20 Q1.5,14.5 4,9 Z"
         fill="currentColor"
