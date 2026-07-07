@@ -38,6 +38,18 @@
   --color-trail-done: #2e8b74;
   --path-node: 56px;             /* lesson node diameter */
   --path-node-gate: 72px;        /* unit checkpoint (torii) size */
+
+  /* the mountain (docs/DESIGN.md §5b): sky stops for the base→summit
+     gradient. The summit is NIGHT in both themes, so night-ink/night-soft
+     deliberately do NOT flip in .dark — text on the upper mountain uses
+     these instead of ink/ink-soft. */
+  --path-sky-low: #f7fbfa;
+  --path-sky-mid: #cfe7ea;
+  --path-sky-high: #37718e;
+  --path-sky-night: #122536;
+  --color-night-ink: #ecf6f4;
+  --color-night-soft: #a8bfc9;
+  --color-ridge: #9fc3c9;        /* distant ranges, low altitude */
 }
 
 :root {
@@ -49,9 +61,28 @@
 .dark {
   color-scheme: dark;
 
-  --color-trail: #223c4e;        /* dark `liquid` */
+  --color-trail: #2b4a5e;        /* lifted vs the old dark liquid so the trail
+                                    still reads against the night mountain */
   --color-trail-done: #5fcfae;   /* dark olive */
+
+  /* dark mode climbs from dusk into the same night */
+  --path-sky-low: #0f1d2b;
+  --path-sky-mid: #142c3f;
+  --path-sky-high: #0e2233;
+  --path-sky-night: #081420;
+  --color-ridge: #1d354a;
 }
+
+/* Mountain ambience (PathScenery.tsx) — gentle, endless, motion-safe. */
+@media (prefers-reduced-motion: no-preference) {
+  .cloud-drift { animation: cloud-drift 26s ease-in-out infinite alternate; }
+  .cloud-drift-far { animation: cloud-drift 44s ease-in-out infinite alternate-reverse; }
+  .star-twinkle { animation: star-twinkle 3.8s ease-in-out infinite; }
+  .lantern-sway { transform-box: fill-box; transform-origin: 50% 0%; animation: lantern-sway 5.2s ease-in-out infinite alternate; }
+}
+@keyframes cloud-drift { from { transform: translateX(-14px); } to { transform: translateX(14px); } }
+@keyframes star-twinkle { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+@keyframes lantern-sway { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
 
 html,
 body,

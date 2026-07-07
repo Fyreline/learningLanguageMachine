@@ -178,6 +178,30 @@ Layout & mechanics:
   nodes), but memoize the path geometry. Initial scroll via `scrollIntoView({block:
   'center'})` on the current node, instant (no animation) on load.
 
+## 5b. The Mountain revision (shipped 2026-07-07, household request)
+
+§5's flat trail became a full mountain ascent — **the whole page is the mountain**
+(`PathScene.tsx` + `PathScenery.tsx`; sky/night tokens in `index.css`):
+
+- **Altitude t ∈ [0,1]** (door→summit) drives everything by lerp — *no hard biome
+  boundaries anywhere*: sky gradient (`--path-sky-low/mid/high/night`), sprite mix
+  (pines/bushes/grass fade out by t≈0.55; rocks ramp 0.15–0.65; stone tōrō 0.45–0.75;
+  cloud band centred t≈0.68; chōchin lanterns, decorative mini-torii and stars own
+  0.75→1), and winding — accumulated-phase sine whose frequency (0.52→1.02 rad/node)
+  and amplitude (102→140) grow with progress: switchbacks tighten toward the peak.
+- **The summit is night in both themes**, so two non-flipping tokens
+  (`--color-night-ink/soft`) carry upper-mountain text; unit headers flip above
+  t≈0.62 (`NIGHT_LINE`). Clouds are moonlit `night-ink`, never `paper`.
+- **Summit = goraikō**: rising sun behind a silhouette torii (`SummitScene`) with the
+  trip-ready meter beneath — replaced the Fuji illustration (you're *on* Fuji now).
+- **Parallax** (motion `useScroll`): far ridges ×0.16, cloud band ×0.07, foreground
+  wisps ×−0.06 (they pass in front of the trail — you climb *through* them); ridges
+  are placed pre-compensated (`y·(1−f)+f·300`) so they align where they belong.
+  Ambience loops (cloud drift, star twinkle, lantern sway) are scoped CSS keyframes.
+  Everything — parallax and loops — sits behind `prefers-reduced-motion`.
+- **Determinism**: all placement is fract-sin hashed by index — the mountain is a
+  place, not a screensaver; it never reshuffles between visits.
+
 ## 6. Stats — the travel journal
 
 Four zones on one scrolling page (cards `bg-paper-mid border-line rounded-lg p-6`):

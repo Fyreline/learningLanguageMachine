@@ -1,25 +1,33 @@
-/** The Path (docs/DESIGN.md §5): one continuous walking trail from the front
- * door (bottom) to the summit of Mt. Fuji (top). Lessons are paw-print
- * stepping stones, checkpoints are torii gates, the cat stands on the current
- * node and the partner's ghost cat shows theirs. Flat palette-only SVG.
+/** The Path (docs/DESIGN.md §5 + §5b): THE WHOLE PAGE IS THE MOUNTAIN. One
+ * trail climbs from the front door (bottom) through forest, rock, a cloud
+ * band and finally a starlit summit stretch — the biome shifting gradually
+ * with altitude, never at a boundary. Lessons are paw-print stepping stones,
+ * checkpoints are torii gates, the kitsune stands on the current node.
  *
- * Geometry: nodes are laid bottom-up along x = CX + A·sin(i·0.62); the trail
- * is a Catmull-Rom curve through them, drawn twice (full in `trail`, walked
- * portion in `trail-done`). Unit headers/landmarks are HTML overlays placed
- * with the same geometry (percentage tops), so text stays crisp and wrappable.
+ * Geometry: nodes are laid bottom-up along an accumulated-phase sine whose
+ * frequency AND amplitude grow with progress, so the path winds back on
+ * itself more often the higher you climb (switchbacks near the peak). The
+ * trail is a Catmull-Rom curve through the nodes, drawn twice (full +
+ * walked overlay). Sky/ridges/clouds are parallax layers driven by
+ * motion's useScroll; scenery sprites live in PathScenery.tsx.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { motion as m, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import type { PathLesson, PathManifest, PathUnit } from '../pathData'
 import { AnimatedKitsune } from './AnimatedKitsune'
 import { MichiMark } from './MichiMark'
+import { buildScenery, CloudPuff, hash, SpriteGlyph, Stars, SummitScene } from './PathScenery'
 
 const STEP = 132 // vertical px between nodes ≈ the ~140px arc of the spec
 const CX = 190
-const AMP = 112
 const W = 380
 const TOP_PAD = 300 // room for the summit block
 const BOT_PAD = 190 // room for the front door
+
+/** Text on the upper mountain sits on night sky in BOTH themes — flip unit
+ * headers to the non-theming night tokens above this altitude. */
+const NIGHT_LINE = 0.62
 
 interface FlatNode {
   lesson: PathLesson
@@ -33,12 +41,20 @@ interface FlatNode {
 function buildNodes(units: PathUnit[], totalH: number): FlatNode[] {
   const flat: { lesson: PathLesson; unit: PathUnit; indexInUnit: number }[] = []
   for (const u of units) u.lessons.forEach((l, li) => flat.push({ lesson: l, unit: u, indexInUnit: li }))
-  return flat.map((f, i) => ({
-    ...f,
-    i,
-    x: CX + AMP * Math.sin(i * 0.62),
-    y: totalH - BOT_PAD - i * STEP,
-  }))
+  const N = Math.max(1, flat.length - 1)
+  let phase = 0
+  return flat.map((f, i) => {
+    const p = i / N // 0 at the door, 1 at the summit
+    // switchbacks tighten with altitude: frequency nearly doubles, and the
+    // swing widens a touch — the classic zig-zag of a real summit approach
+    phase += 0.52 + 0.5 * p
+    return {
+      ...f,
+      i,
+      x: CX + (102 + 38 * p) * Math.sin(phase),
+      y: totalH - BOT_PAD - i * STEP,
+    }
+  })
 }
 
 /** Catmull-Rom → cubic bezier through the given points. */
@@ -297,7 +313,8 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
     currentRef.current?.scrollIntoView({ block: 'center' })
   }, [])
 
-  // Unit header/landmark overlay positions from the same geometry.
+  // Unit header/landmark overlay positions from the same geometry, plus each
+  // header's altitude so text flips to the night tokens on the upper mountain.
   const unitMeta = useMemo(() => {
     let cursor = 0
     return units.map((u) => {
@@ -310,18 +327,116 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
         headerSide: first.x < CX ? 'right' : 'left',
         landmarkTopPct: ((mid.y - 20) / totalH) * 100,
         landmarkSide: mid.x < CX ? 'left' : 'right',
+        night: 1 - first.y / totalH > NIGHT_LINE,
       }
     })
   }, [units, nodes, totalH])
 
+  // Scenery + atmosphere (PathScenery.tsx). Deterministic, memoized.
+  const scenery = useMemo(() => buildScenery(nodes, totalH, CX, W), [nodes, totalH])
+  const clouds = useMemo(() => {
+    const out: { key: string; x: number; y: number; s: number; far: boolean; fg: boolean }[] = []
+    for (let k = 0; k < 48; k++) {
+      // the band is centred on t≈0.68 and feathers out both ways — you climb
+      // into it, through it, and above it, gradually
+      const t = 0.5 + hash(k * 17.3) * 0.36
+      const density = 1 - Math.min(1, Math.abs(t - 0.68) / 0.17)
+      if (hash(k * 29.1) > density * 1.6) continue
+      out.push({
+        key: `cl-${k}`,
+        x: 30 + hash(k * 7.9) * (W - 60),
+        y: (1 - t) * totalH,
+        s: 1.7 + hash(k * 11.7) * 1.7,
+        far: hash(k * 3.3) > 0.55,
+        fg: hash(k * 41.7) > 0.8,
+      })
+    }
+    return out
+  }, [totalH])
+
+  // Parallax: far ridges lag the scroll, the cloud band lags less, foreground
+  // wisps run slightly ahead. Zeroed under reduced motion.
+  const reduced = useReducedMotion()
+  const { scrollY } = useScroll()
+  const ridgeY = useTransform(scrollY, (v) => (reduced ? 0 : v * 0.16))
+  const cloudY = useTransform(scrollY, (v) => (reduced ? 0 : v * 0.07))
+  const fgY = useTransform(scrollY, (v) => (reduced ? 0 : v * -0.06))
+
+  // Distant ridge silhouettes, placed pre-compensated for their parallax
+  // factor so they still sit beside the altitude they belong to on screen.
+  const ridges = useMemo(() => {
+    const f = 0.16
+    const out: { key: string; x: number; y: number; w2: number; h: number; o: number }[] = []
+    for (let k = 0; k < 9; k++) {
+      const tScene = 0.06 + k * 0.075
+      if (tScene > 0.6) break // no distant ranges above the cloud band
+      const ys = (1 - tScene) * totalH
+      out.push({
+        key: `rg-${k}`,
+        x: (k % 2 === 0 ? 0.26 : 0.74) * W + (hash(k * 5.7) - 0.5) * 70,
+        y: ys * (1 - f) + f * 300,
+        w2: 95 + hash(k * 3.1) * 70,
+        h: 42 + hash(k * 9.3) * 30,
+        o: 0.16 + (1 - tScene) * 0.22,
+      })
+    }
+    return out
+  }, [totalH])
+
   return (
     <div className="relative mx-auto w-full max-w-md" style={{ aspectRatio: `${W} / ${totalH}` }}>
+      {/* the sky: day at the trailhead, night at the summit, one gradient */}
+      <div
+        className="absolute inset-0"
+        aria-hidden
+        style={{
+          background:
+            'linear-gradient(to top, var(--path-sky-low) 0%, var(--path-sky-low) 18%, var(--path-sky-mid) 46%, var(--path-sky-high) 72%, var(--path-sky-night) 88%)',
+        }}
+      />
+
+      {/* far ridges — slowest parallax layer */}
+      <m.div className="pointer-events-none absolute inset-0" style={{ y: ridgeY }} aria-hidden>
+        <svg viewBox={`0 0 ${W} ${totalH}`} className="h-full w-full" preserveAspectRatio="none">
+          {ridges.map((r) => (
+            <path
+              key={r.key}
+              d={`M ${r.x - r.w2} ${r.y} Q ${r.x} ${r.y - r.h} ${r.x + r.w2} ${r.y} Z`}
+              style={{ fill: 'var(--color-ridge)', opacity: r.o }}
+            />
+          ))}
+        </svg>
+      </m.div>
+
+      {/* the cloud band, behind the trail */}
+      <m.div className="pointer-events-none absolute inset-0" style={{ y: cloudY }} aria-hidden>
+        <svg viewBox={`0 0 ${W} ${totalH}`} className="h-full w-full">
+          {clouds.filter((c) => !c.fg).map((c) => (
+            <g key={c.key} transform={`translate(${c.x} ${c.y})`} className={c.far ? 'cloud-drift-far' : 'cloud-drift'} opacity={c.far ? 0.5 : 0.8}>
+              <CloudPuff s={c.s} />
+            </g>
+          ))}
+        </svg>
+      </m.div>
+
       <svg
         viewBox={`0 0 ${W} ${totalH}`}
         className="absolute inset-0 h-full w-full"
         role="list"
-        aria-label="Your path to Japan — one node per lesson"
+        aria-label="Your path up the mountain — one node per lesson"
       >
+        {/* night sky details */}
+        <Stars totalH={totalH} w={W} />
+
+        {/* trailside scenery — behind the trail so the path always reads */}
+        <g aria-hidden>
+          {scenery.map((sp) => (
+            <g key={sp.key} transform={`translate(${sp.x} ${sp.y})`}>
+              <SpriteGlyph sp={sp} />
+            </g>
+          ))}
+        </g>
+
         {/* the trail: full, then the walked overlay */}
         <path d={full} fill="none" className="stroke-trail" strokeWidth="14" strokeLinecap="round" />
         <path d={walked} fill="none" className="stroke-trail-done" strokeWidth="14" strokeLinecap="round" />
@@ -421,31 +536,43 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
         </g>
       </svg>
 
-      {/* summit block — Fuji, the flag, and the trip-readiness meter */}
+      {/* foreground wisps — you pass THROUGH the cloud band */}
+      <m.div className="pointer-events-none absolute inset-0" style={{ y: fgY }} aria-hidden>
+        <svg viewBox={`0 0 ${W} ${totalH}`} className="h-full w-full">
+          {clouds.filter((c) => c.fg).map((c) => (
+            <g key={c.key} transform={`translate(${c.x} ${c.y})`} className="cloud-drift" opacity="0.9">
+              <CloudPuff s={c.s * 1.5} />
+            </g>
+          ))}
+        </svg>
+      </m.div>
+
+      {/* summit block — goraikō sunrise and the trip-readiness meter */}
       <div className="absolute inset-x-0 top-0 flex flex-col items-center gap-2 pt-2 text-center">
-        <Landmark kind="fuji" />
+        <SummitScene />
         <div className="w-56 max-w-[70%]">
-          <div className="h-2 overflow-hidden rounded-full bg-paper-deep">
+          <div className="h-2 overflow-hidden rounded-full bg-night-ink/20">
             <div className="h-full rounded-full bg-clay transition-[width] duration-700" style={{ width: `${summit.trip_ready_pct}%` }} />
           </div>
-          <p className="mt-1.5 font-mono text-[11px] tracking-[0.08em] text-ink-soft">
+          <p className="mt-1.5 font-mono text-[11px] tracking-[0.08em] text-night-soft">
             TRIP-READY {summit.trip_ready_pct}%
             {summit.days_to_trip >= 0 && <> · {summit.days_to_trip} DAYS TO GO</>}
           </p>
         </div>
       </div>
 
-      {/* unit headers + landmarks (HTML overlays; same geometry) */}
-      {unitMeta.map(({ unit: u, headerTopPct, headerSide, landmarkTopPct, landmarkSide }) => (
+      {/* unit headers + landmarks (HTML overlays; same geometry). Above the
+          night line the sky is dark in both themes → night tokens. */}
+      {unitMeta.map(({ unit: u, headerTopPct, headerSide, landmarkTopPct, landmarkSide, night }) => (
         <div key={u.id}>
           <div
             className={`absolute w-[34%] ${headerSide === 'left' ? 'left-0 text-left' : 'right-0 text-right'}`}
             style={{ top: `${headerTopPct}%` }}
             ref={u.lessons.some((l) => l.state === 'current') ? currentRef : undefined}
           >
-            <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-soft">{u.kicker}</p>
-            <h2 className="font-display text-base font-semibold leading-tight text-ink">{u.title}</h2>
-            <p className="mt-0.5 text-xs leading-snug text-ink-soft">{u.summary}</p>
+            <p className={`font-mono text-[10px] uppercase tracking-[0.08em] ${night ? 'text-night-soft' : 'text-ink-soft'}`}>{u.kicker}</p>
+            <h2 className={`font-display text-base font-semibold leading-tight ${night ? 'text-night-ink' : 'text-ink'}`}>{u.title}</h2>
+            <p className={`mt-0.5 text-xs leading-snug ${night ? 'text-night-soft' : 'text-ink-soft'}`}>{u.summary}</p>
             {!u.authored && (
               <span className="mt-1 inline-block rounded-full bg-oat px-2 py-0.5 text-[10px] font-medium text-ink-mid">
                 being written…
