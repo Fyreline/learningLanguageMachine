@@ -98,6 +98,16 @@ export function get<T>(path: string): Promise<T> {
   return request<T>(path)
 }
 
+/** JSON POST twin of get<T>() — feature modules (curriculum/loader.ts, ...)
+ * own the body/response types. */
+export function post<T>(path: string, body: unknown): Promise<T> {
+  return request<T>(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
 export const api = {
   base: BASE,
   health: () => get<Health>('/api/health'),

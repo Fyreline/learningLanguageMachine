@@ -35,6 +35,16 @@ def unit(unit_id: str) -> dict[str, Any] | None:
         return json.load(f)
 
 
+@lru_cache(maxsize=4)
+def kana_deck(name: str) -> dict[str, Any] | None:
+    """The hiragana/katakana side-trail decks (docs/CONTENT_GUIDE.md §2)."""
+    path = CONTENT_DIR / "kana" / f"{name}.json"
+    if not path.exists():
+        return None
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
 @lru_cache(maxsize=1)
 def main_lesson_order() -> list[str]:
     """Every main-path lesson id in walking order (kana trail excluded —
@@ -61,3 +71,90 @@ def trip_core_item_ids() -> frozenset[str]:
 
 def unit_has_content(unit_id: str) -> bool:
     return unit(unit_id) is not None
+
+
+# ---------------------------------------------------------------------------
+# Flat indices for the lesson-content / progress endpoints (phase 3). Built
+# once per process from whatever units + kana decks are authored; cheap to
+# rebuild (lru_cache) if a dev edit bumps the underlying files after restart.
+# ---------------------------------------------------------------------------
+_KANA_DECKS = ("hiragana", "katakana")
+
+
+@lru_cache(maxsize=1)
+def _index() -> dict[str, Any]:
+    items: dict[str, dict[str, Any]] = {}
+    item_owner: dict[str, str] = {}  # item_id -> unit id or kana deck name
+    lessons: dict[str, dict[str, Any]] = {}
+    lesson_owner: dict[str, str] = {}
+    dialogues: dict[str, dict[str, Any]] = {}
+
+    def ingest(owner: str, data: dict[str, Any]) -> None:
+        for item in data.get("items", []):
+            iid = item.get("id")
+            if iid:
+                items[iid] = item
+                item_owner[iid] = owner
+        for lesson in data.get("lessons", []):
+            lid = lesson.get("id")
+            if lid:
+                lessons[lid] = lesson
+                lesson_owner[lid] = owner
+        for dlg in data.get("dialogues", []):
+            did = dlg.get("id")
+            if did:
+                dialogues[did] = dlg
+
+    for u in manifest()["units"]:
+        data = unit(u["id"])
+        if data:
+            ingest(u["id"], data)
+    for name in _KANA_DECKS:
+        data = kana_deck(name)
+        if data:
+            ingest(name, data)
+
+    return {
+        "items": items,
+        "item_owner": item_owner,
+        "lessons": lessons,
+        "lesson_owner": lesson_owner,
+        "dialogues": dialogues,
+    }
+
+
+def get_item(item_id: str) -> dict[str, Any] | None:
+    return _index()["items"].get(item_id)
+
+
+def get_lesson(lesson_id: str) -> dict[str, Any] | None:
+    return _index()["lessons"].get(lesson_id)
+
+
+def get_dialogue(dialogue_id: str) -> dict[str, Any] | None:
+    return _index()["dialogues"].get(dialogue_id)
+
+
+def lesson_owner(lesson_id: str) -> str | None:
+    """The unit id (e.g. ``u04``) or kana deck name that owns a lesson."""
+    return _index()["lesson_owner"].get(lesson_id)
+
+
+def is_kana_lesson(lesson_id: str) -> bool:
+    return lesson_owner(lesson_id) in _KANA_DECKS
+
+
+def unit_lesson_ids(unit_id: str) -> list[str]:
+    """Every lesson id of a unit, in manifest order (main path only)."""
+    for u in manifest()["units"]:
+        if u["id"] == unit_id:
+            return [lesson["id"] for lesson in u["lessons"]]
+    return []
+
+
+def unit_id_for_lesson(lesson_id: str) -> str | None:
+    """The manifest unit a main-path lesson belongs to (``u04.l3`` -> ``u04``)."""
+    for u in manifest()["units"]:
+        if any(lesson["id"] == lesson_id for lesson in u["lessons"]):
+            return u["id"]
+    return None

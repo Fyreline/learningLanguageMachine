@@ -1,26 +1,28 @@
 /** Home tab: fetches the progress-merged course manifest and renders the
  * PathScene (docs/DESIGN.md §5), with the kana side-trail as a card by the
- * front door. Lesson taps hand off to the lesson player once phase 3 lands —
- * until then, a quiet toast-line explains. `?mock` shows a dressed preview. */
+ * front door. Lesson taps launch the LessonPlayer as a full-screen takeover;
+ * completing one refreshes the path. `?mock` shows a dressed preview and
+ * `?lesson=u01.l1` force-opens a lesson (dev route). */
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { fetchManifest, isMockMode, type PathManifest } from '../pathData'
+import { LessonPlayer } from './LessonPlayer'
 import { PathScene } from './PathScene'
 
 export function PathPage() {
   const [manifest, setManifest] = useState<PathManifest | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
+  const [activeLesson, setActiveLesson] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get('lesson'),
+  )
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     fetchManifest().then(setManifest, (e) => setError(e.message))
   }, [])
 
   useEffect(() => {
-    if (!notice) return
-    const t = setTimeout(() => setNotice(null), 4000)
-    return () => clearTimeout(t)
-  }, [notice])
+    refresh()
+  }, [refresh])
 
   if (error) {
     return (
@@ -37,6 +39,9 @@ export function PathPage() {
   const kana = manifest.kana_trail
   const kanaDone = Object.values(kana).flat().filter((l) => l.state === 'done').length
   const kanaTotal = Object.values(kana).flat().length
+  const nextKana = Object.values(kana)
+    .flat()
+    .find((l) => l.state !== 'done')
 
   return (
     <div className="relative">
@@ -50,13 +55,10 @@ export function PathPage() {
 
       <PathScene
         manifest={manifest}
-        onSelectLesson={(id, state) =>
-          setNotice(
-            state === 'done'
-              ? 'Replay practice arrives with the lesson player (phase 3).'
-              : `“${id}” opens once the lesson player lands (phase 3).`,
-          )
-        }
+        onSelectLesson={(id, state) => {
+          if (state === 'locked') return
+          setActiveLesson(id)
+        }}
       />
 
       {/* kana side-trail — a spur by the front door (CURRICULUM §1) */}
@@ -71,16 +73,31 @@ export function PathPage() {
               Optional — recognising the symbols. Never blocks the main path.
             </p>
           </div>
-          <span className="shrink-0 rounded-full bg-oat px-3 py-1 font-mono text-[11px] tracking-[0.08em] text-ink-mid">
-            {kanaDone}/{kanaTotal}
-          </span>
+          <div className="flex shrink-0 flex-col items-end gap-2">
+            <span className="rounded-full bg-oat px-3 py-1 font-mono text-[11px] tracking-[0.08em] text-ink-mid">
+              {kanaDone}/{kanaTotal}
+            </span>
+            {nextKana && (
+              <button
+                type="button"
+                onClick={() => setActiveLesson(nextKana.id)}
+                className="rounded-lg border border-line-strong px-3 py-1.5 text-xs font-medium text-ink transition hover:bg-oat"
+              >
+                Next kana lesson
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {notice && (
-        <div className="fixed bottom-20 left-1/2 z-30 -translate-x-1/2 rounded-lg bg-ink px-4 py-2.5 text-sm text-paper shadow-float sm:bottom-6">
-          {notice}
-        </div>
+      {activeLesson && (
+        <LessonPlayer
+          lessonId={activeLesson}
+          onClose={(completed) => {
+            setActiveLesson(null)
+            if (completed) refresh()
+          }}
+        />
       )}
     </div>
   )

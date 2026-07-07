@@ -51,3 +51,38 @@ def _clean_state():
 def client():
     with TestClient(app) as test_client:
         yield test_client
+
+
+def make_user(email: str = "amy@example.com", display_name: str = "Amy", mishka_id: int = 7) -> int:
+    """Insert a Michi user row directly (bypassing the Mishka login proxy) and
+    return its id — for exercising the authed progress/reviews/curriculum
+    surface without standing up a fake identity server."""
+    from app.db import SessionLocal
+    from app.models import User
+
+    with SessionLocal() as db:
+        user = User(
+            email=email.lower(),
+            display_name=display_name,
+            mishka_user_id=mishka_id,
+            created_at="2026-07-01 00:00:00",
+            settings_json="{}",
+        )
+        db.add(user)
+        db.commit()
+        return user.id
+
+
+def auth_headers(user_id: int) -> dict[str, str]:
+    from app.config import get_settings
+    from app.security import create_access_token
+
+    token = create_access_token(user_id, get_settings())
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def authed(client):
+    """(client, user_id, headers) for a freshly-inserted household user."""
+    user_id = make_user()
+    return client, user_id, auth_headers(user_id)

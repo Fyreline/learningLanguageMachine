@@ -9,13 +9,15 @@ from datetime import date, datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from .. import content
 from ..auth import current_user
 from ..db import get_session
+from ..errors import MichiHTTPException
 from ..models import ItemProgress, LessonCompletion, User
+from ..scoring import fmt_ts, now_utc
 
 router = APIRouter(prefix="/curriculum", tags=["curriculum"])
 
@@ -91,6 +93,152 @@ def _words_known(db: Session, user_id: int) -> int:
         .select_from(ItemProgress)
         .where(ItemProgress.user_id == user_id, ItemProgress.strength >= 3)
     ).scalar_one()
+
+
+def _completed_lesson_ids(db: Session, user_id: int) -> set[str]:
+    return {
+        r[0]
+        for r in db.execute(
+            select(LessonCompletion.lesson_id).where(
+                LessonCompletion.user_id == user_id
+            )
+        ).all()
+    }
+
+
+def lesson_is_locked(db: Session, user_id: int, lesson_id: str) -> bool:
+    """Path-order enforcement (docs/API.md, docs/DATA_MODEL.md "Path state").
+    A main-path lesson opens once the lesson immediately before it is done;
+    done lessons stay open (relaxed replay); kana lessons never gate."""
+    if content.is_kana_lesson(lesson_id):
+        return False
+    order = content.main_lesson_order()
+    if lesson_id not in order:
+        return False  # not a gated main-path lesson (shouldn't happen once found)
+    done = _completed_lesson_ids(db, user_id)
+    if lesson_id in done:
+        return False
+    idx = order.index(lesson_id)
+    prev_done = idx == 0 or order[idx - 1] in done
+    return not prev_done
+
+
+def _referenced_item_ids(lesson: dict[str, Any]) -> list[str]:
+    """Every item id the client will need to render this lesson: its new
+    items, any hand-authored step items, and any dialogue ``you``-turn items."""
+    ids: list[str] = list(lesson.get("new_items", []))
+    for step in lesson.get("steps") or []:
+        if step.get("item"):
+            ids.append(step["item"])
+        ids.extend(step.get("items", []))
+        did = step.get("dialogue")
+        if did:
+            dlg = content.get_dialogue(did)
+            if dlg:
+                for turn in dlg.get("turns", []):
+                    if turn.get("expect_item"):
+                        ids.append(turn["expect_item"])
+    # de-dupe, keep order
+    seen: set[str] = set()
+    out: list[str] = []
+    for iid in ids:
+        if iid not in seen:
+            seen.add(iid)
+            out.append(iid)
+    return out
+
+
+def _review_riders(
+    db: Session, user_id: int, exclude: set[str], now_str: str, limit: int = 5
+) -> list[ItemProgress]:
+    """The SRS-weakest 3-5 due-or-weak items that ride along as warm-up
+    (docs/API.md: the server decides *which* review items ride along)."""
+    rows = db.execute(
+        select(ItemProgress)
+        .where(
+            ItemProgress.user_id == user_id,
+            ItemProgress.item_id.not_in(exclude) if exclude else True,
+            or_(
+                ItemProgress.strength < 3,
+                ItemProgress.due_at.is_not(None) & (ItemProgress.due_at <= now_str),
+            ),
+        )
+        .order_by(ItemProgress.strength.asc(), ItemProgress.due_at.asc())
+        .limit(limit)
+    ).scalars().all()
+    return list(rows)
+
+
+@router.get("/lessons/{lesson_id}")
+def get_lesson_content(
+    lesson_id: str,
+    user_id: int = Depends(current_user),
+    db: Session = Depends(get_session),
+) -> dict[str, Any]:
+    lesson = content.get_lesson(lesson_id)
+    if lesson is None:
+        raise MichiHTTPException(
+            status_code=404, detail=f"No lesson '{lesson_id}'", code="unknown_lesson"
+        )
+    if lesson_is_locked(db, user_id, lesson_id):
+        raise MichiHTTPException(
+            status_code=403,
+            detail="Finish the trail behind you first",
+            code="lesson_locked",
+        )
+
+    referenced = _referenced_item_ids(lesson)
+    strengths = {
+        r.item_id: r
+        for r in db.execute(
+            select(ItemProgress).where(ItemProgress.user_id == user_id)
+        ).scalars()
+    }
+
+    def item_payload(iid: str, *, review_rider: bool = False) -> dict[str, Any] | None:
+        base = content.get_item(iid)
+        if base is None:
+            return None
+        row = strengths.get(iid)
+        return {
+            **base,
+            "strength": row.strength if row else 0,
+            "due_at": row.due_at if row else None,
+            "review_rider": review_rider,
+        }
+
+    items: list[dict[str, Any]] = []
+    for iid in referenced:
+        payload = item_payload(iid)
+        if payload:
+            items.append(payload)
+
+    # Warm-up riders: SRS-weakest due-or-weak earlier items, never the ones
+    # this lesson already teaches/drills.
+    riders = _review_riders(db, user_id, set(referenced), fmt_ts(now_utc()))
+    for r in riders:
+        payload = item_payload(r.item_id, review_rider=True)
+        if payload:
+            items.append(payload)
+
+    dialogues = []
+    for step in lesson.get("steps") or []:
+        did = step.get("dialogue")
+        if did:
+            dlg = content.get_dialogue(did)
+            if dlg:
+                dialogues.append(dlg)
+
+    return {
+        "lesson": {
+            "id": lesson["id"],
+            "title": lesson.get("title", ""),
+            "kind": lesson.get("kind", "teach"),
+        },
+        "items": items,
+        "steps": lesson.get("steps"),
+        "dialogues": dialogues,
+    }
 
 
 def current_lesson_id(db: Session, user_id: int) -> str | None:
