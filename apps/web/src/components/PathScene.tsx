@@ -9,8 +9,9 @@
  * with the same geometry (percentage tops), so text stays crisp and wrappable.
  */
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PathLesson, PathManifest, PathUnit } from '../pathData'
+import { AnimatedKitsune } from './AnimatedKitsune'
 import { MichiMark } from './MichiMark'
 
 const STEP = 132 // vertical px between nodes ≈ the ~140px arc of the spec
@@ -264,6 +265,17 @@ export interface PathSceneProps {
 }
 
 export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
+  // One round of hops when arriving back from a just-completed lesson — the
+  // score screen (or anything else) sets sessionStorage 'michi-celebrate'.
+  const [celebrating, setCelebrating] = useState(
+    () => sessionStorage.getItem('michi-celebrate') === '1',
+  )
+  useEffect(() => {
+    if (!celebrating) return
+    sessionStorage.removeItem('michi-celebrate')
+    const t = setTimeout(() => setCelebrating(false), 3400)
+    return () => clearTimeout(t)
+  }, [celebrating])
   const { units, summit, partner } = manifest
   const nodeCount = units.reduce((n, u) => n + u.lessons.length, 0)
   const totalH = TOP_PAD + BOT_PAD + (nodeCount - 1) * STEP
@@ -383,10 +395,10 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
                   ))}
                 </g>
               )}
-              {/* the cat, standing on the current node */}
+              {/* the kitsune, alive on the current node */}
               {l.state === 'current' && (
                 <g transform={`translate(${n.x - 19} ${n.y - 62})`} aria-label="You are here">
-                  <MichiMark variant="kitsune" width={50} height={46} className="" />
+                  <AnimatedKitsune mood={celebrating ? 'celebrating' : 'idle'} width={50} height={46} className="" />
                 </g>
               )}
               {/* partner's ghost cat (sky), presence not competition */}
