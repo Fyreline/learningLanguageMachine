@@ -386,14 +386,14 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
               {/* the cat, standing on the current node */}
               {l.state === 'current' && (
                 <g transform={`translate(${n.x - 19} ${n.y - 62})`} aria-label="You are here">
-                  <MichiMark width={38} height={28} className="" />
+                  <MichiMark variant="cat" width={32} height={28} className="" />
                 </g>
               )}
               {/* partner's ghost cat (sky), presence not competition */}
               {partnerNode?.lesson.id === l.id && partner && (
                 <g transform={`translate(${n.x + 22} ${n.y - 50})`} opacity="0.75">
                   <title>{`${partner.display_name} is here`}</title>
-                  <MichiMark width={27} height={20} className="text-sky" />
+                  <MichiMark variant="cat" width={27} height={24} className="text-sky" />
                 </g>
               )}
             </g>
