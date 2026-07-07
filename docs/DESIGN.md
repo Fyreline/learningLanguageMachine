@@ -202,6 +202,27 @@ Layout & mechanics:
 - **Determinism**: all placement is fract-sin hashed by index — the mountain is a
   place, not a screensaver; it never reshuffles between visits.
 
+**Full-bleed amendment (same day):** the scene now escapes its column
+(margin breakout, `w-screen` — deliberately no transform) and spans the full
+page on every device, with a responsive unit width (`W = clamp(420, pageW/1.2,
+920)`, seeded from `window.innerWidth`) so nodes render finger-sized
+everywhere. A converging **mountain body** (`bodyHalfAt`: wider than the page
+at the base → narrow crest, always ≥ the trail's swing) carries a
+meadow→stone→volcanic-dusk gradient (`--path-ground-*`; stop-color set via
+style — as an attribute, `var()` silently paints black) and occludes
+stars/ridges/clouds behind it for depth; the trail's amplitude now *shrinks*
+into the crest while frequency doubles, landing the last node on the peak.
+Hard-won rendering rules: (1) no transformed element may span the whole scene
+— band-limit every parallax layer to its content's altitude range (Chromium
+composites transformed elements and squashes overlapping siblings into
+textures with a hard device-pixel budget); (2) the scene renders in stacked
+segment `<svg>`s (~1600 units each), body/trail drawn in every segment and
+clipped by its viewBox; (3) `overflow: clip` on the wrapper, or scrolling
+parallax offsets grow the document with phantom pixels; (4) headless
+screenshot tooling whites out beyond ~16384 device px of page height — deep
+regions must be verified in a real browser or at narrow widths, not declared
+broken (a full afternoon says hello).
+
 ## 6. Stats — the travel journal
 
 Four zones on one scrolling page (cards `bg-paper-mid border-line rounded-lg p-6`):

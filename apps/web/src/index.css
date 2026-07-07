@@ -50,6 +50,13 @@
   --color-night-ink: #ecf6f4;
   --color-night-soft: #a8bfc9;
   --color-ridge: #9fc3c9;        /* distant ranges, low altitude */
+
+  /* the mountain BODY (§5b full-bleed revision): ground gradient stops,
+     meadow at the base → worn stone → volcanic dusk at the crest. The body
+     must stay distinct from the sky behind it at every altitude. */
+  --path-ground-low: #dfecdb;
+  --path-ground-mid: #b7c9c2;
+  --path-ground-high: #3a5266;
 }
 
 :root {
@@ -71,6 +78,11 @@
   --path-sky-high: #0e2233;
   --path-sky-night: #081420;
   --color-ridge: #1d354a;
+
+  /* night body — lighter than the night sky so the silhouette reads */
+  --path-ground-low: #16303c;
+  --path-ground-mid: #1a3542;
+  --path-ground-high: #122837;
 }
 
 /* Mountain ambience (PathScenery.tsx) — gentle, endless, motion-safe. */

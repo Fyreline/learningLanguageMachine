@@ -155,12 +155,14 @@ function pickKind(t: number, r: number): Sprite['kind'] | null {
 }
 
 /** Two placement slots per node — one either side of the trail, offset
- * outward so nothing collides with nodes, stars or the kitsune. */
+ * outward but clamped ONTO the mountain body (`halfAt` gives the body's
+ * half-width at a given y), so nothing floats in the sky beside the peak. */
 export function buildScenery(
   nodes: { x: number; y: number; i: number }[],
   totalH: number,
   cx: number,
   w: number,
+  halfAt: (y: number) => number,
 ): Sprite[] {
   const sprites: Sprite[] = []
   for (const n of nodes) {
@@ -171,11 +173,14 @@ export function buildScenery(
       const kind = pickKind(t, r1)
       if (!kind) continue
       const dir = side === 0 ? -1 : 1
-      // sit outside the trail's swing on this side, jittered
-      const edge = side === 0 ? Math.min(n.x, cx) : Math.max(n.x, cx)
-      const x = edge + dir * (58 + hash(seed * 3.7) * (side === 0 ? edge - 20 : w - edge - 20) * 0.5)
       const y = n.y + (hash(seed * 7.3) - 0.5) * 100
-      if (x < 14 || x > w - 14) continue
+      const bodyEdge = cx + dir * (halfAt(y) - 20)
+      // between the trail's swing on this side and the body's edge, jittered
+      const edge = side === 0 ? Math.min(n.x, cx) : Math.max(n.x, cx)
+      const room = Math.abs(bodyEdge - (edge + dir * 52))
+      if (room < 10) continue // the crest is too narrow here — leave it bare
+      const x = edge + dir * (52 + hash(seed * 3.7) * room * 0.85)
+      if (x < 14 || x > w - 14 || Math.abs(x - cx) > halfAt(y) - 16) continue
       sprites.push({
         key: `sp-${seed}`,
         kind,
@@ -201,27 +206,73 @@ export function SpriteGlyph({ sp }: { sp: Sprite }) {
   }
 }
 
-/** Star field for the upper mountain — density ramps with altitude. */
-export function Stars({ totalH, w }: { totalH: number; w: number }) {
-  const stars = []
+/** Star field for the upper mountain — density ramps with altitude.
+ * `asHtml` renders positioned <span> dots for use inside a plain div layer
+ * (avoids a page-tall svg, which busts Chromium's raster budget). */
+export function Stars({
+  totalH,
+  w,
+  asHtml = false,
+  bandFrac = 1,
+}: {
+  totalH: number
+  w: number
+  asHtml?: boolean
+  /** when the HTML host div covers only the top `bandFrac` of the scene,
+   * positions are re-based so stars land at their true scene altitude */
+  bandFrac?: number
+}) {
+  const pts: { k: number; x: number; y: number; r: number; o: number; d: number }[] = []
   const zoneTop = 0.68 // stars live above t≈0.68, thickening upward
   for (let k = 0; k < 90; k++) {
     const rx = hash(k * 3.1 + 5)
     const ry = hash(k * 9.7 + 2)
     const t = zoneTop + ry * (1 - zoneTop)
     if (hash(k * 5.3) > ramp(t, 0.68, 0.98) * 0.95) continue
-    stars.push(
-      <circle
-        key={`st-${k}`}
-        cx={rx * w}
-        cy={(1 - t) * totalH}
-        r={0.8 + hash(k * 7.7) * 1.3}
-        className="fill-night-ink star-twinkle"
-        style={{ animationDelay: `${hash(k * 11.3) * 3.8}s`, opacity: 0.35 + hash(k) * 0.5 }}
-      />,
+    pts.push({
+      k,
+      x: rx * w,
+      y: (1 - t) * totalH,
+      r: 0.8 + hash(k * 7.7) * 1.3,
+      o: 0.35 + hash(k) * 0.5,
+      d: hash(k * 11.3) * 3.8,
+    })
+  }
+  if (asHtml) {
+    return (
+      <>
+        {pts.map((p) => (
+          <span
+            key={`st-${p.k}`}
+            className="star-twinkle absolute rounded-full"
+            style={{
+              left: `${(p.x / w) * 100}%`,
+              top: `${((p.y / totalH) / bandFrac) * 100}%`,
+              width: `${p.r * 2.4}px`,
+              height: `${p.r * 2.4}px`,
+              background: 'var(--color-night-ink)',
+              opacity: p.o,
+              animationDelay: `${p.d}s`,
+            }}
+          />
+        ))}
+      </>
     )
   }
-  return <g aria-hidden>{stars}</g>
+  return (
+    <g aria-hidden>
+      {pts.map((p) => (
+        <circle
+          key={`st-${p.k}`}
+          cx={p.x}
+          cy={p.y}
+          r={p.r}
+          className="fill-night-ink star-twinkle"
+          style={{ animationDelay: `${p.d}s`, opacity: p.o }}
+        />
+      ))}
+    </g>
+  )
 }
 
 /** Goraikō — the summit sunrise: torii against the rising sun, the reward at
