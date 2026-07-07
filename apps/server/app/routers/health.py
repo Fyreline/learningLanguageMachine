@@ -10,6 +10,8 @@ import time
 
 from fastapi import APIRouter, Request
 
+from app import content
+
 router = APIRouter(tags=["health"])
 
 _CACHE_TTL_SECONDS = 60
@@ -35,5 +37,5 @@ async def health(request: Request) -> dict:
         "identity": "reachable" if reachable else "unreachable",
         # Curriculum content ships in Phase 2 (docs/phases/PHASE-2-content.md);
         # a fixed placeholder until content/manifest.json exists to version off.
-        "content_version": "unreleased",
+        "content_version": content.manifest()["course"] if content.manifest() else "no-content",
     }

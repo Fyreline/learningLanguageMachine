@@ -49,8 +49,12 @@ def _streak(db: Session, user_id: int, today: date) -> dict[str, Any]:
         if day in active:
             streak += 1
         else:
-            # a rest day is allowed if no other rest day sits within 6 days
-            if any((rest - day).days < 7 for rest in rest_days) or streak == 0:
+            # a rest day only BRIDGES two active stretches — it is never
+            # spent on the trailing gap before the streak began (which made
+            # a day-one streak report "resting") — and only when no other
+            # rest day sits within 6 days
+            prev = day - timedelta(days=1)
+            if prev not in active or any((rest - day).days < 7 for rest in rest_days) or streak == 0:
                 break
             rest_days.append(day)
         day -= timedelta(days=1)

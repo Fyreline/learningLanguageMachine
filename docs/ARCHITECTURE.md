@@ -144,6 +144,24 @@ Decisions worth stating:
 - Vite config sets `base: '/learningLanguageMachine/'` for Pages builds (env-gated, same
   trick as Mishka).
 
+### 5b. The shipped runbook (live since 2026-07-07, all tested)
+
+- **API, always on**: LaunchAgent `~/Library/LaunchAgents/com.michi.api.plist`
+  (mirrors Mishka's) runs uvicorn on 127.0.0.1:8100 at login, KeepAlive, logs in
+  `~/Library/Logs/michi/`. Manage with
+  `launchctl kickstart -k gui/$UID/com.michi.api` (restart) /
+  `launchctl bootout gui/$UID/com.michi.api` (stop).
+- **Tunnel**: `michi-api.mishka-hub.com` ingress in `~/.cloudflared/config.yml`
+  → 127.0.0.1:8100, DNS CNAME routed to the shared tunnel. cloudflared is a
+  root LaunchDaemon: config changes need
+  `sudo launchctl kickstart -k system/com.cloudflare.cloudflared`.
+- **Web**: GitHub Pages via `.github/workflows/deploy-pages.yml` on every push
+  to main touching `apps/web/**` or `content/**`; repo variable
+  `VITE_API_BASE=https://michi-api.mishka-hub.com` baked in at build. Live at
+  https://fyreline.github.io/learningLanguageMachine/.
+- **CORS**: `https://fyreline.github.io` is in the server's default allow-list
+  (config.py); verified end-to-end through the tunnel.
+
 ## 6. Testing & verification bar
 
 - Server: pytest for `identity.py` (Mishka up / down / bad password), `srs.py` interval
