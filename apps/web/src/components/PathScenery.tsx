@@ -276,13 +276,19 @@ export function buildScenery(
       // slot 2 alternates sides by node so the extra base growth spreads
       const dir = side === 2 ? (n.i % 2 === 0 ? -1 : 1) : side === 0 ? -1 : 1
       const y = n.y + (hash(seed * 7.3) - 0.5) * 100
-      const bodyEdge = cx + dir * (halfAt(y) - 20)
+      // `halfAt` is the SMOOTH body-width function; the rendered flank adds
+      // ridged noise that can pull the real edge up to ~33 units narrower
+      // at any given y — margins here must clear that worst case (48) or a
+      // sprite anchored to the smooth edge can end up stranded outside the
+      // actual jagged silhouette.
+      const EDGE_MARGIN = 48
+      const bodyEdge = cx + dir * (halfAt(y) - EDGE_MARGIN)
       // between the trail's swing on this side and the body's edge, jittered
       const edge = dir < 0 ? Math.min(n.x, cx) : Math.max(n.x, cx)
       const room = Math.abs(bodyEdge - (edge + dir * 52))
       if (room < 10) continue // the crest is too narrow here — leave it bare
       const x = edge + dir * (52 + hash(seed * 3.7) * room * 0.85)
-      if (x < 14 || x > w - 14 || Math.abs(x - cx) > halfAt(y) - 16) continue
+      if (x < 14 || x > w - 14 || Math.abs(x - cx) > halfAt(y) - EDGE_MARGIN + 12) continue
       const s = 0.8 + hash(seed * 13.9) * 0.55
       const r = spriteR(kind, s)
       // never on text or landmarks

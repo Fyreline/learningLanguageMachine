@@ -365,15 +365,26 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
       const mid = nodes[Math.min(cursor + 3, cursor + u.lessons.length - 1)]
       cursor += u.lessons.length
       const landmarkDir = mid.x < CX ? -1 : 1
-      const off = Math.max(96, Math.min(halfAtY(mid.y) - 52, W / 2 - 44))
+      // clamp to the tighter of (body edge minus the same worst-case-noise
+      // margin sprites use) and the screen bound — NEVER exceed either, even
+      // if that means sitting closer to the trail than the preferred 96
+      // (the previous Math.max(96, …) could force a landmark past a narrow
+      // jagged edge, stranding it outside the visible mountain)
+      const maxOff = Math.min(halfAtY(mid.y) - 48, W / 2 - 44)
+      const off = Math.max(40, Math.min(96, maxOff))
+      // sit in the GAP between the mid node and the one above it, not
+      // stamped on top of either — the icon's own fixed CSS footprint
+      // (~56px) was overlapping the node circle when anchored only 20
+      // scene-units above it; render is centred (translate-y-1/2) too
+      const landmarkY = mid.y - STEP / 2
       return {
         unit: u,
         headerTopPct: (first.y / totalH) * 100,
         headerSide: first.x < CX ? 'right' : 'left',
         headerY: first.y,
-        landmarkTopPct: ((mid.y - 20) / totalH) * 100,
+        landmarkTopPct: (landmarkY / totalH) * 100,
         landmarkX: CX + landmarkDir * off,
-        landmarkY: mid.y,
+        landmarkY,
         night: 1 - first.y / totalH > NIGHT_LINE,
       }
     })
@@ -390,7 +401,7 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
           : { x0: W - 0.015 * W - headerW, x1: W, y0: um.headerY - 10, y1: um.headerY + 155 },
       )
       if (um.unit.landmark !== 'fuji') {
-        rects.push({ x0: um.landmarkX - 44, x1: um.landmarkX + 44, y0: um.landmarkY - 26, y1: um.landmarkY + 62 })
+        rects.push({ x0: um.landmarkX - 44, x1: um.landmarkX + 44, y0: um.landmarkY - 40, y1: um.landmarkY + 40 })
       }
     }
     return rects
@@ -442,17 +453,17 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
       const t = 0.5 + hash(k * 17.3) * 0.36
       const density = 1 - Math.min(1, Math.abs(t - 0.68) / 0.17)
       if (hash(k * 29.1) > density * 1.6) continue
-      out.push({
-        key: `cl-${k}`,
-        x: 30 + hash(k * 7.9) * (W - 60),
-        y: (1 - t) * totalH,
-        s: 1.7 + hash(k * 11.7) * 1.7,
-        far: hash(k * 3.3) > 0.55,
-        fg: hash(k * 41.7) > 0.8,
-      })
+      const x = 30 + hash(k * 7.9) * (W - 60)
+      const y = (1 - t) * totalH
+      let fg = hash(k * 41.7) > 0.8
+      // foreground wisps draw ON TOP of the trail — never let one land
+      // squarely on a tappable node (demote to the background layer instead,
+      // where it's occluded by the mountain body and can't obscure anything)
+      if (fg && nodes.some((n) => (n.x - x) ** 2 + (n.y - y) ** 2 < 78 * 78)) fg = false
+      out.push({ key: `cl-${k}`, x, y, s: 1.7 + hash(k * 11.7) * 1.7, far: hash(k * 3.3) > 0.55, fg })
     }
     return out
-  }, [totalH, W])
+  }, [totalH, W, nodes])
 
   // Parallax: far ridges lag the scroll, the cloud band lags less, foreground
   // wisps run slightly ahead. Zeroed under reduced motion.
@@ -637,8 +648,8 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
 
             {/* trailside scenery in this slice */}
             <g aria-hidden>
-              {scenery.filter((sp) => within(sp.y)).map((sp) => (
-                <g key={sp.key} transform={`translate(${sp.x} ${sp.y})`}>
+              {scenery.filter((sp) => within(sp.y, 0)).map((sp) => (
+                <g key={sp.key} data-sp={sp.kind} transform={`translate(${sp.x} ${sp.y})`}>
                   <SpriteGlyph sp={sp} />
                 </g>
               ))}
@@ -697,6 +708,7 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
       {unitMeta.map(({ unit: u, headerTopPct, headerSide, landmarkTopPct, landmarkX, night }) => (
         <div key={u.id}>
           <div
+            data-header={u.id}
             className={`absolute w-[30%] max-w-[230px] ${headerSide === 'left' ? 'left-[2%] text-left' : 'right-[2%] text-right'}`}
             style={{ top: `${headerTopPct}%` }}
             ref={u.lessons.some((l) => l.state === 'current') ? currentRef : undefined}
@@ -712,7 +724,8 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
           </div>
           {u.landmark !== 'fuji' /* the summit block owns the peak */ && (
             <div
-              className="absolute -translate-x-1/2"
+              data-landmark={u.landmark}
+              className="absolute -translate-x-1/2 -translate-y-1/2"
               style={{
                 top: `${landmarkTopPct}%`,
                 // anchored to the mountain's edge at this altitude — never
@@ -734,7 +747,7 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
   function renderSegmentNodes(within: (y: number, pad?: number) => boolean) {
     return (
       <>
-        {nodes.filter((n) => within(n.y)).map((n) => {
+        {nodes.filter((n) => within(n.y, 0)).map((n) => {
           const { lesson: l } = n
           const isGate = l.kind === 'checkpoint'
           const clickable = l.state !== 'locked' && onSelectLesson
@@ -820,7 +833,7 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
         })}
 
         {/* the front door, where every journey starts (last segment only) */}
-        {within(totalH - 108) && (
+        {within(totalH - 108, 0) && (
           <g transform={`translate(${nodes[0].x - 20} ${totalH - 108})`}>
             <rect x="4" y="18" width="32" height="40" rx="2" className="fill-paper-deep" />
             <path d="M0 20 L20 6 L40 20" fill="none" strokeWidth="3" strokeLinecap="round" className="stroke-ink-soft" stroke="currentColor" />
