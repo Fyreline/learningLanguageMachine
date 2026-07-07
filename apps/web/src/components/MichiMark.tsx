@@ -29,16 +29,34 @@ export function MichiMark({
    * (PathScene) — CSS class sizing doesn't reach a nested <svg> reliably. */
   width?: number
   height?: number
-  variant?: 'torii' | 'cat'
+  variant?: 'torii' | 'cat' | 'kitsune'
 }) {
   // default clay unless the caller brings its own text-* colour (the
-  // partner's ghost cat is sky) — appending both risks stylesheet-order
+  // partner's ghost kitsune is sky) — appending both risks stylesheet-order
   // roulette between two same-specificity utilities
   const colour = className.includes('text-') ? className : `text-clay ${className}`
   if (variant === 'cat') {
     return (
       <svg viewBox="0 0 32 28" aria-hidden width={width} height={height} className={colour}>
         <CatFace />
+      </svg>
+    )
+  }
+  if (variant === 'kitsune') {
+    // The path walker: full-bodied kitsune — bushy pale-tipped tail swooping
+    // behind, same family face. (A bindle was tried 2026-07-07 and cut: it
+    // collides with the head at walker scale.)
+    return (
+      <svg viewBox="0 0 46 42" aria-hidden width={width} height={height} className={colour}>
+        <path d="M16,31 Q3,30 2,18 Q2,8 10,4.5 Q9,11.5 12.5,15 Q18.5,19.5 17.5,28 Z" fill="currentColor" />
+        <path d="M10,4.5 Q9.4,10.5 12,13.8 Q14.5,10.8 13.2,7.4 Q11.8,5.4 10,4.5 Z" fill="var(--color-paper)" opacity="0.9" />
+        <path d="M15,32 Q14.5,23 22,20 Q28,18.5 34,20 L39,22 Q42,24 42,28 L42,32 Q42,36 38,36 L19,36 Q15,36 15,32 Z" fill="currentColor" />
+        <rect x="18" y="33" width="3.4" height="8" rx="1.6" fill="currentColor" />
+        <rect x="26.5" y="34" width="3.4" height="7" rx="1.6" fill="currentColor" />
+        <rect x="35" y="33" width="3.4" height="8" rx="1.6" fill="currentColor" />
+        <g transform="translate(28.5,3) scale(0.92)">
+          <CatFace />
+        </g>
       </svg>
     )
   }
