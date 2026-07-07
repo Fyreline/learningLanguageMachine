@@ -1,0 +1,74 @@
+{
+  "id": "u01",
+  "items": [
+    { "id": "u01.konnichiwa", "jp": "こんにちは", "romaji": "konnichiwa", "en": "hello / good afternoon", "note": "The safe daytime greeting. The は here is read wa.", "tags": ["greeting", "trip_core"], "trip_core": true },
+    { "id": "u01.ohayo", "jp": "おはようございます", "romaji": "ohayō gozaimasu", "en": "good morning", "note": "Drop gozaimasu only with people you know well.", "tags": ["greeting"] },
+    { "id": "u01.konbanwa", "jp": "こんばんは", "romaji": "konbanwa", "en": "good evening", "note": "From late afternoon on. Again は is read wa.", "tags": ["greeting"] },
+    { "id": "u01.oyasumi", "jp": "おやすみなさい", "romaji": "oyasuminasai", "en": "good night", "note": "Said before sleep, or when parting late at night.", "tags": ["greeting"] },
+    { "id": "u01.sayonara", "jp": "さようなら", "romaji": "sayōnara", "en": "goodbye", "note": "A fairly final goodbye; for shops a small bow is plenty.", "tags": ["greeting"] },
+
+    { "id": "u01.arigato", "jp": "ありがとう", "romaji": "arigatō", "en": "thanks", "note": "Warm but casual. Add gozaimasu for anyone serving you.", "tags": ["politeness"] },
+    { "id": "u01.arigatogozaimasu", "jp": "ありがとうございます", "romaji": "arigatō gozaimasu", "en": "thank you", "note": "Your default thanks to staff, drivers, strangers.", "tags": ["politeness", "trip_core"], "trip_core": true },
+    { "id": "u01.doumo", "jp": "どうも", "romaji": "dōmo", "en": "thanks / cheers", "note": "A light, friendly thanks — also a casual hello.", "tags": ["politeness"] },
+    { "id": "u01.douitashimashite", "jp": "どういたしまして", "romaji": "dō itashimashite", "en": "you're welcome", "note": "You'll hear it more than say it; nice to recognise.", "tags": ["politeness"] },
+    { "id": "u01.onegaishimasu", "jp": "おねがいします", "romaji": "onegaishimasu", "en": "please", "note": "The all-purpose 'please' when asking for or accepting something.", "tags": ["politeness", "trip_core"], "trip_core": true },
+
+    { "id": "u01.sumimasen", "jp": "すみません", "romaji": "sumimasen", "en": "excuse me / sorry", "literal": "'this doesn't finish' — an open-ended apology", "note": "Your Swiss-army word: catch attention, apologise, or call staff over.", "tags": ["politeness", "trip_core"], "trip_core": true, "distractors": ["u01.konnichiwa", "u01.onegaishimasu", "u01.arigato"] },
+    { "id": "u01.gomennasai", "jp": "ごめんなさい", "romaji": "gomennasai", "en": "sorry", "note": "A softer, personal 'sorry'. With strangers, sumimasen is safer.", "tags": ["politeness"], "distractors": ["u01.konnichiwa", "u01.onegaishimasu", "u01.arigato"] },
+    { "id": "u01.chotto", "jp": "ちょっと", "romaji": "chotto", "en": "a little / a moment", "note": "Softens anything: 'chotto sumimasen' = 'sorry, just a sec'.", "tags": ["politeness"] },
+    { "id": "u01.ano", "jp": "あのう", "romaji": "anō", "en": "um... / excuse me", "note": "A gentle opener before you trouble someone. Buys you a breath.", "tags": ["politeness"] },
+
+    { "id": "u01.hai", "jp": "はい", "romaji": "hai", "en": "yes", "note": "Also just 'I'm listening'. A nod's worth of agreement.", "tags": ["politeness", "trip_core"], "trip_core": true },
+    { "id": "u01.iie", "jp": "いいえ", "romaji": "iie", "en": "no", "note": "Softer in practice than English 'no'; often paired with a small wave.", "tags": ["politeness", "trip_core"], "trip_core": true },
+    { "id": "u01.daijobu", "jp": "だいじょうぶです", "romaji": "daijōbu desu", "en": "I'm fine / it's OK", "note": "Reassures, declines, or checks on someone. Endlessly useful.", "tags": ["politeness", "trip_core"], "trip_core": true },
+    { "id": "u01.kekkou", "jp": "けっこうです", "romaji": "kekkō desu", "en": "no thank you", "note": "Politely declines an offer. Tone matters — say it gently.", "tags": ["politeness"], "distractors": ["u01.hai", "u01.onegaishimasu", "u01.daijobu"] },
+    { "id": "u01.soudesu", "jp": "そうです", "romaji": "sō desu", "en": "that's right", "note": "Confirms what someone just said. 'sō desu ka' = 'oh, I see'.", "tags": ["politeness"] },
+    { "id": "u01.wakarimashita", "jp": "わかりました", "romaji": "wakarimashita", "en": "understood / got it", "note": "Signals you've followed. The happy opposite of the next word.", "tags": ["politeness"] },
+
+    { "id": "u01.wakarimasen", "jp": "わかりません", "romaji": "wakarimasen", "en": "I don't understand", "note": "No shame in it — most people will slow down and help.", "tags": ["politeness", "trip_core"], "trip_core": true },
+    { "id": "u01.moichido", "jp": "もういちど おねがいします", "romaji": "mō ichido onegaishimasu", "en": "once more, please", "note": "The polite 'again?' — better than a blank stare.", "tags": ["politeness", "trip_core"], "trip_core": true },
+    { "id": "u01.yukkuri", "jp": "ゆっくり おねがいします", "romaji": "yukkuri onegaishimasu", "en": "slowly, please", "note": "Pairs beautifully with wakarimasen. Buys you comprehensible speech.", "tags": ["politeness"] },
+    { "id": "u01.eigo", "jp": "えいご", "romaji": "eigo", "en": "English (language)", "note": "The word for the language, not the country (that's Igirisu).", "tags": ["smalltalk"] },
+    { "id": "u01.nihongo", "jp": "にほんご", "romaji": "nihongo", "en": "Japanese (language)", "note": "'nihongo wa chotto...' = 'my Japanese is a little...' — a charming out.", "tags": ["smalltalk"] },
+    { "id": "u01.eigo_hanasemasu", "jp": "えいごが はなせますか", "romaji": "eigo ga hanasemasu ka", "en": "do you speak English?", "note": "The rescue question. Ask it with a smile, not an apology.", "tags": ["question", "trip_core"], "trip_core": true }
+  ],
+  "lessons": [
+    { "id": "u01.l1", "title": "Hello, all day", "kind": "teach", "new_items": ["u01.konnichiwa", "u01.ohayo", "u01.konbanwa", "u01.oyasumi", "u01.sayonara"] },
+    { "id": "u01.l2", "title": "Thank you", "kind": "teach", "new_items": ["u01.arigato", "u01.arigatogozaimasu", "u01.doumo", "u01.douitashimashite", "u01.onegaishimasu"] },
+    { "id": "u01.l3", "title": "The magic word: sumimasen", "kind": "teach", "new_items": ["u01.sumimasen", "u01.gomennasai", "u01.chotto", "u01.ano"] },
+    { "id": "u01.l4", "title": "Yes, no, please", "kind": "teach", "new_items": ["u01.hai", "u01.iie", "u01.daijobu", "u01.kekkou", "u01.soudesu", "u01.wakarimashita"] },
+    { "id": "u01.l5", "title": "I don't understand", "kind": "teach", "new_items": ["u01.wakarimasen", "u01.moichido", "u01.yukkuri", "u01.eigo", "u01.nihongo", "u01.eigo_hanasemasu"] },
+    { "id": "u01.check", "title": "At the front door", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "listen-pick", "item": "u01.konnichiwa" },
+      { "type": "listen-pick-jp", "item": "u01.arigatogozaimasu" },
+      { "type": "match-pairs", "items": ["u01.konnichiwa", "u01.ohayo", "u01.konbanwa", "u01.sayonara", "u01.oyasumi"] },
+      { "type": "listen-pick", "item": "u01.sumimasen", "distractors": ["u01.konnichiwa", "u01.onegaishimasu", "u01.hai"] },
+      { "type": "tile-arrange", "item": "u01.eigo_hanasemasu" },
+      { "type": "listen-type-romaji", "item": "u01.hai" },
+      { "type": "listen-pick-jp", "item": "u01.wakarimasen" },
+      { "type": "match-pairs", "items": ["u01.hai", "u01.iie", "u01.daijobu", "u01.kekkou", "u01.soudesu"] },
+      { "type": "speak", "item": "u01.onegaishimasu" },
+      { "type": "listen-pick", "item": "u01.moichido" },
+      { "type": "speak", "item": "u01.arigatogozaimasu" },
+      { "type": "dialogue", "dialogue": "u01.d1" }
+    ] }
+  ],
+  "dialogues": [
+    {
+      "id": "u01.d1",
+      "scene": "Front door of the guesthouse, evening. The owner opens the door as you arrive with your bags.",
+      "turns": [
+        { "speaker": "npc", "jp": "こんにちは。ようこそ！", "romaji": "konnichiwa. yōkoso!", "en": "hello — welcome!" },
+        { "speaker": "you", "expect_item": "u01.konnichiwa", "mode": "pick", "stakes": "First impression. Greet her back warmly." },
+        { "speaker": "npc", "jp": "あのう、チェックインですか？", "romaji": "anō, chekku-in desu ka?", "en": "um, are you checking in?" },
+        { "speaker": "you", "expect_item": "u01.hai", "mode": "pick", "stakes": "You are. Say yes." },
+        { "speaker": "npc", "jp": "かぎを どうぞ。おへやは にかいです。", "romaji": "kagi o dōzo. o-heya wa nikai desu.", "en": "here's your key. your room is on the second floor." },
+        { "speaker": "you", "expect_item": "u01.arigatogozaimasu", "mode": "speak", "stakes": "She handed you the key. Thank her properly." },
+        { "speaker": "npc", "jp": "えいごの メニュー、いりますか？", "romaji": "eigo no menyū, irimasu ka?", "en": "would you like an English menu?" },
+        { "speaker": "you", "expect_item": "u01.onegaishimasu", "mode": "pick", "stakes": "Yes — accept it politely." },
+        { "speaker": "npc", "jp": "はい。ごゆっくり どうぞ。", "romaji": "hai. go-yukkuri dōzo.", "en": "of course. please relax and enjoy your stay." },
+        { "speaker": "you", "expect_item": "u01.doumo", "mode": "pick", "stakes": "A warm, easy thanks to close the door on a good note." }
+      ]
+    }
+  ]
+}

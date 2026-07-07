@@ -1,0 +1,82 @@
+{
+  "id": "hiragana",
+  "items": [
+    { "id": "kana.hi.a", "jp": "あ", "romaji": "a", "en": "'a' as in father", "tags": ["kana"] },
+    { "id": "kana.hi.i", "jp": "い", "romaji": "i", "en": "'i' as in machine", "tags": ["kana"] },
+    { "id": "kana.hi.u", "jp": "う", "romaji": "u", "en": "'u' as in flute", "tags": ["kana"] },
+    { "id": "kana.hi.e", "jp": "え", "romaji": "e", "en": "'e' as in net", "tags": ["kana"] },
+    { "id": "kana.hi.o", "jp": "お", "romaji": "o", "en": "'o' as in for", "tags": ["kana"] },
+
+    { "id": "kana.hi.ka", "jp": "か", "romaji": "ka", "en": "'ka'", "tags": ["kana"] },
+    { "id": "kana.hi.ki", "jp": "き", "romaji": "ki", "en": "'ki'", "tags": ["kana"] },
+    { "id": "kana.hi.ku", "jp": "く", "romaji": "ku", "en": "'ku'", "tags": ["kana"] },
+    { "id": "kana.hi.ke", "jp": "け", "romaji": "ke", "en": "'ke'", "tags": ["kana"] },
+    { "id": "kana.hi.ko", "jp": "こ", "romaji": "ko", "en": "'ko'", "tags": ["kana"] },
+
+    { "id": "kana.hi.sa", "jp": "さ", "romaji": "sa", "en": "'sa'", "tags": ["kana"] },
+    { "id": "kana.hi.shi", "jp": "し", "romaji": "shi", "en": "'shi' as in sheep", "tags": ["kana"] },
+    { "id": "kana.hi.su", "jp": "す", "romaji": "su", "en": "'su'", "tags": ["kana"] },
+    { "id": "kana.hi.se", "jp": "せ", "romaji": "se", "en": "'se'", "tags": ["kana"] },
+    { "id": "kana.hi.so", "jp": "そ", "romaji": "so", "en": "'so'", "tags": ["kana"] },
+
+    { "id": "kana.hi.ta", "jp": "た", "romaji": "ta", "en": "'ta'", "tags": ["kana"] },
+    { "id": "kana.hi.chi", "jp": "ち", "romaji": "chi", "en": "'chi' as in cheese", "tags": ["kana"] },
+    { "id": "kana.hi.tsu", "jp": "つ", "romaji": "tsu", "en": "'tsu' as in cats", "tags": ["kana"] },
+    { "id": "kana.hi.te", "jp": "て", "romaji": "te", "en": "'te'", "tags": ["kana"] },
+    { "id": "kana.hi.to", "jp": "と", "romaji": "to", "en": "'to'", "tags": ["kana"] },
+
+    { "id": "kana.hi.na", "jp": "な", "romaji": "na", "en": "'na'", "tags": ["kana"] },
+    { "id": "kana.hi.ni", "jp": "に", "romaji": "ni", "en": "'ni' as in knee", "tags": ["kana"] },
+    { "id": "kana.hi.nu", "jp": "ぬ", "romaji": "nu", "en": "'nu' as in noodle", "tags": ["kana"] },
+    { "id": "kana.hi.ne", "jp": "ね", "romaji": "ne", "en": "'ne'", "tags": ["kana"] },
+    { "id": "kana.hi.no", "jp": "の", "romaji": "no", "en": "'no'", "tags": ["kana"] },
+
+    { "id": "kana.hi.ha", "jp": "は", "romaji": "ha", "en": "'ha' (read 'wa' as a particle)", "tags": ["kana"] },
+    { "id": "kana.hi.hi", "jp": "ひ", "romaji": "hi", "en": "'hi' as in he", "tags": ["kana"] },
+    { "id": "kana.hi.fu", "jp": "ふ", "romaji": "fu", "en": "'fu', soft, between f and h", "tags": ["kana"] },
+    { "id": "kana.hi.he", "jp": "へ", "romaji": "he", "en": "'he' (read 'e' as a particle)", "tags": ["kana"] },
+    { "id": "kana.hi.ho", "jp": "ほ", "romaji": "ho", "en": "'ho'", "tags": ["kana"] },
+
+    { "id": "kana.hi.ma", "jp": "ま", "romaji": "ma", "en": "'ma'", "tags": ["kana"] },
+    { "id": "kana.hi.mi", "jp": "み", "romaji": "mi", "en": "'mi' as in me", "tags": ["kana"] },
+    { "id": "kana.hi.mu", "jp": "む", "romaji": "mu", "en": "'mu' as in moo", "tags": ["kana"] },
+    { "id": "kana.hi.me", "jp": "め", "romaji": "me", "en": "'me' as in met", "tags": ["kana"] },
+    { "id": "kana.hi.mo", "jp": "も", "romaji": "mo", "en": "'mo'", "tags": ["kana"] },
+
+    { "id": "kana.hi.ya", "jp": "や", "romaji": "ya", "en": "'ya' as in yacht", "tags": ["kana"] },
+    { "id": "kana.hi.yu", "jp": "ゆ", "romaji": "yu", "en": "'yu' as in you", "tags": ["kana"] },
+    { "id": "kana.hi.yo", "jp": "よ", "romaji": "yo", "en": "'yo' as in yoga", "tags": ["kana"] },
+
+    { "id": "kana.hi.ra", "jp": "ら", "romaji": "ra", "en": "'ra', a light tapped r", "tags": ["kana"] },
+    { "id": "kana.hi.ri", "jp": "り", "romaji": "ri", "en": "'ri', a light tapped r", "tags": ["kana"] },
+    { "id": "kana.hi.ru", "jp": "る", "romaji": "ru", "en": "'ru', a light tapped r", "tags": ["kana"] },
+    { "id": "kana.hi.re", "jp": "れ", "romaji": "re", "en": "'re', a light tapped r", "tags": ["kana"] },
+    { "id": "kana.hi.ro", "jp": "ろ", "romaji": "ro", "en": "'ro', a light tapped r", "tags": ["kana"] },
+
+    { "id": "kana.hi.wa", "jp": "わ", "romaji": "wa", "en": "'wa' as in wander", "tags": ["kana"] },
+    { "id": "kana.hi.wo", "jp": "を", "romaji": "o", "en": "'wo', said 'o'; only used as a particle", "tags": ["kana"] },
+    { "id": "kana.hi.n", "jp": "ん", "romaji": "n", "en": "'n', the only lone consonant", "tags": ["kana"] }
+  ],
+  "lessons": [
+    { "id": "kana.hi.l1", "title": "Hiragana: a i u e o", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.hi.a" }, { "type": "kana-glyph", "item": "kana.hi.i" }, { "type": "kana-glyph", "item": "kana.hi.u" }, { "type": "kana-glyph", "item": "kana.hi.e" }, { "type": "kana-glyph", "item": "kana.hi.o" } ] },
+    { "id": "kana.hi.l2", "title": "Hiragana: ka ki ku ke ko", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.hi.ka" }, { "type": "kana-glyph", "item": "kana.hi.ki" }, { "type": "kana-glyph", "item": "kana.hi.ku" }, { "type": "kana-glyph", "item": "kana.hi.ke" }, { "type": "kana-glyph", "item": "kana.hi.ko" } ] },
+    { "id": "kana.hi.l3", "title": "Hiragana: sa shi su se so", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.hi.sa" }, { "type": "kana-glyph", "item": "kana.hi.shi" }, { "type": "kana-glyph", "item": "kana.hi.su" }, { "type": "kana-glyph", "item": "kana.hi.se" }, { "type": "kana-glyph", "item": "kana.hi.so" } ] },
+    { "id": "kana.hi.l4", "title": "Hiragana: ta chi tsu te to", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.hi.ta" }, { "type": "kana-glyph", "item": "kana.hi.chi" }, { "type": "kana-glyph", "item": "kana.hi.tsu" }, { "type": "kana-glyph", "item": "kana.hi.te" }, { "type": "kana-glyph", "item": "kana.hi.to" } ] },
+    { "id": "kana.hi.l5", "title": "Hiragana: na ni nu ne no", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.hi.na" }, { "type": "kana-glyph", "item": "kana.hi.ni" }, { "type": "kana-glyph", "item": "kana.hi.nu" }, { "type": "kana-glyph", "item": "kana.hi.ne" }, { "type": "kana-glyph", "item": "kana.hi.no" } ] },
+    { "id": "kana.hi.l6", "title": "Hiragana: ha hi fu he ho", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.hi.ha" }, { "type": "kana-glyph", "item": "kana.hi.hi" }, { "type": "kana-glyph", "item": "kana.hi.fu" }, { "type": "kana-glyph", "item": "kana.hi.he" }, { "type": "kana-glyph", "item": "kana.hi.ho" } ] },
+    { "id": "kana.hi.l7", "title": "Hiragana: ma mi mu me mo", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.hi.ma" }, { "type": "kana-glyph", "item": "kana.hi.mi" }, { "type": "kana-glyph", "item": "kana.hi.mu" }, { "type": "kana-glyph", "item": "kana.hi.me" }, { "type": "kana-glyph", "item": "kana.hi.mo" } ] },
+    { "id": "kana.hi.l8", "title": "Hiragana: ya yu yo", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.hi.ya" }, { "type": "kana-glyph", "item": "kana.hi.yu" }, { "type": "kana-glyph", "item": "kana.hi.yo" } ] },
+    { "id": "kana.hi.l9", "title": "Hiragana: ra ri ru re ro", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.hi.ra" }, { "type": "kana-glyph", "item": "kana.hi.ri" }, { "type": "kana-glyph", "item": "kana.hi.ru" }, { "type": "kana-glyph", "item": "kana.hi.re" }, { "type": "kana-glyph", "item": "kana.hi.ro" } ] },
+    { "id": "kana.hi.l10", "title": "Hiragana: wa wo n", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.hi.wa" }, { "type": "kana-glyph", "item": "kana.hi.wo" }, { "type": "kana-glyph", "item": "kana.hi.n" } ] }
+  ]
+}

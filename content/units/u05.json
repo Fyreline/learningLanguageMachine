@@ -1,0 +1,80 @@
+{
+  "id": "u05",
+  "items": [
+    { "id": "u05.eki", "jp": "駅", "furigana": "えき", "romaji": "eki", "en": "station", "note": "The kanji 駅 is everywhere on signs; learn to spot it fast.", "tags": ["transport", "place", "trip_core"], "trip_core": true },
+    { "id": "u05.kippu", "jp": "切符", "furigana": "きっぷ", "romaji": "kippu", "en": "ticket", "note": "Paper tickets still exist alongside IC cards; keep it till the exit gate.", "tags": ["transport", "trip_core"], "trip_core": true },
+    { "id": "u05.kippu_uriba", "jp": "切符うりば", "furigana": "きっぷうりば", "romaji": "kippu-uriba", "en": "ticket counter", "note": "-uriba means 'selling place'. Also midori-no-madoguchi for JR.", "tags": ["transport", "place"] },
+    { "id": "u05.kaisatsu", "jp": "かいさつ", "romaji": "kaisatsu", "en": "ticket gate", "note": "Tap your IC card or feed the paper ticket. Mind the gap-flaps.", "tags": ["transport", "place"] },
+    { "id": "u05.deguchi", "jp": "出口", "furigana": "でぐち", "romaji": "deguchi", "en": "exit", "note": "Big stations have many; note your exit number before you dive in.", "tags": ["transport", "direction", "trip_core"], "trip_core": true },
+    { "id": "u05.iriguchi", "jp": "入口", "furigana": "いりぐち", "romaji": "iriguchi", "en": "entrance", "tags": ["transport", "direction"] },
+    { "id": "u05.homu", "jp": "ホーム", "romaji": "hōmu", "en": "platform", "note": "From English 'platform'. Numbered; match it to your train.", "tags": ["transport", "place"] },
+
+    { "id": "u05.made", "jp": "まで", "romaji": "made", "en": "to / as far as", "note": "A particle: 'Kyōto made' = 'to Kyoto'. Points at your destination.", "tags": ["transport", "pattern"] },
+    { "id": "u05.made_onegai", "jp": "とうきょうまで おねがいします", "romaji": "Tōkyō made onegaishimasu", "en": "to Tokyo, please", "note": "The whole ticket-buying sentence. Swap in your station name.", "tags": ["transport", "trip_core"], "trip_core": true, "slots": { "pattern": "{X} made onegaishimasu", "fills": ["u05.eki", "u05.shinkansen"] } },
+    { "id": "u05.katamichi", "jp": "かたみち", "romaji": "katamichi", "en": "one-way", "tags": ["transport"] },
+    { "id": "u05.oufuku", "jp": "おうふく", "romaji": "ōfuku", "en": "return / round trip", "note": "Often cheaper than two singles for the same day.", "tags": ["transport", "trip_core"], "trip_core": true },
+    { "id": "u05.kippu_nimai", "jp": "切符を にまい", "furigana": "きっぷを にまい", "romaji": "kippu o nimai", "en": "two tickets", "note": "Tickets take the -mai counter. Two of you: nimai.", "tags": ["transport"] },
+    { "id": "u05.otona", "jp": "おとな", "romaji": "otona", "en": "adult (fare)", "note": "Machines ask otona / kodomo (adult / child). Tap otona.", "tags": ["transport"] },
+
+    { "id": "u05.nanbansen", "jp": "なんばんせんですか", "romaji": "nanban-sen desu ka", "en": "which platform / line?", "note": "-sen means 'line'. The answer is a number: 'san-ban-sen', platform 3.", "tags": ["transport", "question", "trip_core"], "trip_core": true },
+    { "id": "u05.tsugi", "jp": "つぎ", "romaji": "tsugi", "en": "next", "tags": ["transport", "direction"] },
+    { "id": "u05.tsugi_wa", "jp": "つぎは とうきょうです", "romaji": "tsugi wa Tōkyō desu", "en": "next stop is Tokyo", "note": "The announcement shape. Listen for your stop's name after 'tsugi wa'.", "tags": ["transport"] },
+    { "id": "u05.norikae", "jp": "のりかえ", "romaji": "norikae", "en": "transfer / change trains", "note": "Screens show it in English too; 'norikae' is the word you'll hear.", "tags": ["transport", "trip_core"], "trip_core": true },
+    { "id": "u05.kaisoku", "jp": "かいそく", "romaji": "kaisoku", "en": "rapid train", "note": "Skips small stops. Check it still stops where you want.", "tags": ["transport"] },
+    { "id": "u05.kakueki", "jp": "かくえき", "romaji": "kakueki", "en": "local (all stops)", "note": "kakueki-teisha: stops everywhere. Slow but never wrong.", "tags": ["transport"] },
+
+    { "id": "u05.shinkansen", "jp": "しんかんせん", "romaji": "shinkansen", "en": "bullet train", "note": "Reserve a seat in peak season; the green cars are first class.", "tags": ["transport", "trip_core"], "trip_core": true },
+    { "id": "u05.jr", "jp": "ジェイアール", "romaji": "JR", "en": "JR (Japan Railways)", "note": "Your rail pass world. JR lines, JR gates, JR staff windows.", "tags": ["transport"] },
+    { "id": "u05.chikatetsu", "jp": "ちかてつ", "romaji": "chikatetsu", "en": "subway", "note": "Tokyo has two subway companies plus JR — IC cards cover them all.", "tags": ["transport"] },
+    { "id": "u05.jiyuuseki", "jp": "じゆうせき", "romaji": "jiyūseki", "en": "non-reserved seat", "note": "Sit anywhere in these cars, first come first served.", "tags": ["transport"] },
+    { "id": "u05.shiteiseki", "jp": "していせき", "romaji": "shitei-seki", "en": "reserved seat", "note": "Guarantees a seat on a busy shinkansen; worth it with luggage.", "tags": ["transport"] },
+    { "id": "u05.mado_gawa", "jp": "まどがわ", "romaji": "mado-gawa", "en": "window seat", "note": "Ask for it to catch Fuji on the Tokyo–Kyoto run (right side, going west).", "tags": ["transport"] },
+    { "id": "u05.tsuro_gawa", "jp": "つうろがわ", "romaji": "tsūro-gawa", "en": "aisle seat", "tags": ["transport"] },
+
+    { "id": "u05.basu", "jp": "バス", "romaji": "basu", "en": "bus", "note": "Rural Fuji legs lean on buses; you often board at the back, pay at the front.", "tags": ["transport", "trip_core"], "trip_core": true },
+    { "id": "u05.takushi", "jp": "タクシー", "romaji": "takushī", "en": "taxi", "note": "Doors open automatically — don't grab the handle. Cash or IC.", "tags": ["transport", "trip_core"], "trip_core": true },
+    { "id": "u05.basutei", "jp": "バスてい", "romaji": "basu-tei", "en": "bus stop", "tags": ["transport", "place"] },
+    { "id": "u05.koko_made", "jp": "ここまで おねがいします", "romaji": "koko made onegaishimasu", "en": "to here, please", "note": "Show the driver the address on your phone and say it. Job done.", "tags": ["transport", "trip_core"], "trip_core": true },
+    { "id": "u05.tomete", "jp": "ここで とめて ください", "romaji": "koko de tomete kudasai", "en": "please stop here", "note": "For getting off a taxi where you want. Point as you say it.", "tags": ["transport"] },
+    { "id": "u05.orimasu", "jp": "つぎで おります", "romaji": "tsugi de orimasu", "en": "I'll get off at the next stop", "note": "Useful on buses; press the stop button too.", "tags": ["transport"] }
+  ],
+  "lessons": [
+    { "id": "u05.l1", "title": "Station and tickets", "kind": "teach", "new_items": ["u05.eki", "u05.kippu", "u05.kippu_uriba", "u05.kaisatsu", "u05.deguchi", "u05.iriguchi", "u05.homu"] },
+    { "id": "u05.l2", "title": "To ~ , one-way or return", "kind": "teach", "new_items": ["u05.made", "u05.made_onegai", "u05.katamichi", "u05.oufuku", "u05.kippu_nimai", "u05.otona"] },
+    { "id": "u05.l3", "title": "Which platform?", "kind": "teach", "new_items": ["u05.nanbansen", "u05.tsugi", "u05.tsugi_wa", "u05.norikae", "u05.kaisoku", "u05.kakueki"] },
+    { "id": "u05.l4", "title": "Shinkansen seats", "kind": "teach", "new_items": ["u05.shinkansen", "u05.jr", "u05.chikatetsu", "u05.jiyuuseki", "u05.shiteiseki", "u05.mado_gawa", "u05.tsuro_gawa"] },
+    { "id": "u05.l5", "title": "Bus and taxi", "kind": "teach", "new_items": ["u05.basu", "u05.takushi", "u05.basutei", "u05.koko_made", "u05.tomete", "u05.orimasu"] },
+    { "id": "u05.check", "title": "Buying a shinkansen ticket", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "listen-pick", "item": "u05.eki" },
+      { "type": "match-pairs", "items": ["u05.eki", "u05.kippu", "u05.deguchi", "u05.homu", "u05.norikae"] },
+      { "type": "listen-pick-jp", "item": "u05.made_onegai" },
+      { "type": "listen-pick", "item": "u05.oufuku", "distractors": ["u05.katamichi", "u05.otona", "u05.norikae"] },
+      { "type": "tile-arrange", "item": "u05.nanbansen" },
+      { "type": "match-pairs", "items": ["u05.shinkansen", "u05.basu", "u05.takushi", "u05.chikatetsu", "u05.jr"] },
+      { "type": "listen-type-romaji", "item": "u05.shinkansen" },
+      { "type": "listen-pick-jp", "item": "u05.koko_made" },
+      { "type": "listen-pick", "item": "u05.shiteiseki", "distractors": ["u05.jiyuuseki", "u05.mado_gawa", "u05.tsuro_gawa"] },
+      { "type": "speak", "item": "u05.made_onegai" },
+      { "type": "speak", "item": "u05.nanbansen" },
+      { "type": "dialogue", "dialogue": "u05.d1" }
+    ] }
+  ],
+  "dialogues": [
+    {
+      "id": "u05.d1",
+      "scene": "The JR ticket window, Tokyo Station. A morning crowd behind you, a Kyoto day-trip ahead. The clerk slides the glass open.",
+      "turns": [
+        { "speaker": "npc", "jp": "はい、つぎの かた どうぞ。", "romaji": "hai, tsugi no kata dōzo.", "en": "next in line, please." },
+        { "speaker": "you", "expect_item": "u05.made_onegai", "mode": "speak", "stakes": "You want Kyoto. Ask for tickets there. (Say your station in the slot.)" },
+        { "speaker": "npc", "jp": "かたみちですか、おうふくですか？", "romaji": "katamichi desu ka, ōfuku desu ka?", "en": "one-way or return?" },
+        { "speaker": "you", "expect_item": "u05.oufuku", "mode": "pick", "stakes": "You're coming back tonight. Choose the return." },
+        { "speaker": "npc", "jp": "おふたりですね。していせきに しますか？", "romaji": "o-futari desu ne. shitei-seki ni shimasu ka?", "en": "two of you, right? reserved seats?" },
+        { "speaker": "you", "expect_item": "u01.onegaishimasu", "mode": "pick", "stakes": "It's busy season — yes, lock in seats. Say please." },
+        { "speaker": "npc", "jp": "まどがわと つうろがわ、どちらが いいですか？", "romaji": "mado-gawa to tsūro-gawa, dochira ga ii desu ka?", "en": "window or aisle?" },
+        { "speaker": "you", "expect_item": "u05.mado_gawa", "mode": "pick", "stakes": "You want to see Fuji from the train. Pick the window." },
+        { "speaker": "npc", "jp": "しんかんせんは じゅうよんばんせんです。", "romaji": "shinkansen wa jūyon-ban-sen desu.", "en": "the shinkansen leaves from platform 14." },
+        { "speaker": "you", "expect_item": "u01.arigatogozaimasu", "mode": "pick", "stakes": "Tickets in hand. Thank the clerk and go find platform 14." }
+      ]
+    }
+  ]
+}

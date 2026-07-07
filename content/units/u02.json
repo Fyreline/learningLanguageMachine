@@ -1,0 +1,72 @@
+{
+  "id": "u02",
+  "items": [
+    { "id": "u02.kore", "jp": "これ", "romaji": "kore", "en": "this (near me)", "note": "The thing in your hand or right by you. Point and say it.", "tags": ["pattern", "trip_core"], "trip_core": true },
+    { "id": "u02.sore", "jp": "それ", "romaji": "sore", "en": "that (near you)", "note": "The thing by the person you're talking to.", "tags": ["pattern"] },
+    { "id": "u02.are", "jp": "あれ", "romaji": "are", "en": "that (over there)", "note": "The thing away from you both — up on the shelf, across the room.", "tags": ["pattern"] },
+    { "id": "u02.dore", "jp": "どれ", "romaji": "dore", "en": "which one", "note": "kore/sore/are/dore — the this/that/which family. Note the -re.", "tags": ["question"] },
+
+    { "id": "u02.desu", "jp": "です", "romaji": "desu", "en": "is / am / are", "note": "The polite 'to be'. Ends most sentences and keeps you polite.", "tags": ["pattern"] },
+    { "id": "u02.wa_desu", "jp": "これは にほんごです", "romaji": "kore wa nihongo desu", "en": "this is Japanese", "literal": "pattern: A wa B desu = 'A is B'", "note": "Your first sentence shape. Swap A and B for anything.", "tags": ["pattern"], "slots": { "pattern": "{X} wa {Y} desu", "fills": ["u02.kore", "u02.sore", "u02.are"] } },
+    { "id": "u02.nandesuka", "jp": "なんですか", "romaji": "nan desu ka", "en": "what is it?", "note": "The ka on the end makes any statement a question.", "tags": ["question", "trip_core"], "trip_core": true },
+    { "id": "u02.korewa_nandesu", "jp": "これは なんですか", "romaji": "kore wa nan desu ka", "en": "what is this?", "note": "Point at the mystery dish or button and ask. Endlessly handy.", "tags": ["question", "trip_core"], "trip_core": true, "distractors": ["u02.nandesuka", "u02.dokodesuka", "u02.ikuradesuka"] },
+    { "id": "u02.watashi", "jp": "わたし", "romaji": "watashi", "en": "I / me", "note": "Often dropped when it's obvious you mean yourself.", "tags": ["pattern"] },
+
+    { "id": "u02.kudasai", "jp": "ください", "romaji": "kudasai", "en": "please give me", "note": "A firm, polite 'please' for requesting a thing.", "tags": ["pattern", "trip_core"], "trip_core": true },
+    { "id": "u02.o_kudasai", "jp": "これを ください", "romaji": "kore o kudasai", "en": "this one, please", "literal": "pattern: X o kudasai = 'X, please'", "note": "The single most useful sentence for shops and stalls.", "tags": ["pattern", "trip_core"], "trip_core": true, "slots": { "pattern": "{X} o kudasai", "fills": ["u02.kore", "u02.sore", "u02.are"] } },
+    { "id": "u02.o_onegai", "jp": "これを おねがいします", "romaji": "kore o onegaishimasu", "en": "this one, please (softer)", "note": "Gentler than kudasai — good with staff you want to charm.", "tags": ["pattern"], "slots": { "pattern": "{X} o onegaishimasu", "fills": ["u02.kore", "u02.sore", "u02.are"] } },
+    { "id": "u02.hoshii", "jp": "ほしいです", "romaji": "hoshii desu", "en": "I want (it)", "note": "For wanting a thing. For doing something, you'd use a verb form later.", "tags": ["pattern"] },
+    { "id": "u02.ga_hoshii", "jp": "これが ほしいです", "romaji": "kore ga hoshii desu", "en": "I want this", "note": "ga marks what you want. Point and claim it.", "tags": ["pattern"], "slots": { "pattern": "{X} ga hoshii desu", "fills": ["u02.kore", "u02.sore", "u02.are"] } },
+
+    { "id": "u02.arimasu", "jp": "あります", "romaji": "arimasu", "en": "there is / they have", "note": "For things (not living people). 'Yes, arimasu' = 'yes, we've got it'.", "tags": ["pattern"] },
+    { "id": "u02.arimasen", "jp": "ありません", "romaji": "arimasen", "en": "there isn't / sold out", "note": "The gentle 'we don't have it'. You'll hear it — recognise it.", "tags": ["pattern"] },
+    { "id": "u02.wa_arimasuka", "jp": "みずは ありますか", "romaji": "mizu wa arimasu ka", "en": "do you have water?", "literal": "pattern: X wa arimasu ka = 'do you have X?'", "note": "Swap in anything you're hunting for. A shop's best friend.", "tags": ["question", "trip_core"], "trip_core": true, "slots": { "pattern": "{X} wa arimasu ka", "fills": ["u02.kore", "u02.sore", "u02.are"] } },
+    { "id": "u02.motto", "jp": "もっと", "romaji": "motto", "en": "more", "note": "'motto kudasai' = 'more, please'. Great at the table.", "tags": ["pattern"] },
+    { "id": "u02.sukoshi", "jp": "すこし", "romaji": "sukoshi", "en": "a little / a few", "note": "Softens requests and quantities. 'sukoshi dake' = 'just a little'.", "tags": ["pattern"] },
+
+    { "id": "u02.dokodesuka", "jp": "どこですか", "romaji": "doko desu ka", "en": "where is it?", "note": "The bones of the most valuable question in Japan (toilet edition, unit 6).", "tags": ["question", "trip_core"], "trip_core": true, "distractors": ["u02.nandesuka", "u02.ikuradesuka", "u02.itsudesuka"] },
+    { "id": "u02.korewa_doko", "jp": "これは どこですか", "romaji": "kore wa doko desu ka", "en": "where is this? (on a map)", "note": "Point at an address or a photo and ask where it is.", "tags": ["question"] },
+    { "id": "u02.ikuradesuka", "jp": "いくらですか", "romaji": "ikura desu ka", "en": "how much is it?", "note": "Unit 3 makes the answer make sense. Learn the question now.", "tags": ["question", "money", "trip_core"], "trip_core": true },
+    { "id": "u02.itsudesuka", "jp": "いつですか", "romaji": "itsu desu ka", "en": "when is it?", "note": "For times and dates — the answers arrive in unit 9.", "tags": ["question"] },
+    { "id": "u02.dochira", "jp": "どちらですか", "romaji": "dochira desu ka", "en": "which one / which way?", "note": "A more polite 'which'. Also 'where are you from' in unit 10.", "tags": ["question"] }
+  ],
+  "lessons": [
+    { "id": "u02.l1", "title": "This, that, that over there", "kind": "teach", "new_items": ["u02.kore", "u02.sore", "u02.are", "u02.dore"] },
+    { "id": "u02.l2", "title": "It is ~ (wa ~ desu)", "kind": "teach", "new_items": ["u02.desu", "u02.wa_desu", "u02.nandesuka", "u02.korewa_nandesu", "u02.watashi"] },
+    { "id": "u02.l3", "title": "This one, please", "kind": "teach", "new_items": ["u02.kudasai", "u02.o_kudasai", "u02.o_onegai", "u02.hoshii", "u02.ga_hoshii"] },
+    { "id": "u02.l4", "title": "Do you have ~?", "kind": "teach", "new_items": ["u02.arimasu", "u02.arimasen", "u02.wa_arimasuka", "u02.motto", "u02.sukoshi"] },
+    { "id": "u02.l5", "title": "What is it? Where is it?", "kind": "teach", "new_items": ["u02.dokodesuka", "u02.korewa_doko", "u02.ikuradesuka", "u02.itsudesuka", "u02.dochira"] },
+    { "id": "u02.check", "title": "On the corner shop", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "listen-pick", "item": "u02.kore" },
+      { "type": "match-pairs", "items": ["u02.kore", "u02.sore", "u02.are", "u02.dore", "u02.dochira"] },
+      { "type": "listen-pick-jp", "item": "u02.o_kudasai" },
+      { "type": "tile-arrange", "item": "u02.korewa_nandesu" },
+      { "type": "listen-pick", "item": "u02.ikuradesuka" },
+      { "type": "listen-type-romaji", "item": "u02.arimasu" },
+      { "type": "match-pairs", "items": ["u02.nandesuka", "u02.dokodesuka", "u02.ikuradesuka", "u02.itsudesuka", "u02.kudasai"] },
+      { "type": "tile-arrange", "item": "u02.wa_arimasuka" },
+      { "type": "listen-pick-jp", "item": "u02.dokodesuka", "distractors": ["u02.nandesuka", "u02.ikuradesuka", "u02.itsudesuka"] },
+      { "type": "speak", "item": "u02.o_kudasai" },
+      { "type": "speak", "item": "u02.korewa_nandesu" },
+      { "type": "dialogue", "dialogue": "u02.d1" }
+    ] }
+  ],
+  "dialogues": [
+    {
+      "id": "u02.d1",
+      "scene": "A tiny neighbourhood shop. You've spotted something on a shelf and the owner steps over to help.",
+      "turns": [
+        { "speaker": "npc", "jp": "いらっしゃいませ。", "romaji": "irasshaimase.", "en": "welcome in." },
+        { "speaker": "you", "expect_item": "u02.korewa_nandesu", "mode": "pick", "stakes": "Point at the mystery jar. Ask what it is." },
+        { "speaker": "npc", "jp": "それは ゆずの ジャムですよ。", "romaji": "sore wa yuzu no jamu desu yo.", "en": "that's yuzu jam." },
+        { "speaker": "you", "expect_item": "u02.ikuradesuka", "mode": "pick", "stakes": "Sounds good. Ask the price." },
+        { "speaker": "npc", "jp": "ろっぴゃくえんです。", "romaji": "roppyaku-en desu.", "en": "six hundred yen." },
+        { "speaker": "you", "expect_item": "u02.o_kudasai", "mode": "speak", "stakes": "You want it. Ask for this one." },
+        { "speaker": "npc", "jp": "はい。ほかに なにか ありますか？", "romaji": "hai. hoka ni nanika arimasu ka?", "en": "sure. anything else?" },
+        { "speaker": "you", "expect_item": "u01.daijobu", "mode": "pick", "stakes": "You're set. Politely say you're fine." },
+        { "speaker": "npc", "jp": "ありがとうございます！", "romaji": "arigatō gozaimasu!", "en": "thank you very much!" },
+        { "speaker": "you", "expect_item": "u01.arigatogozaimasu", "mode": "pick", "stakes": "Thank her back and take your jam." }
+      ]
+    }
+  ]
+}

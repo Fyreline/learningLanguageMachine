@@ -1,0 +1,78 @@
+{
+  "id": "u03",
+  "items": [
+    { "id": "u03.ichi", "jp": "いち", "romaji": "ichi", "en": "one", "tags": ["number", "trip_core"], "trip_core": true },
+    { "id": "u03.ni", "jp": "に", "romaji": "ni", "en": "two", "tags": ["number", "trip_core"], "trip_core": true },
+    { "id": "u03.san", "jp": "さん", "romaji": "san", "en": "three", "tags": ["number", "trip_core"], "trip_core": true },
+    { "id": "u03.yon", "jp": "よん", "romaji": "yon", "en": "four", "note": "yon is safer than shi (which sounds like 'death'). Both exist.", "tags": ["number"] },
+    { "id": "u03.go", "jp": "ご", "romaji": "go", "en": "five", "tags": ["number"] },
+    { "id": "u03.roku", "jp": "ろく", "romaji": "roku", "en": "six", "tags": ["number"] },
+    { "id": "u03.nana", "jp": "なな", "romaji": "nana", "en": "seven", "note": "nana is clearer than shichi over noise. Use it.", "tags": ["number"] },
+
+    { "id": "u03.hachi", "jp": "はち", "romaji": "hachi", "en": "eight", "tags": ["number"] },
+    { "id": "u03.kyuu", "jp": "きゅう", "romaji": "kyū", "en": "nine", "tags": ["number"] },
+    { "id": "u03.juu", "jp": "じゅう", "romaji": "jū", "en": "ten", "note": "Eleven is just jū-ichi, twenty is ni-jū. The system is kind.", "tags": ["number", "trip_core"], "trip_core": true },
+    { "id": "u03.hyaku", "jp": "ひゃく", "romaji": "hyaku", "en": "hundred", "note": "Prices live here: 100 to 900 covers most snacks.", "tags": ["number", "money", "trip_core"], "trip_core": true },
+    { "id": "u03.sen", "jp": "せん", "romaji": "sen", "en": "thousand", "note": "A 1,000-yen note is your everyday cash.", "tags": ["number", "money", "trip_core"], "trip_core": true },
+    { "id": "u03.man", "jp": "まん", "romaji": "man", "en": "ten thousand", "note": "10,000, not 1,000×10 in speech: ichi-man. Big-ticket unit.", "tags": ["number", "money"] },
+    { "id": "u03.en", "jp": "えん", "romaji": "en", "en": "yen", "note": "Written 円 on prices and notes; said 'en'. 500-en is a coin.", "tags": ["money", "trip_core"], "trip_core": true },
+
+    { "id": "u03.zero", "jp": "ゼロ", "romaji": "zero", "en": "zero", "note": "Also rei; zero is fine and clear for phone numbers and prices.", "tags": ["number"] },
+    { "id": "u03.gohyaku", "jp": "ごひゃく", "romaji": "gohyaku", "en": "five hundred", "note": "Regular. It's 300 and 600 and 800 that go irregular.", "tags": ["number", "money"] },
+    { "id": "u03.sanbyaku", "jp": "さんびゃく", "romaji": "sanbyaku", "en": "three hundred", "note": "hyaku softens to byaku after san. Your ear will learn it.", "tags": ["number", "money"] },
+    { "id": "u03.nisen", "jp": "にせん", "romaji": "nisen", "en": "two thousand", "note": "Sen stays regular for most: nisen, sanzen (that one shifts).", "tags": ["number", "money"] },
+    { "id": "u03.ichiman", "jp": "いちまん", "romaji": "ichiman", "en": "ten thousand (¥10,000)", "note": "The big note. Breaking one at a konbini is completely normal.", "tags": ["number", "money"] },
+
+    { "id": "u03.hitotsu", "jp": "ひとつ", "romaji": "hitotsu", "en": "one (thing)", "note": "The -tsu counter for general objects. Point and say 'hitotsu'.", "tags": ["number", "trip_core"], "trip_core": true },
+    { "id": "u03.futatsu", "jp": "ふたつ", "romaji": "futatsu", "en": "two (things)", "note": "hitotsu, futatsu, mittsu... this set only goes to ten and it's gold.", "tags": ["number", "trip_core"], "trip_core": true },
+    { "id": "u03.mittsu", "jp": "みっつ", "romaji": "mittsu", "en": "three (things)", "tags": ["number"] },
+    { "id": "u03.ichimai", "jp": "いちまい", "romaji": "ichimai", "en": "one (ticket / flat thing)", "note": "-mai counts flat things: tickets, tissues, cards.", "tags": ["number"] },
+    { "id": "u03.nimai", "jp": "にまい", "romaji": "nimai", "en": "two (tickets)", "note": "Two of you, two tickets: 'nimai kudasai'.", "tags": ["number", "trip_core"], "trip_core": true },
+
+    { "id": "u03.kado", "jp": "カード", "romaji": "kādo", "en": "(credit) card", "tags": ["money"] },
+    { "id": "u03.kado_de", "jp": "カードで いいですか", "romaji": "kādo de ii desu ka", "en": "is card OK?", "note": "Ask before you assume — many small places are cash-only.", "tags": ["money", "question", "trip_core"], "trip_core": true },
+    { "id": "u03.genkin", "jp": "げんきん", "romaji": "genkin", "en": "cash", "note": "Japan still loves it. Carry some; ATMs at konbini are reliable.", "tags": ["money", "trip_core"], "trip_core": true },
+    { "id": "u03.reshiito", "jp": "レシート", "romaji": "reshīto", "en": "receipt", "note": "'reshīto onegaishimasu' if you want one for tax-free later.", "tags": ["money", "shopping"] },
+    { "id": "u03.suika", "jp": "スイカ", "romaji": "Suika", "en": "Suica (IC travel card)", "note": "Tap-to-pay for trains and konbini. Pasmo and ICOCA work the same.", "tags": ["money", "transport"] },
+    { "id": "u03.otsuri", "jp": "おつり", "romaji": "otsuri", "en": "change (money back)", "note": "Handed on a small tray — take it from the tray, not the hand.", "tags": ["money", "culture"] }
+  ],
+  "lessons": [
+    { "id": "u03.l1", "title": "One to ten", "kind": "teach", "new_items": ["u03.ichi", "u03.ni", "u03.san", "u03.yon", "u03.go", "u03.roku", "u03.nana"] },
+    { "id": "u03.l2", "title": "Hundreds, thousands, yen", "kind": "teach", "new_items": ["u03.hachi", "u03.kyuu", "u03.juu", "u03.hyaku", "u03.sen", "u03.man", "u03.en"] },
+    { "id": "u03.l3", "title": "How much is it?", "kind": "teach", "new_items": ["u03.zero", "u03.gohyaku", "u03.sanbyaku", "u03.nisen", "u03.ichiman"] },
+    { "id": "u03.l4", "title": "Counting things", "kind": "teach", "new_items": ["u03.hitotsu", "u03.futatsu", "u03.mittsu", "u03.ichimai", "u03.nimai"] },
+    { "id": "u03.l5", "title": "Card or cash", "kind": "teach", "new_items": ["u03.kado", "u03.kado_de", "u03.genkin", "u03.reshiito", "u03.suika", "u03.otsuri"] },
+    { "id": "u03.check", "title": "At the airport kiosk", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "match-pairs", "items": ["u03.ichi", "u03.ni", "u03.san", "u03.yon", "u03.go"] },
+      { "type": "listen-pick", "item": "u03.hyaku" },
+      { "type": "listen-type-romaji", "item": "u03.sen" },
+      { "type": "match-pairs", "items": ["u03.roku", "u03.nana", "u03.hachi", "u03.kyuu", "u03.juu"] },
+      { "type": "listen-pick-jp", "item": "u03.en" },
+      { "type": "listen-pick", "item": "u03.hitotsu", "distractors": ["u03.futatsu", "u03.mittsu", "u03.ichimai"] },
+      { "type": "tile-arrange", "item": "u03.kado_de" },
+      { "type": "listen-pick", "item": "u03.genkin" },
+      { "type": "listen-pick-jp", "item": "u03.suika" },
+      { "type": "listen-type-romaji", "item": "u03.nimai" },
+      { "type": "speak", "item": "u03.kado_de" },
+      { "type": "dialogue", "dialogue": "u03.d1" }
+    ] }
+  ],
+  "dialogues": [
+    {
+      "id": "u03.d1",
+      "scene": "A convenience kiosk just past arrivals. You want two bottles of water and a travel card, jet-lagged and fumbling for cash.",
+      "turns": [
+        { "speaker": "npc", "jp": "いらっしゃいませ。", "romaji": "irasshaimase.", "en": "welcome." },
+        { "speaker": "you", "expect_item": "u02.wa_arimasuka", "mode": "pick", "stakes": "Ask if they have water before you dig through the fridge." },
+        { "speaker": "npc", "jp": "はい、あちらに ありますよ。", "romaji": "hai, achira ni arimasu yo.", "en": "yes, they're just over there." },
+        { "speaker": "you", "expect_item": "u03.futatsu", "mode": "pick", "stakes": "Two of you, two bottles. Ask for two." },
+        { "speaker": "npc", "jp": "スイカも いりますか？", "romaji": "Suika mo irimasu ka?", "en": "do you also want a Suica card?" },
+        { "speaker": "you", "expect_item": "u01.onegaishimasu", "mode": "pick", "stakes": "Yes — you'll need it for the trains. Accept it." },
+        { "speaker": "npc", "jp": "ぜんぶで にせんえんです。", "romaji": "zenbu de nisen-en desu.", "en": "that's two thousand yen altogether." },
+        { "speaker": "you", "expect_item": "u03.kado_de", "mode": "speak", "stakes": "You'd rather not break a note. Ask if card is OK." },
+        { "speaker": "npc", "jp": "だいじょうぶです。レシートは いりますか？", "romaji": "daijōbu desu. reshīto wa irimasu ka?", "en": "that's fine. would you like a receipt?" },
+        { "speaker": "you", "expect_item": "u01.kekkou", "mode": "pick", "stakes": "You don't need it. Decline politely." }
+      ]
+    }
+  ]
+}

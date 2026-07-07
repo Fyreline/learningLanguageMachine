@@ -1,0 +1,227 @@
+{
+  "course": "ja-travel-v1",
+  "trip_date_default": "2026-09-15",
+  "units": [
+    {
+      "id": "u01",
+      "title": "First words",
+      "kicker": "UNIT 1 · FIRST WORDS",
+      "summary": "Greet, thank, apologise, and catch someone's attention.",
+      "landmark": "door",
+      "lessons": [
+        { "id": "u01.l1", "title": "Hello, all day", "kind": "teach" },
+        { "id": "u01.l2", "title": "Thank you", "kind": "teach" },
+        { "id": "u01.l3", "title": "The magic word: sumimasen", "kind": "teach" },
+        { "id": "u01.l4", "title": "Yes, no, please", "kind": "teach" },
+        { "id": "u01.l5", "title": "I don't understand", "kind": "teach" },
+        { "id": "u01.check", "title": "At the front door", "kind": "checkpoint" }
+      ]
+    },
+    {
+      "id": "u02",
+      "title": "Survival grammar",
+      "kicker": "UNIT 2 · SURVIVAL GRAMMAR",
+      "summary": "Point at anything and ask or say what it is.",
+      "landmark": "street",
+      "lessons": [
+        { "id": "u02.l1", "title": "This, that, that over there", "kind": "teach" },
+        { "id": "u02.l2", "title": "It is ~ (wa ~ desu)", "kind": "teach" },
+        { "id": "u02.l3", "title": "This one, please", "kind": "teach" },
+        { "id": "u02.l4", "title": "Do you have ~?", "kind": "teach" },
+        { "id": "u02.l5", "title": "What is it? Where is it?", "kind": "teach" },
+        { "id": "u02.check", "title": "On the corner shop", "kind": "checkpoint" }
+      ]
+    },
+    {
+      "id": "u03",
+      "title": "Numbers & money",
+      "kicker": "UNIT 3 · NUMBERS & MONEY",
+      "summary": "Count, read prices, and pay without panic.",
+      "landmark": "plane",
+      "lessons": [
+        { "id": "u03.l1", "title": "One to ten", "kind": "teach" },
+        { "id": "u03.l2", "title": "Hundreds, thousands, yen", "kind": "teach" },
+        { "id": "u03.l3", "title": "How much is it?", "kind": "teach" },
+        { "id": "u03.l4", "title": "Counting things", "kind": "teach" },
+        { "id": "u03.l5", "title": "Card or cash", "kind": "teach" },
+        { "id": "u03.check", "title": "At the airport kiosk", "kind": "checkpoint" }
+      ]
+    },
+    {
+      "id": "u04",
+      "title": "Restaurant",
+      "kicker": "UNIT 4 · RESTAURANT",
+      "summary": "Get seated, order, ask, pay, and leave charmed.",
+      "landmark": "izakaya",
+      "lessons": [
+        { "id": "u04.l1", "title": "Table for two", "kind": "teach" },
+        { "id": "u04.l2", "title": "The menu, please", "kind": "teach" },
+        { "id": "u04.l3", "title": "This one, twice", "kind": "teach" },
+        { "id": "u04.l4", "title": "Delicious! and dietary needs", "kind": "teach" },
+        { "id": "u04.l5", "title": "The bill, please", "kind": "teach" },
+        { "id": "u04.check", "title": "Izakaya night", "kind": "checkpoint" }
+      ]
+    },
+    {
+      "id": "u05",
+      "title": "Trains & transport",
+      "kicker": "UNIT 5 · TRAINS & TRANSPORT",
+      "summary": "Buy tickets, find platforms, ride the right train.",
+      "landmark": "shinkansen",
+      "lessons": [
+        { "id": "u05.l1", "title": "Station and tickets", "kind": "teach" },
+        { "id": "u05.l2", "title": "To ~ , one-way or return", "kind": "teach" },
+        { "id": "u05.l3", "title": "Which platform?", "kind": "teach" },
+        { "id": "u05.l4", "title": "Shinkansen seats", "kind": "teach" },
+        { "id": "u05.l5", "title": "Bus and taxi", "kind": "teach" },
+        { "id": "u05.check", "title": "Buying a shinkansen ticket", "kind": "checkpoint" }
+      ]
+    },
+    {
+      "id": "u06",
+      "title": "Directions & places",
+      "kicker": "UNIT 6 · DIRECTIONS & PLACES",
+      "summary": "Ask where things are and read the answer's shape.",
+      "landmark": "streets",
+      "lessons": [
+        { "id": "u06.l1", "title": "Straight, right, left", "kind": "teach" },
+        { "id": "u06.l2", "title": "Near and far", "kind": "teach" },
+        { "id": "u06.l3", "title": "Where is the toilet?", "kind": "teach" },
+        { "id": "u06.l4", "title": "Useful places", "kind": "teach" },
+        { "id": "u06.l5", "title": "Which floor?", "kind": "teach" },
+        { "id": "u06.check", "title": "Lost in the streets", "kind": "checkpoint" }
+      ]
+    },
+    {
+      "id": "u07",
+      "title": "Shopping & konbini",
+      "kicker": "UNIT 7 · SHOPPING & KONBINI",
+      "summary": "Browse, ask for sizes, and survive the konbini rituals.",
+      "landmark": "donki",
+      "lessons": [
+        { "id": "u07.l1", "title": "Just looking", "kind": "teach" },
+        { "id": "u07.l2", "title": "A bit big, a bit small", "kind": "teach" },
+        { "id": "u07.l3", "title": "The bag question", "kind": "teach" },
+        { "id": "u07.l4", "title": "Warm it up?", "kind": "teach" },
+        { "id": "u07.l5", "title": "Souvenirs and tax-free", "kind": "teach" },
+        { "id": "u07.check", "title": "A run through Don Quijote", "kind": "checkpoint" }
+      ]
+    },
+    {
+      "id": "u08",
+      "title": "Hotel & home base",
+      "kicker": "UNIT 8 · HOTEL & HOME BASE",
+      "summary": "Check in and out, ask for things, and read the ryokan.",
+      "landmark": "ryokan",
+      "lessons": [
+        { "id": "u08.l1", "title": "I have a reservation", "kind": "teach" },
+        { "id": "u08.l2", "title": "Check-in, check-out", "kind": "teach" },
+        { "id": "u08.l3", "title": "Luggage and keys", "kind": "teach" },
+        { "id": "u08.l4", "title": "Wifi and breakfast", "kind": "teach" },
+        { "id": "u08.l5", "title": "Onsen and yukata", "kind": "teach" },
+        { "id": "u08.check", "title": "Checking into the ryokan", "kind": "checkpoint" }
+      ]
+    },
+    {
+      "id": "u09",
+      "title": "Time & plans",
+      "kicker": "UNIT 9 · TIME & PLANS",
+      "summary": "Tell the time, name the days, read opening hours.",
+      "landmark": "calendar",
+      "lessons": [
+        { "id": "u09.l1", "title": "What time is it?", "kind": "teach" },
+        { "id": "u09.l2", "title": "Minutes and half past", "kind": "teach" },
+        { "id": "u09.l3", "title": "Today, tomorrow, yesterday", "kind": "teach" },
+        { "id": "u09.l4", "title": "Days of the week", "kind": "teach" },
+        { "id": "u09.l5", "title": "Open and closed", "kind": "teach" },
+        { "id": "u09.check", "title": "Are you open?", "kind": "checkpoint" }
+      ]
+    },
+    {
+      "id": "u10",
+      "title": "Feelings & small talk",
+      "kicker": "UNIT 10 · FEELINGS & SMALL TALK",
+      "summary": "Be a person, not a phrasebook.",
+      "landmark": "onsen-town",
+      "lessons": [
+        { "id": "u10.l1", "title": "Fun, tired, cold, hot", "kind": "teach" },
+        { "id": "u10.l2", "title": "I like it", "kind": "teach" },
+        { "id": "u10.l3", "title": "Beautiful, amazing", "kind": "teach" },
+        { "id": "u10.l4", "title": "Nice to meet you", "kind": "teach" },
+        { "id": "u10.l5", "title": "Where are you from?", "kind": "teach" },
+        { "id": "u10.check", "title": "A chat in the onsen town", "kind": "checkpoint" }
+      ]
+    },
+    {
+      "id": "u11",
+      "title": "Emergencies & health",
+      "kicker": "UNIT 11 · EMERGENCIES & HEALTH",
+      "summary": "Get help fast and make a pharmacy run.",
+      "landmark": "koban",
+      "lessons": [
+        { "id": "u11.l1", "title": "Help, police, ambulance", "kind": "teach" },
+        { "id": "u11.l2", "title": "It hurts", "kind": "teach" },
+        { "id": "u11.l3", "title": "Body parts", "kind": "teach" },
+        { "id": "u11.l4", "title": "Pharmacy and medicine", "kind": "teach" },
+        { "id": "u11.l5", "title": "I lost my passport", "kind": "teach" },
+        { "id": "u11.check", "title": "At the koban", "kind": "checkpoint" }
+      ]
+    },
+    {
+      "id": "u12",
+      "title": "Food, deeper",
+      "kicker": "UNIT 12 · FOOD, DEEPER",
+      "summary": "Read a menu-ish, name what you love, eat safely.",
+      "landmark": "market",
+      "lessons": [
+        { "id": "u12.l1", "title": "Dishes you'll want", "kind": "teach" },
+        { "id": "u12.l2", "title": "Sweet, spicy, salty", "kind": "teach" },
+        { "id": "u12.l3", "title": "Set meals and sides", "kind": "teach" },
+        { "id": "u12.l4", "title": "What meat is this?", "kind": "teach" },
+        { "id": "u12.l5", "title": "Allergies, deeper", "kind": "teach" },
+        { "id": "u12.check", "title": "At the Kyoto market", "kind": "checkpoint" }
+      ]
+    },
+    {
+      "id": "u13",
+      "title": "Politeness & culture",
+      "kicker": "UNIT 13 · POLITENESS & CULTURE",
+      "summary": "The unspoken rules, finally said out loud.",
+      "landmark": "torii-avenue",
+      "lessons": [
+        { "id": "u13.l1", "title": "Honorific o- and go-", "kind": "teach" },
+        { "id": "u13.l2", "title": "Before you eat and leave", "kind": "teach" },
+        { "id": "u13.l3", "title": "Sorry vs sorry", "kind": "teach" },
+        { "id": "u13.l4", "title": "Trays, shoes, escalators", "kind": "teach" },
+        { "id": "u13.l5", "title": "Small gracious phrases", "kind": "teach" },
+        { "id": "u13.check", "title": "Along the torii avenue", "kind": "checkpoint" }
+      ]
+    },
+    {
+      "id": "u14",
+      "title": "Trip dress rehearsal",
+      "kicker": "UNIT 14 · DRESS REHEARSAL",
+      "summary": "Six full scenes chaining everything you know.",
+      "landmark": "fuji",
+      "lessons": [
+        { "id": "u14.l1", "title": "Arrival: airport to hotel", "kind": "checkpoint" },
+        { "id": "u14.l2", "title": "Izakaya night", "kind": "checkpoint" },
+        { "id": "u14.l3", "title": "Day-trip by train", "kind": "checkpoint" },
+        { "id": "u14.l4", "title": "The shopping run", "kind": "checkpoint" },
+        { "id": "u14.l5", "title": "Feeling unwell", "kind": "checkpoint" },
+        { "id": "u14.check", "title": "Last-night thank-yous", "kind": "checkpoint" }
+      ]
+    }
+  ],
+  "kana_trail": {
+    "hiragana": [
+      "kana.hi.l1", "kana.hi.l2", "kana.hi.l3", "kana.hi.l4", "kana.hi.l5",
+      "kana.hi.l6", "kana.hi.l7", "kana.hi.l8", "kana.hi.l9", "kana.hi.l10"
+    ],
+    "katakana": [
+      "kana.ka.l1", "kana.ka.l2", "kana.ka.l3", "kana.ka.l4", "kana.ka.l5",
+      "kana.ka.l6", "kana.ka.l7", "kana.ka.l8", "kana.ka.l9", "kana.ka.l10",
+      "kana.ka.menu"
+    ]
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "id": "katakana",
+  "items": [
+    { "id": "kana.ka.a", "jp": "ア", "romaji": "a", "en": "'a' as in father", "tags": ["kana"] },
+    { "id": "kana.ka.i", "jp": "イ", "romaji": "i", "en": "'i' as in machine", "tags": ["kana"] },
+    { "id": "kana.ka.u", "jp": "ウ", "romaji": "u", "en": "'u' as in flute", "tags": ["kana"] },
+    { "id": "kana.ka.e", "jp": "エ", "romaji": "e", "en": "'e' as in net", "tags": ["kana"] },
+    { "id": "kana.ka.o", "jp": "オ", "romaji": "o", "en": "'o' as in for", "tags": ["kana"] },
+
+    { "id": "kana.ka.ka", "jp": "カ", "romaji": "ka", "en": "'ka'", "tags": ["kana"] },
+    { "id": "kana.ka.ki", "jp": "キ", "romaji": "ki", "en": "'ki'", "tags": ["kana"] },
+    { "id": "kana.ka.ku", "jp": "ク", "romaji": "ku", "en": "'ku'", "tags": ["kana"] },
+    { "id": "kana.ka.ke", "jp": "ケ", "romaji": "ke", "en": "'ke'", "tags": ["kana"] },
+    { "id": "kana.ka.ko", "jp": "コ", "romaji": "ko", "en": "'ko'", "tags": ["kana"] },
+
+    { "id": "kana.ka.sa", "jp": "サ", "romaji": "sa", "en": "'sa'", "tags": ["kana"] },
+    { "id": "kana.ka.shi", "jp": "シ", "romaji": "shi", "en": "'shi'; note the near-twin tsu", "tags": ["kana"] },
+    { "id": "kana.ka.su", "jp": "ス", "romaji": "su", "en": "'su'", "tags": ["kana"] },
+    { "id": "kana.ka.se", "jp": "セ", "romaji": "se", "en": "'se'", "tags": ["kana"] },
+    { "id": "kana.ka.so", "jp": "ソ", "romaji": "so", "en": "'so'; note the near-twin n", "tags": ["kana"] },
+
+    { "id": "kana.ka.ta", "jp": "タ", "romaji": "ta", "en": "'ta'", "tags": ["kana"] },
+    { "id": "kana.ka.chi", "jp": "チ", "romaji": "chi", "en": "'chi'", "tags": ["kana"] },
+    { "id": "kana.ka.tsu", "jp": "ツ", "romaji": "tsu", "en": "'tsu'; note the near-twin shi", "tags": ["kana"] },
+    { "id": "kana.ka.te", "jp": "テ", "romaji": "te", "en": "'te'", "tags": ["kana"] },
+    { "id": "kana.ka.to", "jp": "ト", "romaji": "to", "en": "'to'", "tags": ["kana"] },
+
+    { "id": "kana.ka.na", "jp": "ナ", "romaji": "na", "en": "'na'", "tags": ["kana"] },
+    { "id": "kana.ka.ni", "jp": "ニ", "romaji": "ni", "en": "'ni'", "tags": ["kana"] },
+    { "id": "kana.ka.nu", "jp": "ヌ", "romaji": "nu", "en": "'nu'", "tags": ["kana"] },
+    { "id": "kana.ka.ne", "jp": "ネ", "romaji": "ne", "en": "'ne'", "tags": ["kana"] },
+    { "id": "kana.ka.no", "jp": "ノ", "romaji": "no", "en": "'no'", "tags": ["kana"] },
+
+    { "id": "kana.ka.ha", "jp": "ハ", "romaji": "ha", "en": "'ha'", "tags": ["kana"] },
+    { "id": "kana.ka.hi", "jp": "ヒ", "romaji": "hi", "en": "'hi'", "tags": ["kana"] },
+    { "id": "kana.ka.fu", "jp": "フ", "romaji": "fu", "en": "'fu'", "tags": ["kana"] },
+    { "id": "kana.ka.he", "jp": "ヘ", "romaji": "he", "en": "'he'", "tags": ["kana"] },
+    { "id": "kana.ka.ho", "jp": "ホ", "romaji": "ho", "en": "'ho'", "tags": ["kana"] },
+
+    { "id": "kana.ka.ma", "jp": "マ", "romaji": "ma", "en": "'ma'", "tags": ["kana"] },
+    { "id": "kana.ka.mi", "jp": "ミ", "romaji": "mi", "en": "'mi'", "tags": ["kana"] },
+    { "id": "kana.ka.mu", "jp": "ム", "romaji": "mu", "en": "'mu'", "tags": ["kana"] },
+    { "id": "kana.ka.me", "jp": "メ", "romaji": "me", "en": "'me'", "tags": ["kana"] },
+    { "id": "kana.ka.mo", "jp": "モ", "romaji": "mo", "en": "'mo'", "tags": ["kana"] },
+
+    { "id": "kana.ka.ya", "jp": "ヤ", "romaji": "ya", "en": "'ya'", "tags": ["kana"] },
+    { "id": "kana.ka.yu", "jp": "ユ", "romaji": "yu", "en": "'yu'", "tags": ["kana"] },
+    { "id": "kana.ka.yo", "jp": "ヨ", "romaji": "yo", "en": "'yo'", "tags": ["kana"] },
+
+    { "id": "kana.ka.ra", "jp": "ラ", "romaji": "ra", "en": "'ra'", "tags": ["kana"] },
+    { "id": "kana.ka.ri", "jp": "リ", "romaji": "ri", "en": "'ri'", "tags": ["kana"] },
+    { "id": "kana.ka.ru", "jp": "ル", "romaji": "ru", "en": "'ru'", "tags": ["kana"] },
+    { "id": "kana.ka.re", "jp": "レ", "romaji": "re", "en": "'re'", "tags": ["kana"] },
+    { "id": "kana.ka.ro", "jp": "ロ", "romaji": "ro", "en": "'ro'", "tags": ["kana"] },
+
+    { "id": "kana.ka.wa", "jp": "ワ", "romaji": "wa", "en": "'wa'", "tags": ["kana"] },
+    { "id": "kana.ka.wo", "jp": "ヲ", "romaji": "o", "en": "'wo', said 'o'; very rare", "tags": ["kana"] },
+    { "id": "kana.ka.n", "jp": "ン", "romaji": "n", "en": "'n'; note the near-twin so", "tags": ["kana"] },
+
+    { "id": "kana.ka.menu.biru", "jp": "ビール", "romaji": "bīru", "en": "beer", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.ramen", "jp": "ラーメン", "romaji": "rāmen", "en": "ramen", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.kohi", "jp": "コーヒー", "romaji": "kōhī", "en": "coffee", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.aisu", "jp": "アイス", "romaji": "aisu", "en": "ice cream", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.juusu", "jp": "ジュース", "romaji": "jūsu", "en": "juice", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.miruku", "jp": "ミルク", "romaji": "miruku", "en": "milk", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.sarada", "jp": "サラダ", "romaji": "sarada", "en": "salad", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.pan", "jp": "パン", "romaji": "pan", "en": "bread", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.basu", "jp": "バス", "romaji": "basu", "en": "bus", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.takushi", "jp": "タクシー", "romaji": "takushī", "en": "taxi", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.hoteru", "jp": "ホテル", "romaji": "hoteru", "en": "hotel", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.konbini", "jp": "コンビニ", "romaji": "konbini", "en": "convenience store", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.toire", "jp": "トイレ", "romaji": "toire", "en": "toilet", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.menyu", "jp": "メニュー", "romaji": "menyū", "en": "menu", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.kado", "jp": "カード", "romaji": "kādo", "en": "card", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.reshito", "jp": "レシート", "romaji": "reshīto", "en": "receipt", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.saizu", "jp": "サイズ", "romaji": "saizu", "en": "size", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.chekkuin", "jp": "チェックイン", "romaji": "chekku-in", "en": "check-in", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.erebeta", "jp": "エレベーター", "romaji": "erebētā", "en": "elevator / lift", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.esukareta", "jp": "エスカレーター", "romaji": "esukarētā", "en": "escalator", "tags": ["kana", "menu"] },
+    { "id": "kana.ka.menu.pasupoto", "jp": "パスポート", "romaji": "pasupōto", "en": "passport", "tags": ["kana", "menu"] }
+  ],
+  "lessons": [
+    { "id": "kana.ka.l1", "title": "Katakana: a i u e o", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.ka.a" }, { "type": "kana-glyph", "item": "kana.ka.i" }, { "type": "kana-glyph", "item": "kana.ka.u" }, { "type": "kana-glyph", "item": "kana.ka.e" }, { "type": "kana-glyph", "item": "kana.ka.o" } ] },
+    { "id": "kana.ka.l2", "title": "Katakana: ka ki ku ke ko", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.ka.ka" }, { "type": "kana-glyph", "item": "kana.ka.ki" }, { "type": "kana-glyph", "item": "kana.ka.ku" }, { "type": "kana-glyph", "item": "kana.ka.ke" }, { "type": "kana-glyph", "item": "kana.ka.ko" } ] },
+    { "id": "kana.ka.l3", "title": "Katakana: sa shi su se so", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.ka.sa" }, { "type": "kana-glyph", "item": "kana.ka.shi" }, { "type": "kana-glyph", "item": "kana.ka.su" }, { "type": "kana-glyph", "item": "kana.ka.se" }, { "type": "kana-glyph", "item": "kana.ka.so" } ] },
+    { "id": "kana.ka.l4", "title": "Katakana: ta chi tsu te to", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.ka.ta" }, { "type": "kana-glyph", "item": "kana.ka.chi" }, { "type": "kana-glyph", "item": "kana.ka.tsu" }, { "type": "kana-glyph", "item": "kana.ka.te" }, { "type": "kana-glyph", "item": "kana.ka.to" } ] },
+    { "id": "kana.ka.l5", "title": "Katakana: na ni nu ne no", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.ka.na" }, { "type": "kana-glyph", "item": "kana.ka.ni" }, { "type": "kana-glyph", "item": "kana.ka.nu" }, { "type": "kana-glyph", "item": "kana.ka.ne" }, { "type": "kana-glyph", "item": "kana.ka.no" } ] },
+    { "id": "kana.ka.l6", "title": "Katakana: ha hi fu he ho", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.ka.ha" }, { "type": "kana-glyph", "item": "kana.ka.hi" }, { "type": "kana-glyph", "item": "kana.ka.fu" }, { "type": "kana-glyph", "item": "kana.ka.he" }, { "type": "kana-glyph", "item": "kana.ka.ho" } ] },
+    { "id": "kana.ka.l7", "title": "Katakana: ma mi mu me mo", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.ka.ma" }, { "type": "kana-glyph", "item": "kana.ka.mi" }, { "type": "kana-glyph", "item": "kana.ka.mu" }, { "type": "kana-glyph", "item": "kana.ka.me" }, { "type": "kana-glyph", "item": "kana.ka.mo" } ] },
+    { "id": "kana.ka.l8", "title": "Katakana: ya yu yo", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.ka.ya" }, { "type": "kana-glyph", "item": "kana.ka.yu" }, { "type": "kana-glyph", "item": "kana.ka.yo" } ] },
+    { "id": "kana.ka.l9", "title": "Katakana: ra ri ru re ro", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.ka.ra" }, { "type": "kana-glyph", "item": "kana.ka.ri" }, { "type": "kana-glyph", "item": "kana.ka.ru" }, { "type": "kana-glyph", "item": "kana.ka.re" }, { "type": "kana-glyph", "item": "kana.ka.ro" } ] },
+    { "id": "kana.ka.l10", "title": "Katakana: wa wo n", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.ka.wa" }, { "type": "kana-glyph", "item": "kana.ka.wo" }, { "type": "kana-glyph", "item": "kana.ka.n" } ] },
+    { "id": "kana.ka.menu", "title": "Menu katakana: reading in the wild", "kind": "teach", "new_items": [], "steps": [
+      { "type": "kana-glyph", "item": "kana.ka.menu.biru" }, { "type": "kana-glyph", "item": "kana.ka.menu.ramen" }, { "type": "kana-glyph", "item": "kana.ka.menu.kohi" }, { "type": "kana-glyph", "item": "kana.ka.menu.aisu" }, { "type": "kana-glyph", "item": "kana.ka.menu.juusu" }, { "type": "kana-glyph", "item": "kana.ka.menu.miruku" }, { "type": "kana-glyph", "item": "kana.ka.menu.sarada" }, { "type": "kana-glyph", "item": "kana.ka.menu.pan" }, { "type": "kana-glyph", "item": "kana.ka.menu.basu" }, { "type": "kana-glyph", "item": "kana.ka.menu.takushi" }, { "type": "kana-glyph", "item": "kana.ka.menu.hoteru" }, { "type": "kana-glyph", "item": "kana.ka.menu.konbini" }, { "type": "kana-glyph", "item": "kana.ka.menu.toire" }, { "type": "kana-glyph", "item": "kana.ka.menu.menyu" }, { "type": "kana-glyph", "item": "kana.ka.menu.kado" }, { "type": "kana-glyph", "item": "kana.ka.menu.reshito" }, { "type": "kana-glyph", "item": "kana.ka.menu.saizu" }, { "type": "kana-glyph", "item": "kana.ka.menu.chekkuin" }, { "type": "kana-glyph", "item": "kana.ka.menu.erebeta" }, { "type": "kana-glyph", "item": "kana.ka.menu.esukareta" }, { "type": "kana-glyph", "item": "kana.ka.menu.pasupoto" } ] }
+  ]
+}

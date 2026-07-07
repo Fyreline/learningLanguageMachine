@@ -1,0 +1,74 @@
+{
+  "id": "u08",
+  "items": [
+    { "id": "u08.yoyaku", "jp": "よやく", "romaji": "yoyaku", "en": "reservation", "tags": ["hotel"] },
+    { "id": "u08.yoyaku_shiteimasu", "jp": "よやく して います", "romaji": "yoyaku shite imasu", "en": "I have a reservation", "note": "Your opening line at the desk. Have the booking name ready.", "tags": ["hotel", "trip_core"], "trip_core": true },
+    { "id": "u08.namae", "jp": "なまえ", "romaji": "namae", "en": "name", "note": "o-namae when asking someone else's; namae for your own.", "tags": ["hotel", "smalltalk"] },
+    { "id": "u08.namae_de", "jp": "スミスで よやく して います", "romaji": "Sumisu de yoyaku shite imasu", "en": "it's booked under Smith", "note": "'[name] de' = 'under [name]'. Swap in your surname.", "tags": ["hotel"] },
+    { "id": "u08.konban_tomari", "jp": "こんばん とまります", "romaji": "konban tomarimasu", "en": "I'm staying tonight", "note": "For a walk-in without a booking. Add a night count if you can.", "tags": ["hotel"] },
+
+    { "id": "u08.chekkuin", "jp": "チェックイン", "romaji": "chekku-in", "en": "check-in", "tags": ["hotel", "trip_core"], "trip_core": true },
+    { "id": "u08.chekkuauto", "jp": "チェックアウト", "romaji": "chekku-auto", "en": "check-out", "tags": ["hotel"] },
+    { "id": "u08.nanji_chekkuauto", "jp": "チェックアウトは なんじですか", "romaji": "chekku-auto wa nan-ji desu ka", "en": "what time is check-out?", "note": "Usually 10 or 11am. Ask so you don't get a polite phone call.", "tags": ["hotel", "question", "time"] },
+    { "id": "u08.furonto", "jp": "フロント", "romaji": "furonto", "en": "front desk", "note": "The reception, from 'front'. 'furonto de' = 'at the desk'.", "tags": ["hotel", "place"] },
+    { "id": "u08.heya", "jp": "へや", "romaji": "heya", "en": "room", "tags": ["hotel"] },
+
+    { "id": "u08.nimotsu", "jp": "にもつ", "romaji": "nimotsu", "en": "luggage", "tags": ["hotel"] },
+    { "id": "u08.nimotsu_azukatte", "jp": "にもつを あずかって もらえますか", "romaji": "nimotsu o azukatte moraemasu ka", "en": "could you hold my luggage?", "note": "Before check-in or after check-out. Almost always a yes.", "tags": ["hotel", "question", "trip_core"], "trip_core": true },
+    { "id": "u08.kagi", "jp": "かぎ", "romaji": "kagi", "en": "key", "tags": ["hotel", "trip_core"], "trip_core": true },
+    { "id": "u08.kagi_onegai", "jp": "かぎを おねがいします", "romaji": "kagi o onegaishimasu", "en": "the key, please", "note": "Leave it at the desk when you go out at many ryokan.", "tags": ["hotel"] },
+    { "id": "u08.roomnanba", "jp": "へやの ばんごう", "romaji": "heya no bangō", "en": "room number", "note": "You give it to charge meals to the room; keep the card handy.", "tags": ["hotel"] },
+    { "id": "u08.wasuremono", "jp": "わすれもの", "romaji": "wasuremono", "en": "a forgotten item", "note": "'wasuremono desu' = 'I left something behind'. Handy the morning after.", "tags": ["hotel"] },
+
+    { "id": "u08.wifi", "jp": "ワイファイ", "romaji": "waifai", "en": "wifi", "tags": ["hotel"] },
+    { "id": "u08.pasuwado", "jp": "パスワード", "romaji": "pasuwādo", "en": "password", "tags": ["hotel"] },
+    { "id": "u08.wifi_pasuwado", "jp": "ワイファイの パスワードは なんですか", "romaji": "waifai no pasuwādo wa nan desu ka", "en": "what's the wifi password?", "note": "Often printed on a card in the room; ask if you can't spot it.", "tags": ["hotel", "question", "trip_core"], "trip_core": true },
+    { "id": "u08.asagohan", "jp": "あさごはん", "romaji": "asagohan", "en": "breakfast", "note": "Ryokan breakfast is a whole spread — don't skip it.", "tags": ["hotel", "food"] },
+    { "id": "u08.asagohan_nanji", "jp": "あさごはんは なんじですか", "romaji": "asagohan wa nan-ji desu ka", "en": "what time is breakfast?", "note": "Often a fixed window. Unit 9 makes the answer readable.", "tags": ["hotel", "question", "time", "trip_core"], "trip_core": true },
+
+    { "id": "u08.onsen", "jp": "おんせん", "romaji": "onsen", "en": "hot spring bath", "note": "Wash and rinse fully at the taps first; soak clean, towel out of the water.", "tags": ["hotel", "culture", "trip_core"], "trip_core": true },
+    { "id": "u08.yukata", "jp": "ゆかた", "romaji": "yukata", "en": "cotton robe", "note": "Left side over right (right-over-left is for funerals). Wear it to dinner.", "tags": ["hotel", "culture"] },
+    { "id": "u08.daiyokujo", "jp": "だいよくじょう", "romaji": "daiyokujō", "en": "large communal bath", "note": "Signs split by colour: red/onna (women), blue/otoko (men).", "tags": ["hotel", "place"] },
+    { "id": "u08.taoru", "jp": "タオル", "romaji": "taoru", "en": "towel", "note": "The small one is for washing and modesty; leave the big one in the room.", "tags": ["hotel"] },
+    { "id": "u08.surippa", "jp": "スリッパ", "romaji": "surippa", "en": "slippers", "note": "Swap street shoes for these at the entrance; separate ones for the toilet.", "tags": ["hotel", "culture"] }
+  ],
+  "lessons": [
+    { "id": "u08.l1", "title": "I have a reservation", "kind": "teach", "new_items": ["u08.yoyaku", "u08.yoyaku_shiteimasu", "u08.namae", "u08.namae_de", "u08.konban_tomari"] },
+    { "id": "u08.l2", "title": "Check-in, check-out", "kind": "teach", "new_items": ["u08.chekkuin", "u08.chekkuauto", "u08.nanji_chekkuauto", "u08.furonto", "u08.heya"] },
+    { "id": "u08.l3", "title": "Luggage and keys", "kind": "teach", "new_items": ["u08.nimotsu", "u08.nimotsu_azukatte", "u08.kagi", "u08.kagi_onegai", "u08.roomnanba", "u08.wasuremono"] },
+    { "id": "u08.l4", "title": "Wifi and breakfast", "kind": "teach", "new_items": ["u08.wifi", "u08.pasuwado", "u08.wifi_pasuwado", "u08.asagohan", "u08.asagohan_nanji"] },
+    { "id": "u08.l5", "title": "Onsen and yukata", "kind": "teach", "new_items": ["u08.onsen", "u08.yukata", "u08.daiyokujo", "u08.taoru", "u08.surippa"] },
+    { "id": "u08.check", "title": "Checking into the ryokan", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "listen-pick", "item": "u08.yoyaku_shiteimasu" },
+      { "type": "match-pairs", "items": ["u08.chekkuin", "u08.chekkuauto", "u08.kagi", "u08.heya", "u08.nimotsu"] },
+      { "type": "listen-pick-jp", "item": "u08.nimotsu_azukatte" },
+      { "type": "tile-arrange", "item": "u08.wifi_pasuwado" },
+      { "type": "listen-pick", "item": "u08.onsen" },
+      { "type": "match-pairs", "items": ["u08.onsen", "u08.yukata", "u08.taoru", "u08.surippa", "u08.asagohan"] },
+      { "type": "listen-type-romaji", "item": "u08.kagi" },
+      { "type": "listen-pick-jp", "item": "u08.asagohan_nanji" },
+      { "type": "listen-pick", "item": "u08.chekkuauto", "distractors": ["u08.chekkuin", "u08.furonto", "u08.heya"] },
+      { "type": "speak", "item": "u08.yoyaku_shiteimasu" },
+      { "type": "speak", "item": "u08.nimotsu_azukatte" },
+      { "type": "dialogue", "dialogue": "u08.d1" }
+    ] }
+  ],
+  "dialogues": [
+    {
+      "id": "u08.d1",
+      "scene": "A wooden ryokan entrance in the mountains. You slip off your shoes; the okami-san bows behind the desk as you arrive early, bags in hand.",
+      "turns": [
+        { "speaker": "npc", "jp": "いらっしゃいませ。おなまえを おねがいします。", "romaji": "irasshaimase. o-namae o onegaishimasu.", "en": "welcome. your name, please?" },
+        { "speaker": "you", "expect_item": "u08.yoyaku_shiteimasu", "mode": "speak", "stakes": "Tell her you've booked so she can find you." },
+        { "speaker": "npc", "jp": "はい、うけたまわって おります。おへやは にかいです。", "romaji": "hai, uketamawatte orimasu. o-heya wa nikai desu.", "en": "yes, we have you. your room is upstairs." },
+        { "speaker": "you", "expect_item": "u08.nimotsu_azukatte", "mode": "pick", "stakes": "Check-in isn't till 3pm. Ask if she'll mind your bags till then." },
+        { "speaker": "npc", "jp": "もちろんです。おふろは ごご よじからです。", "romaji": "mochiron desu. o-furo wa gogo yo-ji kara desu.", "en": "of course. the bath opens from 4pm." },
+        { "speaker": "you", "expect_item": "u08.asagohan_nanji", "mode": "pick", "stakes": "You want to plan the morning. Ask what time breakfast is." },
+        { "speaker": "npc", "jp": "あさごはんは しちじから はちじです。", "romaji": "asagohan wa shichi-ji kara hachi-ji desu.", "en": "breakfast is from seven to eight." },
+        { "speaker": "you", "expect_item": "u08.wifi_pasuwado", "mode": "pick", "stakes": "You need to message home. Ask for the wifi password." },
+        { "speaker": "npc", "jp": "こちらの カードに かいて あります。", "romaji": "kochira no kādo ni kaite arimasu.", "en": "it's written on this card here." },
+        { "speaker": "you", "expect_item": "u01.arigatogozaimasu", "mode": "pick", "stakes": "She's been lovely. Thank her before you head up." }
+      ]
+    }
+  ]
+}

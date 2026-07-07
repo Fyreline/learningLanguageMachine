@@ -1,0 +1,76 @@
+{
+  "id": "u06",
+  "items": [
+    { "id": "u06.massugu", "jp": "まっすぐ", "romaji": "massugu", "en": "straight ahead", "note": "'massugu desu' as an answer = 'it's straight on'.", "tags": ["direction", "trip_core"], "trip_core": true },
+    { "id": "u06.migi", "jp": "みぎ", "romaji": "migi", "en": "right", "tags": ["direction", "trip_core"], "trip_core": true },
+    { "id": "u06.hidari", "jp": "ひだり", "romaji": "hidari", "en": "left", "tags": ["direction", "trip_core"], "trip_core": true },
+    { "id": "u06.magatte", "jp": "みぎに まがって ください", "romaji": "migi ni magatte kudasai", "en": "please turn right", "note": "Swap migi for hidari to turn left. You'll hear this shape a lot.", "tags": ["direction"] },
+    { "id": "u06.mae", "jp": "まえ", "romaji": "mae", "en": "in front of / before", "note": "'eki no mae' = 'in front of the station', a classic meeting spot.", "tags": ["direction"] },
+    { "id": "u06.ushiro", "jp": "うしろ", "romaji": "ushiro", "en": "behind", "tags": ["direction"] },
+
+    { "id": "u06.chikaku", "jp": "ちかく", "romaji": "chikaku", "en": "near / nearby", "note": "'kono chikaku' = 'near here'. Handy for hunting a konbini.", "tags": ["direction", "trip_core"], "trip_core": true },
+    { "id": "u06.tooi", "jp": "とおい", "romaji": "tōi", "en": "far", "note": "If they say tōi, consider the bus or a taxi.", "tags": ["direction"] },
+    { "id": "u06.tonari", "jp": "となり", "romaji": "tonari", "en": "next to", "note": "'konbini no tonari' = 'next to the convenience store'.", "tags": ["direction"] },
+    { "id": "u06.koko", "jp": "ここ", "romaji": "koko", "en": "here", "tags": ["direction", "place"] },
+    { "id": "u06.soko", "jp": "そこ", "romaji": "soko", "en": "there (by you)", "tags": ["direction", "place"] },
+    { "id": "u06.asoko", "jp": "あそこ", "romaji": "asoko", "en": "over there", "note": "koko / soko / asoko mirror kore / sore / are. Same logic, for places.", "tags": ["direction", "place"] },
+
+    { "id": "u06.toire", "jp": "トイレ", "romaji": "toire", "en": "toilet", "note": "Written トイレ or お手洗い. Clean, free, everywhere — a small miracle.", "tags": ["place", "trip_core"], "trip_core": true },
+    { "id": "u06.toire_doko", "jp": "トイレは どこですか", "romaji": "toire wa doko desu ka", "en": "where is the toilet?", "note": "Arguably the most valuable sentence in Japan. Learn it cold.", "tags": ["place", "question", "trip_core"], "trip_core": true },
+    { "id": "u06.otearai", "jp": "おてあらい", "romaji": "o-tearai", "en": "restroom (polite)", "literal": "'honourable hand-washing'", "note": "A softer word than toire; nice in a restaurant or someone's home.", "tags": ["place"] },
+    { "id": "u06.doko", "jp": "どこ", "romaji": "doko", "en": "where", "tags": ["question", "trip_core"], "trip_core": true },
+    { "id": "u06.achira", "jp": "あちら", "romaji": "achira", "en": "that way / over there (polite)", "note": "The word staff use while pointing. Follow the hand.", "tags": ["direction"] },
+
+    { "id": "u06.koban", "jp": "こうばん", "romaji": "kōban", "en": "police box", "note": "Tiny neighbourhood police posts; officers give directions happily.", "tags": ["place", "emergency", "trip_core"], "trip_core": true },
+    { "id": "u06.konbini", "jp": "コンビニ", "romaji": "konbini", "en": "convenience store", "note": "ATMs, toilets, tickets, hot food, umbrellas. Your basecamp.", "tags": ["place", "trip_core"], "trip_core": true },
+    { "id": "u06.ginko", "jp": "ぎんこう", "romaji": "ginkō", "en": "bank", "note": "For cash, the konbini ATM is usually easier than a bank counter.", "tags": ["place", "money"] },
+    { "id": "u06.hoteru", "jp": "ホテル", "romaji": "hoteru", "en": "hotel", "tags": ["place", "hotel"] },
+    { "id": "u06.byoin", "jp": "びょういん", "romaji": "byōin", "en": "hospital", "note": "Don't confuse with bi-yōin (beauty salon); the long ō matters.", "tags": ["place", "health"] },
+    { "id": "u06.wa_doko", "jp": "こうばんは どこですか", "romaji": "kōban wa doko desu ka", "en": "where is the police box?", "literal": "pattern: X wa doko desu ka = 'where is X?'", "note": "The all-purpose 'where is ~'. Drop any place into the slot.", "tags": ["question", "trip_core"], "trip_core": true, "slots": { "pattern": "{X} wa doko desu ka", "fills": ["u06.toire", "u06.konbini", "u06.koban", "u06.hoteru"] } },
+
+    { "id": "u06.kai", "jp": "かい", "romaji": "-kai", "en": "floor (counter)", "note": "san-gai (3rd floor) softens the k — the counter's one quirk.", "tags": ["place"] },
+    { "id": "u06.ikkai", "jp": "いっかい", "romaji": "ikkai", "en": "ground floor (1F)", "note": "Japan counts the street level as 1F, like the US, not the UK.", "tags": ["place"] },
+    { "id": "u06.nikai", "jp": "にかい", "romaji": "nikai", "en": "second floor (2F)", "tags": ["place"] },
+    { "id": "u06.chika", "jp": "ちか", "romaji": "chika", "en": "basement", "note": "Depachika (デパ地下) — the food halls below department stores. Go.", "tags": ["place"] },
+    { "id": "u06.nankai", "jp": "なんかいですか", "romaji": "nan-kai desu ka", "en": "which floor?", "note": "For finding a shop in a tall building. The answer is a floor number.", "tags": ["place", "question"] }
+  ],
+  "lessons": [
+    { "id": "u06.l1", "title": "Straight, right, left", "kind": "teach", "new_items": ["u06.massugu", "u06.migi", "u06.hidari", "u06.magatte", "u06.mae", "u06.ushiro"] },
+    { "id": "u06.l2", "title": "Near and far", "kind": "teach", "new_items": ["u06.chikaku", "u06.tooi", "u06.tonari", "u06.koko", "u06.soko", "u06.asoko"] },
+    { "id": "u06.l3", "title": "Where is the toilet?", "kind": "teach", "new_items": ["u06.toire", "u06.toire_doko", "u06.otearai", "u06.doko", "u06.achira"] },
+    { "id": "u06.l4", "title": "Useful places", "kind": "teach", "new_items": ["u06.koban", "u06.konbini", "u06.ginko", "u06.hoteru", "u06.byoin", "u06.wa_doko"] },
+    { "id": "u06.l5", "title": "Which floor?", "kind": "teach", "new_items": ["u06.kai", "u06.ikkai", "u06.nikai", "u06.chika", "u06.nankai"] },
+    { "id": "u06.check", "title": "Lost in the streets", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "listen-pick", "item": "u06.toire_doko" },
+      { "type": "match-pairs", "items": ["u06.massugu", "u06.migi", "u06.hidari", "u06.mae", "u06.ushiro"] },
+      { "type": "listen-pick-jp", "item": "u06.konbini" },
+      { "type": "listen-pick", "item": "u06.chikaku", "distractors": ["u06.tooi", "u06.tonari", "u06.mae"] },
+      { "type": "tile-arrange", "item": "u06.toire_doko" },
+      { "type": "match-pairs", "items": ["u06.koban", "u06.konbini", "u06.ginko", "u06.hoteru", "u06.byoin"] },
+      { "type": "listen-type-romaji", "item": "u06.migi" },
+      { "type": "listen-pick-jp", "item": "u06.wa_doko" },
+      { "type": "listen-pick", "item": "u06.koban" },
+      { "type": "speak", "item": "u06.toire_doko" },
+      { "type": "speak", "item": "u06.wa_doko" },
+      { "type": "dialogue", "dialogue": "u06.d1" }
+    ] }
+  ],
+  "dialogues": [
+    {
+      "id": "u06.d1",
+      "scene": "A quiet backstreet after dark. Your phone's dead, you can't find the hotel, and there's a lit koban on the corner. The officer looks up.",
+      "turns": [
+        { "speaker": "npc", "jp": "こんばんは。どうしましたか？", "romaji": "konbanwa. dō shimashita ka?", "en": "good evening. what's the matter?" },
+        { "speaker": "you", "expect_item": "u06.wa_doko", "mode": "speak", "stakes": "You need the hotel. Ask where it is. (Say your place in the slot.)" },
+        { "speaker": "npc", "jp": "ああ、あの ホテルですね。", "romaji": "ā, ano hoteru desu ne.", "en": "ah, that hotel — I know it." },
+        { "speaker": "you", "expect_item": "u06.chikaku", "mode": "pick", "stakes": "You're exhausted. Check hopefully — is it near?" },
+        { "speaker": "npc", "jp": "はい、ちかいですよ。この みちを まっすぐです。", "romaji": "hai, chikai desu yo. kono michi o massugu desu.", "en": "yes, quite close. straight down this street." },
+        { "speaker": "you", "expect_item": "u06.migi", "mode": "pick", "stakes": "You saw a fork ahead. Ask to confirm the turn — right?" },
+        { "speaker": "npc", "jp": "いいえ、ひだりに まがって ください。", "romaji": "iie, hidari ni magatte kudasai.", "en": "no — turn left there." },
+        { "speaker": "you", "expect_item": "u01.wakarimashita", "mode": "pick", "stakes": "Got it now. Let him know you've understood." },
+        { "speaker": "npc", "jp": "きを つけて。", "romaji": "ki o tsukete.", "en": "take care." },
+        { "speaker": "you", "expect_item": "u01.arigatogozaimasu", "mode": "speak", "stakes": "He rescued your night. Thank him properly." }
+      ]
+    }
+  ]
+}

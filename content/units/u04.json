@@ -1,0 +1,84 @@
+{
+  "id": "u04",
+  "items": [
+    { "id": "u04.futari", "jp": "ふたり", "romaji": "futari", "en": "two people", "note": "The counter for people is irregular early: hitori, futari, then san-nin.", "tags": ["number", "food"] },
+    { "id": "u04.futari_desu", "jp": "ふたりです", "romaji": "futari desu", "en": "table for two", "note": "Say it at the door with two fingers up; you'll be seated instantly.", "tags": ["food", "trip_core"], "trip_core": true },
+    { "id": "u04.hitori", "jp": "ひとり", "romaji": "hitori", "en": "one person", "note": "'hitori desu' for a solo table. No stigma to eating alone here.", "tags": ["number", "food"] },
+    { "id": "u04.sannin", "jp": "さんにん", "romaji": "san-nin", "en": "three people", "note": "From three on it's the regular -nin counter.", "tags": ["number", "food"] },
+    { "id": "u04.nanmei", "jp": "なんめいさまですか", "romaji": "nanmei-sama desu ka", "en": "how many people?", "note": "The greeting at the door. Answer with futari desu.", "tags": ["food", "question"] },
+    { "id": "u04.kinen", "jp": "きんえん", "romaji": "kin'en", "en": "non-smoking", "note": "Ask for kin'en if smoke bothers you; many izakaya still allow it.", "tags": ["food", "place"] },
+    { "id": "u04.seki", "jp": "せき", "romaji": "seki", "en": "seat / table", "note": "Counter seats (kauntā) are friendly for two travellers.", "tags": ["food", "place"] },
+
+    { "id": "u04.menyu", "jp": "メニュー", "romaji": "menyū", "en": "menu", "tags": ["food"] },
+    { "id": "u04.menyu_onegai", "jp": "メニュー おねがいします", "romaji": "menyū onegaishimasu", "en": "the menu, please", "tags": ["food", "trip_core"], "trip_core": true },
+    { "id": "u04.osusume", "jp": "おすすめ", "romaji": "osusume", "en": "recommendation", "tags": ["food"] },
+    { "id": "u04.osusume_wa", "jp": "おすすめは なんですか", "romaji": "osusume wa nan desu ka", "en": "what do you recommend?", "note": "The question that gets you the good stuff. Trust the answer.", "tags": ["food", "question", "trip_core"], "trip_core": true },
+    { "id": "u04.eigo_menyu", "jp": "えいごの メニューは ありますか", "romaji": "eigo no menyū wa arimasu ka", "en": "do you have an English menu?", "note": "Often yes, sometimes with photos. Worth a try before you point.", "tags": ["food", "question"] },
+    { "id": "u04.mizu", "jp": "みず", "romaji": "mizu", "en": "water", "note": "Written 水. Brought free and cold; 'o-hiya' is the fancy word for it.", "tags": ["drink", "trip_core"], "trip_core": true },
+    { "id": "u04.ocha", "jp": "おちゃ", "romaji": "o-cha", "en": "green tea", "note": "Often free and refilled. Hot by default.", "tags": ["drink"] },
+
+    { "id": "u04.kore_hitotsu", "jp": "これを ひとつ", "romaji": "kore o hitotsu", "en": "one of these", "note": "Point at the menu photo and say it. The core ordering move.", "tags": ["food", "trip_core"], "trip_core": true, "slots": { "pattern": "{X} o hitotsu", "fills": ["u04.menyu", "u04.ocha", "u04.biru"] } },
+    { "id": "u04.kore_futatsu", "jp": "これを ふたつ", "romaji": "kore o futatsu", "en": "two of these", "note": "Two of you, two of that. Order once, share the tasting.", "tags": ["food", "trip_core"], "trip_core": true },
+    { "id": "u04.biru", "jp": "ビール", "romaji": "bīru", "en": "beer", "note": "Nama-bīru is draught. Cold and huge and glorious.", "tags": ["drink", "trip_core"], "trip_core": true },
+    { "id": "u04.biru_nihai", "jp": "ビールを にはい", "romaji": "bīru o nihai", "en": "two beers", "note": "Drinks use the -hai counter: ippai, nihai, sanbai.", "tags": ["drink", "trip_core"], "trip_core": true },
+    { "id": "u04.osake", "jp": "おさけ", "romaji": "o-sake", "en": "sake / alcohol", "note": "o-sake means alcohol broadly; nihonshu is specifically rice wine.", "tags": ["drink"] },
+    { "id": "u04.kanpai", "jp": "かんぱい", "romaji": "kanpai", "en": "cheers!", "note": "Glasses up, eyes on each other, then the first sip. Never skip it.", "tags": ["drink", "culture"] },
+    { "id": "u04.toriaezu", "jp": "とりあえず ビール", "romaji": "toriaezu bīru", "en": "a beer to start", "literal": "'for now, beer'", "note": "The national opening line while you read the menu. Buys time, charmingly.", "tags": ["drink", "culture"] },
+
+    { "id": "u04.oishii", "jp": "おいしいです", "romaji": "oishii desu", "en": "it's delicious", "note": "Say it to the chef at the counter and watch the day get better.", "tags": ["food", "feeling", "trip_core"], "trip_core": true },
+    { "id": "u04.niku", "jp": "にく", "romaji": "niku", "en": "meat", "tags": ["food"] },
+    { "id": "u04.sakana", "jp": "さかな", "romaji": "sakana", "en": "fish", "tags": ["food"] },
+    { "id": "u04.niku_nashi", "jp": "にく なしで おねがいします", "romaji": "niku nashi de onegaishimasu", "en": "without meat, please", "note": "'nashi de' = 'without'. The vegetarian traveller's key phrase.", "tags": ["food", "health", "trip_core"], "trip_core": true },
+    { "id": "u04.sakana_nashi", "jp": "さかな なしで おねがいします", "romaji": "sakana nashi de onegaishimasu", "en": "without fish, please", "note": "Dashi (fish stock) hides everywhere; this won't catch it all, but it helps.", "tags": ["food", "health"] },
+    { "id": "u04.arerugi", "jp": "アレルギー", "romaji": "arerugī", "en": "allergy", "tags": ["food", "health"] },
+    { "id": "u04.arerugi_ga", "jp": "たまごアレルギーが あります", "romaji": "tamago arerugī ga arimasu", "en": "I have an egg allergy", "note": "Swap tamago for your allergen. Show it written too, to be safe.", "tags": ["food", "health", "trip_core"], "trip_core": true },
+
+    { "id": "u04.okaikei", "jp": "おかいけい", "romaji": "o-kaikei", "en": "the bill", "tags": ["food", "money"] },
+    { "id": "u04.okaikei_onegai", "jp": "おかいけい おねがいします", "romaji": "o-kaikei onegaishimasu", "en": "the bill, please", "note": "Or mime a little 'X' with your fingers across the room. Both work.", "tags": ["food", "money", "trip_core"], "trip_core": true },
+    { "id": "u04.betsubetsu", "jp": "べつべつで おねがいします", "romaji": "betsubetsu de onegaishimasu", "en": "separately, please", "note": "Splitting the bill; some small places prefer one payment, so ask kindly.", "tags": ["food", "money"] },
+    { "id": "u04.itadakimasu", "jp": "いただきます", "romaji": "itadakimasu", "en": "thanks for the food (before eating)", "literal": "'I humbly receive'", "note": "Said to the table before the first bite. A small, lovely ritual.", "tags": ["food", "culture", "set-phrase"] },
+    { "id": "u04.gochisosama", "jp": "ごちそうさまでした", "romaji": "gochisōsama deshita", "en": "thanks, that was a feast (after eating)", "literal": "'it was a feast'", "note": "Say it to staff as you leave — it thanks the whole kitchen.", "tags": ["food", "culture", "set-phrase", "trip_core"], "trip_core": true },
+    { "id": "u04.oishikatta", "jp": "おいしかったです", "romaji": "oishikatta desu", "en": "it was delicious", "note": "Past tense of oishii; pair it with gochisōsama on the way out.", "tags": ["food", "feeling"] }
+  ],
+  "lessons": [
+    { "id": "u04.l1", "title": "Table for two", "kind": "teach", "new_items": ["u04.futari", "u04.futari_desu", "u04.hitori", "u04.sannin", "u04.nanmei", "u04.kinen", "u04.seki"] },
+    { "id": "u04.l2", "title": "The menu, please", "kind": "teach", "new_items": ["u04.menyu", "u04.menyu_onegai", "u04.osusume", "u04.osusume_wa", "u04.eigo_menyu", "u04.mizu", "u04.ocha"] },
+    { "id": "u04.l3", "title": "This one, twice", "kind": "teach", "new_items": ["u04.kore_hitotsu", "u04.kore_futatsu", "u04.biru", "u04.biru_nihai", "u04.osake", "u04.kanpai", "u04.toriaezu"] },
+    { "id": "u04.l4", "title": "Delicious! and dietary needs", "kind": "teach", "new_items": ["u04.oishii", "u04.niku", "u04.sakana", "u04.niku_nashi", "u04.sakana_nashi", "u04.arerugi", "u04.arerugi_ga"] },
+    { "id": "u04.l5", "title": "The bill, please", "kind": "teach", "new_items": ["u04.okaikei", "u04.okaikei_onegai", "u04.betsubetsu", "u04.itadakimasu", "u04.gochisosama", "u04.oishikatta"] },
+    { "id": "u04.check", "title": "Izakaya night", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "listen-pick", "item": "u04.futari_desu" },
+      { "type": "listen-pick-jp", "item": "u04.menyu_onegai" },
+      { "type": "match-pairs", "items": ["u04.mizu", "u04.ocha", "u04.biru", "u04.osake", "u04.menyu"] },
+      { "type": "tile-arrange", "item": "u04.osusume_wa" },
+      { "type": "listen-pick", "item": "u04.oishii" },
+      { "type": "listen-pick-jp", "item": "u04.niku_nashi", "distractors": ["u04.sakana_nashi", "u04.arerugi_ga", "u04.okaikei_onegai"] },
+      { "type": "match-pairs", "items": ["u04.futari_desu", "u04.kanpai", "u04.oishii", "u04.gochisosama", "u04.okaikei_onegai"] },
+      { "type": "tile-arrange", "item": "u04.biru_nihai" },
+      { "type": "listen-type-romaji", "item": "u04.kanpai" },
+      { "type": "speak", "item": "u04.kore_futatsu" },
+      { "type": "speak", "item": "u04.okaikei_onegai" },
+      { "type": "dialogue", "dialogue": "u04.d1" }
+    ] }
+  ],
+  "dialogues": [
+    {
+      "id": "u04.d1",
+      "scene": "A loud, warm izakaya at 8pm. Steam, laughter, a chalkboard menu. The two of you slide up to the counter and the chef looks over.",
+      "turns": [
+        { "speaker": "npc", "jp": "いらっしゃい！なんめいさまですか？", "romaji": "irasshai! nanmei-sama desu ka?", "en": "welcome! how many are you?" },
+        { "speaker": "you", "expect_item": "u04.futari_desu", "mode": "pick", "stakes": "Just the two of you. Answer so he can seat you." },
+        { "speaker": "npc", "jp": "どうぞ、カウンターへ。おのみものは？", "romaji": "dōzo, kauntā e. o-nomimono wa?", "en": "please, take the counter. drinks?" },
+        { "speaker": "you", "expect_item": "u04.biru_nihai", "mode": "speak", "stakes": "Kick the night off right. Order two beers." },
+        { "speaker": "npc", "jp": "はい、なまビール にはい！", "romaji": "hai, nama-bīru nihai!", "en": "two draught beers coming up!" },
+        { "speaker": "you", "expect_item": "u04.osusume_wa", "mode": "pick", "stakes": "You don't know the menu. Ask what he recommends." },
+        { "speaker": "npc", "jp": "きょうは さばが おすすめですよ。", "romaji": "kyō wa saba ga osusume desu yo.", "en": "the mackerel's great today." },
+        { "speaker": "you", "expect_item": "u04.arerugi_ga", "mode": "pick", "stakes": "One of you can't risk it. Warn him about the egg allergy before ordering." },
+        { "speaker": "npc", "jp": "だいじょうぶ、たまごは つかいません。", "romaji": "daijōbu, tamago wa tsukaimasen.", "en": "no problem, no egg in it." },
+        { "speaker": "you", "expect_item": "u04.kore_futatsu", "mode": "speak", "stakes": "Relieved. Order two of the mackerel." },
+        { "speaker": "npc", "jp": "ありがとうございます！", "romaji": "arigatō gozaimasu!", "en": "thank you!" },
+        { "speaker": "you", "expect_item": "u04.kanpai", "mode": "pick", "stakes": "The beers land. Glasses up — start the night." }
+      ]
+    }
+  ]
+}

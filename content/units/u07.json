@@ -1,0 +1,76 @@
+{
+  "id": "u07",
+  "items": [
+    { "id": "u07.miteiru_dake", "jp": "みているだけです", "romaji": "mite iru dake desu", "en": "I'm just looking", "note": "The polite force-field. Staff will smile and give you space.", "tags": ["shopping", "trip_core"], "trip_core": true },
+    { "id": "u07.irasshaimase", "jp": "いらっしゃいませ", "romaji": "irasshaimase", "en": "welcome (shop greeting)", "note": "Called out to every customer. No reply needed — a nod is plenty.", "tags": ["shopping", "culture"] },
+    { "id": "u07.sagashite", "jp": "おみやげを さがしています", "romaji": "omiyage o sagashite imasu", "en": "I'm looking for a souvenir", "note": "'X o sagashite imasu' aims staff at exactly what you want.", "tags": ["shopping"] },
+    { "id": "u07.mitemo_ii", "jp": "みても いいですか", "romaji": "mite mo ii desu ka", "en": "may I take a look?", "note": "Ask before handling delicate goods; the answer is almost always yes.", "tags": ["shopping", "question"] },
+    { "id": "u07.kore_wa_ikura", "jp": "これは いくらですか", "romaji": "kore wa ikura desu ka", "en": "how much is this?", "note": "Point and ask when the price tag is playing hide and seek.", "tags": ["shopping", "money", "trip_core"], "trip_core": true },
+    { "id": "u07.betsu_no", "jp": "べつのは ありますか", "romaji": "betsu no wa arimasu ka", "en": "do you have a different one?", "note": "For another colour, size, or design without naming it.", "tags": ["shopping", "question"] },
+
+    { "id": "u07.chiisai", "jp": "ちいさい", "romaji": "chiisai", "en": "small", "tags": ["shopping"] },
+    { "id": "u07.ookii", "jp": "おおきい", "romaji": "ōkii", "en": "big", "tags": ["shopping"] },
+    { "id": "u07.chotto_chiisai", "jp": "ちょっと ちいさいです", "romaji": "chotto chiisai desu", "en": "it's a bit small", "note": "chotto softens the complaint into a polite hint.", "tags": ["shopping", "trip_core"], "trip_core": true },
+    { "id": "u07.chotto_ookii", "jp": "ちょっと おおきいです", "romaji": "chotto ōkii desu", "en": "it's a bit big", "tags": ["shopping"] },
+    { "id": "u07.saizu", "jp": "サイズ", "romaji": "saizu", "en": "size", "note": "Japanese sizes run small; an M often fits like a UK S.", "tags": ["shopping"] },
+    { "id": "u07.shichaku", "jp": "しちゃく できますか", "romaji": "shichaku dekimasu ka", "en": "can I try it on?", "note": "Shoes off before a fitting room; they may hand you a face cover.", "tags": ["shopping", "question"] },
+
+    { "id": "u07.fukuro", "jp": "ふくろ", "romaji": "fukuro", "en": "bag", "tags": ["shopping"] },
+    { "id": "u07.fukuro_onegai", "jp": "ふくろ おねがいします", "romaji": "fukuro onegaishimasu", "en": "a bag, please", "note": "Bags often cost a few yen now, so they ask. Say this if you want one.", "tags": ["shopping", "trip_core"], "trip_core": true },
+    { "id": "u07.fukuro_irimasen", "jp": "ふくろは いりません", "romaji": "fukuro wa irimasen", "en": "I don't need a bag", "note": "The eco answer. A small hand-wave helps the message land.", "tags": ["shopping", "trip_core"], "trip_core": true },
+    { "id": "u07.hashi", "jp": "おはし", "romaji": "o-hashi", "en": "chopsticks", "note": "The konbini asks if you need them with hot food; say hai or irimasen.", "tags": ["shopping", "food"] },
+    { "id": "u07.irimasen", "jp": "いりません", "romaji": "irimasen", "en": "I don't need it", "note": "Polite refusal for anything offered — spoons, bags, receipts.", "tags": ["shopping"] },
+
+    { "id": "u07.atatamemasu", "jp": "あたためますか", "romaji": "atatamemasu ka", "en": "shall I heat it up?", "note": "The konbini bentō question. Answer with onegaishimasu or sono mama de.", "tags": ["shopping", "food", "trip_core"], "trip_core": true, "distractors": ["u07.fukuro_onegai", "u07.hashi", "u07.kore_wa_ikura"] },
+    { "id": "u07.atatamete", "jp": "あたためて ください", "romaji": "atatamete kudasai", "en": "please heat it up", "tags": ["shopping", "food"] },
+    { "id": "u07.sonomama", "jp": "そのままで だいじょうぶです", "romaji": "sono mama de daijōbu desu", "en": "as it is, it's fine", "note": "The 'no need to heat it' reply. Also useful for 'leave it as is'.", "tags": ["shopping", "food"] },
+    { "id": "u07.reji", "jp": "レジ", "romaji": "reji", "en": "checkout / till", "note": "'reji wa dochira desu ka' — where's the register — in a big store.", "tags": ["shopping", "place"] },
+    { "id": "u07.tenin", "jp": "てんいん", "romaji": "ten'in", "en": "shop assistant", "tags": ["shopping"] },
+    { "id": "u07.pointo_card", "jp": "ポイントカード", "romaji": "pointo kādo", "en": "point / loyalty card", "note": "They'll ask 'pointo kādo wa?' — just say irimasen unless you have one.", "tags": ["shopping"] },
+
+    { "id": "u07.omiyage", "jp": "おみやげ", "romaji": "omiyage", "en": "souvenir (often edible)", "note": "Boxed regional sweets to share back home — a whole beautiful genre.", "tags": ["shopping", "culture", "trip_core"], "trip_core": true },
+    { "id": "u07.menzei", "jp": "めんぜい", "romaji": "menzei", "en": "tax-free", "note": "Signs say 'Tax-Free'. Threshold is usually ¥5,000+ in one store, same day.", "tags": ["shopping", "money", "trip_core"], "trip_core": true },
+    { "id": "u07.menzei_dekimasu", "jp": "めんぜいは できますか", "romaji": "menzei wa dekimasu ka", "en": "can I get tax-free?", "note": "Ask at the till with your passport ready.", "tags": ["shopping", "money", "question"] },
+    { "id": "u07.tsutsunde", "jp": "つつんで もらえますか", "romaji": "tsutsunde moraemasu ka", "en": "could you gift-wrap it?", "note": "Wrapping is an art here and often free. Worth asking for gifts.", "tags": ["shopping", "question"] },
+    { "id": "u07.zeikomi", "jp": "ぜいこみ", "romaji": "zeikomi", "en": "tax included", "note": "Tags show zeikomi (incl.) and zeinuki (excl.). Check which you're reading.", "tags": ["shopping", "money"] }
+  ],
+  "lessons": [
+    { "id": "u07.l1", "title": "Just looking", "kind": "teach", "new_items": ["u07.miteiru_dake", "u07.irasshaimase", "u07.sagashite", "u07.mitemo_ii", "u07.kore_wa_ikura", "u07.betsu_no"] },
+    { "id": "u07.l2", "title": "A bit big, a bit small", "kind": "teach", "new_items": ["u07.chiisai", "u07.ookii", "u07.chotto_chiisai", "u07.chotto_ookii", "u07.saizu", "u07.shichaku"] },
+    { "id": "u07.l3", "title": "The bag question", "kind": "teach", "new_items": ["u07.fukuro", "u07.fukuro_onegai", "u07.fukuro_irimasen", "u07.hashi", "u07.irimasen"] },
+    { "id": "u07.l4", "title": "Warm it up?", "kind": "teach", "new_items": ["u07.atatamemasu", "u07.atatamete", "u07.sonomama", "u07.reji", "u07.tenin", "u07.pointo_card"] },
+    { "id": "u07.l5", "title": "Souvenirs and tax-free", "kind": "teach", "new_items": ["u07.omiyage", "u07.menzei", "u07.menzei_dekimasu", "u07.tsutsunde", "u07.zeikomi"] },
+    { "id": "u07.check", "title": "A run through Don Quijote", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "listen-pick", "item": "u07.miteiru_dake" },
+      { "type": "match-pairs", "items": ["u07.chiisai", "u07.ookii", "u07.saizu", "u07.fukuro", "u07.omiyage"] },
+      { "type": "listen-pick-jp", "item": "u07.kore_wa_ikura" },
+      { "type": "listen-pick", "item": "u07.atatamemasu", "distractors": ["u07.fukuro_onegai", "u07.hashi", "u07.betsu_no"] },
+      { "type": "tile-arrange", "item": "u07.fukuro_irimasen" },
+      { "type": "listen-pick-jp", "item": "u07.chotto_chiisai" },
+      { "type": "match-pairs", "items": ["u07.miteiru_dake", "u07.fukuro_onegai", "u07.omiyage", "u07.menzei", "u07.reji"] },
+      { "type": "listen-type-romaji", "item": "u07.omiyage" },
+      { "type": "listen-pick", "item": "u07.menzei" },
+      { "type": "speak", "item": "u07.kore_wa_ikura" },
+      { "type": "speak", "item": "u07.fukuro_irimasen" },
+      { "type": "dialogue", "dialogue": "u07.d1" }
+    ] }
+  ],
+  "dialogues": [
+    {
+      "id": "u07.d1",
+      "scene": "Don Quijote, midnight, five floors of everything. You've grabbed snacks and a gift; the till beeps and the clerk fires off the ritual questions.",
+      "turns": [
+        { "speaker": "npc", "jp": "いらっしゃいませ！ポイントカードは ありますか？", "romaji": "irasshaimase! pointo kādo wa arimasu ka?", "en": "welcome! do you have a point card?" },
+        { "speaker": "you", "expect_item": "u07.irimasen", "mode": "pick", "stakes": "You don't. Decline without slowing the queue." },
+        { "speaker": "npc", "jp": "おべんとうは あたためますか？", "romaji": "o-bentō wa atatamemasu ka?", "en": "shall I heat the bentō?" },
+        { "speaker": "you", "expect_item": "u07.atatamete", "mode": "pick", "stakes": "It's a cold night and you're starving. Ask him to heat it." },
+        { "speaker": "npc", "jp": "こちらの おみやげ、めんぜいに できますよ。", "romaji": "kochira no omiyage, menzei ni dekimasu yo.", "en": "this gift can be tax-free, by the way." },
+        { "speaker": "you", "expect_item": "u07.menzei_dekimasu", "mode": "speak", "stakes": "Worth the saving. Confirm you'd like tax-free." },
+        { "speaker": "npc", "jp": "パスポートを おねがいします。ふくろは？", "romaji": "pasupōto o onegaishimasu. fukuro wa?", "en": "your passport, please. and a bag?" },
+        { "speaker": "you", "expect_item": "u07.fukuro_onegai", "mode": "pick", "stakes": "Your arms are full. Yes — ask for a bag." },
+        { "speaker": "npc", "jp": "ぜんぶで さんぜんえんです。", "romaji": "zenbu de sanzen-en desu.", "en": "three thousand yen in total." },
+        { "speaker": "you", "expect_item": "u03.kado_de", "mode": "pick", "stakes": "Cash is low after the izakaya. Ask if card's OK." }
+      ]
+    }
+  ]
+}

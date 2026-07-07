@@ -1,0 +1,78 @@
+{
+  "id": "u09",
+  "items": [
+    { "id": "u09.ji", "jp": "じ", "romaji": "-ji", "en": "o'clock", "note": "Just add -ji to a number: san-ji is three o'clock.", "tags": ["time", "trip_core"], "trip_core": true },
+    { "id": "u09.nanji", "jp": "なんじですか", "romaji": "nan-ji desu ka", "en": "what time is it?", "note": "Also 'what time?' for openings and departures. Endlessly reused.", "tags": ["time", "question", "trip_core"], "trip_core": true },
+    { "id": "u09.ichiji", "jp": "いちじ", "romaji": "ichi-ji", "en": "one o'clock", "tags": ["time"] },
+    { "id": "u09.niji", "jp": "にじ", "romaji": "ni-ji", "en": "two o'clock", "tags": ["time"] },
+    { "id": "u09.yoji", "jp": "よじ", "romaji": "yo-ji", "en": "four o'clock", "note": "Four is yo-ji, never yon-ji or shi-ji. A little irregular, worth drilling.", "tags": ["time"] },
+    { "id": "u09.shichiji", "jp": "しちじ", "romaji": "shichi-ji", "en": "seven o'clock", "note": "Seven o'clock keeps shichi (not nana-ji). Nine is ku-ji, also irregular.", "tags": ["time"] },
+
+    { "id": "u09.fun", "jp": "ふん", "romaji": "-fun", "en": "minute(s)", "note": "Counter for minutes; it shifts to -pun after some numbers.", "tags": ["time"] },
+    { "id": "u09.juppun", "jp": "じゅっぷん", "romaji": "juppun", "en": "ten minutes", "note": "'ju-ji juppun' = 10:10. The -pun shift is the fiddly bit.", "tags": ["time"] },
+    { "id": "u09.han", "jp": "はん", "romaji": "han", "en": "half past", "note": "'shichi-ji han' = half past seven. Simpler than counting to 30.", "tags": ["time"] },
+    { "id": "u09.niji_han", "jp": "にじはん", "romaji": "ni-ji han", "en": "half past two", "tags": ["time"] },
+    { "id": "u09.gozen", "jp": "ごぜん", "romaji": "gozen", "en": "am / morning", "note": "gozen ku-ji = 9am. Trains and timetables use the 24h clock too.", "tags": ["time"] },
+    { "id": "u09.gogo", "jp": "ごご", "romaji": "gogo", "en": "pm / afternoon", "note": "gogo san-ji = 3pm.", "tags": ["time"] },
+
+    { "id": "u09.kyou", "jp": "きょう", "romaji": "kyō", "en": "today", "tags": ["time", "trip_core"], "trip_core": true },
+    { "id": "u09.ashita", "jp": "あした", "romaji": "ashita", "en": "tomorrow", "tags": ["time", "trip_core"], "trip_core": true },
+    { "id": "u09.kinou", "jp": "きのう", "romaji": "kinō", "en": "yesterday", "tags": ["time"] },
+    { "id": "u09.ima", "jp": "いま", "romaji": "ima", "en": "now", "note": "'ima nan-ji desu ka' = 'what time is it now?'", "tags": ["time"] },
+    { "id": "u09.asa", "jp": "あさ", "romaji": "asa", "en": "morning", "tags": ["time"] },
+    { "id": "u09.yoru", "jp": "よる", "romaji": "yoru", "en": "evening / night", "tags": ["time"] },
+
+    { "id": "u09.getsuyoubi", "jp": "げつようび", "romaji": "getsu-yōbi", "en": "Monday", "note": "The -yōbi ending is 'day of the week'; the front half is the planet.", "tags": ["time"] },
+    { "id": "u09.kayoubi", "jp": "かようび", "romaji": "ka-yōbi", "en": "Tuesday", "tags": ["time"] },
+    { "id": "u09.suiyoubi", "jp": "すいようび", "romaji": "sui-yōbi", "en": "Wednesday", "tags": ["time"] },
+    { "id": "u09.mokuyoubi", "jp": "もくようび", "romaji": "moku-yōbi", "en": "Thursday", "tags": ["time"] },
+    { "id": "u09.kinyoubi", "jp": "きんようび", "romaji": "kin-yōbi", "en": "Friday", "tags": ["time"] },
+    { "id": "u09.doyoubi", "jp": "どようび", "romaji": "do-yōbi", "en": "Saturday", "tags": ["time"] },
+    { "id": "u09.nichiyoubi", "jp": "にちようび", "romaji": "nichi-yōbi", "en": "Sunday", "note": "Many small museums and shops close on Monday, not Sunday — check.", "tags": ["time"] },
+
+    { "id": "u09.eigyouchu", "jp": "えいぎょうちゅう", "romaji": "eigyō-chū", "en": "open (for business)", "note": "The 営業中 sign, often on a little hanging plaque. Push the door.", "tags": ["time", "place", "trip_core"], "trip_core": true },
+    { "id": "u09.yasumi", "jp": "やすみ", "romaji": "yasumi", "en": "closed / day off", "note": "'honjitsu yasumi' = 'closed today'. teikyūbi is the regular closing day.", "tags": ["time", "place", "trip_core"], "trip_core": true },
+    { "id": "u09.nanji_kara", "jp": "なんじからですか", "romaji": "nan-ji kara desu ka", "en": "what time does it open?", "note": "kara = 'from'. Its partner made = 'until' gives you the closing time.", "tags": ["time", "question"] },
+    { "id": "u09.kara_made", "jp": "くじから ごじまで", "romaji": "ku-ji kara go-ji made", "en": "from nine to five", "literal": "X kara Y made = 'from X until Y'", "note": "The shape of every opening-hours answer you'll hear.", "tags": ["time"] },
+    { "id": "u09.aitemasu", "jp": "あいて いますか", "romaji": "aite imasu ka", "en": "are you open?", "note": "Ask at the door or on the phone before you trek across town.", "tags": ["time", "question", "trip_core"], "trip_core": true }
+  ],
+  "lessons": [
+    { "id": "u09.l1", "title": "What time is it?", "kind": "teach", "new_items": ["u09.ji", "u09.nanji", "u09.ichiji", "u09.niji", "u09.yoji", "u09.shichiji"] },
+    { "id": "u09.l2", "title": "Minutes and half past", "kind": "teach", "new_items": ["u09.fun", "u09.juppun", "u09.han", "u09.niji_han", "u09.gozen", "u09.gogo"] },
+    { "id": "u09.l3", "title": "Today, tomorrow, yesterday", "kind": "teach", "new_items": ["u09.kyou", "u09.ashita", "u09.kinou", "u09.ima", "u09.asa", "u09.yoru"] },
+    { "id": "u09.l4", "title": "Days of the week", "kind": "teach", "new_items": ["u09.getsuyoubi", "u09.kayoubi", "u09.suiyoubi", "u09.mokuyoubi", "u09.kinyoubi", "u09.doyoubi", "u09.nichiyoubi"] },
+    { "id": "u09.l5", "title": "Open and closed", "kind": "teach", "new_items": ["u09.eigyouchu", "u09.yasumi", "u09.nanji_kara", "u09.kara_made", "u09.aitemasu"] },
+    { "id": "u09.check", "title": "Are you open?", "kind": "checkpoint", "new_items": [], "steps": [
+      { "type": "listen-pick", "item": "u09.nanji" },
+      { "type": "match-pairs", "items": ["u09.ichiji", "u09.niji", "u09.yoji", "u09.shichiji", "u09.niji_han"] },
+      { "type": "listen-pick-jp", "item": "u09.aitemasu" },
+      { "type": "match-pairs", "items": ["u09.getsuyoubi", "u09.kayoubi", "u09.suiyoubi", "u09.mokuyoubi", "u09.kinyoubi"] },
+      { "type": "listen-pick", "item": "u09.yasumi", "distractors": ["u09.eigyouchu", "u09.asa", "u09.yoru"] },
+      { "type": "tile-arrange", "item": "u09.kara_made" },
+      { "type": "listen-pick-jp", "item": "u09.kyou" },
+      { "type": "listen-type-romaji", "item": "u09.ashita" },
+      { "type": "listen-pick", "item": "u09.eigyouchu" },
+      { "type": "speak", "item": "u09.aitemasu" },
+      { "type": "speak", "item": "u09.nanji" },
+      { "type": "dialogue", "dialogue": "u09.d1" }
+    ] }
+  ],
+  "dialogues": [
+    {
+      "id": "u09.d1",
+      "scene": "A tiny ramen counter you've walked twenty minutes to reach. The shutter is half down, but a light's on inside. You call through the doorway.",
+      "turns": [
+        { "speaker": "npc", "jp": "はい、いらっしゃい。", "romaji": "hai, irasshai.", "en": "yes, come in." },
+        { "speaker": "you", "expect_item": "u09.aitemasu", "mode": "speak", "stakes": "The shutter's half down. Check you're not too late — are they open?" },
+        { "speaker": "npc", "jp": "あいてますよ。でも ラストオーダーは くじです。", "romaji": "aitemasu yo. demo rasuto-ōdā wa ku-ji desu.", "en": "we're open. but last orders are at nine." },
+        { "speaker": "you", "expect_item": "u09.nanji", "mode": "pick", "stakes": "You've lost track of time. Ask what time it is now." },
+        { "speaker": "npc", "jp": "いま はちじはんです。まだ だいじょうぶ。", "romaji": "ima hachi-ji han desu. mada daijōbu.", "en": "it's half eight. still fine." },
+        { "speaker": "you", "expect_item": "u01.daijobu", "mode": "pick", "stakes": "Relief. Reassure him you're good — plenty of time." },
+        { "speaker": "npc", "jp": "あしたも やってますよ。", "romaji": "ashita mo yattemasu yo.", "en": "we're open tomorrow too, by the way." },
+        { "speaker": "you", "expect_item": "u09.ashita", "mode": "pick", "stakes": "You might come back. Repeat 'tomorrow' to check you heard right." },
+        { "speaker": "npc", "jp": "ぜひ どうぞ。すわって ください。", "romaji": "zehi dōzo. suwatte kudasai.", "en": "please do. take a seat." },
+        { "speaker": "you", "expect_item": "u01.arigatogozaimasu", "mode": "pick", "stakes": "You made it. Thank him and sit down to the good stuff." }
+      ]
+    }
+  ]
+}
