@@ -10,6 +10,7 @@ import { detectSttCapability } from '../audio/stt'
 import { detectTtsCapability, speak } from '../audio/tts'
 import { getSettings, patchSettings, useSettings } from '../settings'
 import type { UserSettings } from '../api'
+import { AnimatedKitsune, PALETTE, type KitsuneTone } from './AnimatedKitsune'
 import { ThemeToggle } from './ThemeToggle'
 
 type VoiceState = 'idle' | 'speaking' | 'done' | 'error'
@@ -18,6 +19,14 @@ const ROMAJI_OPTIONS: { value: NonNullable<UserSettings['romaji']>; label: strin
   { value: 'show', label: 'Show' },
   { value: 'fade', label: 'Fade after first' },
   { value: 'hide', label: 'Hide' },
+]
+
+const KITSUNE_TONES: { value: KitsuneTone; label: string }[] = [
+  { value: 'clay', label: 'Crimson' },
+  { value: 'sky', label: 'Blue' },
+  { value: 'teal', label: 'Teal' },
+  { value: 'plum', label: 'Plum' },
+  { value: 'cyan', label: 'Cyan' },
 ]
 
 const STT_OPTIONS: { value: NonNullable<UserSettings['stt_mode']>; label: string }[] = [
@@ -229,6 +238,33 @@ export function SettingsPage() {
           <p className="mt-1 text-sm text-ink-soft">Follows your system by default.</p>
         </div>
         <ThemeToggle />
+      </div>
+
+      {/* your kitsune */}
+      <div className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-line bg-paper-mid p-6">
+        <div>
+          <h2 className="font-display text-base font-medium text-ink">Your kitsune</h2>
+          <p className="mt-1 text-sm text-ink-soft">The colour of your walker on the path.</p>
+          <div className="mt-3 flex items-center gap-2.5">
+            {KITSUNE_TONES.map((opt) => {
+              const selected = (settings.kitsune_tone ?? 'clay') === opt.value
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  aria-label={opt.label}
+                  aria-pressed={selected}
+                  onClick={() => void save({ kitsune_tone: opt.value })}
+                  style={{ backgroundColor: PALETTE[opt.value].body }}
+                  className={`h-8 w-8 rounded-full ring-offset-2 ring-offset-paper-mid transition ${
+                    selected ? 'ring-2 ring-ink' : 'ring-1 ring-line hover:ring-line-strong'
+                  }`}
+                />
+              )
+            })}
+          </div>
+        </div>
+        <AnimatedKitsune tone={settings.kitsune_tone ?? 'clay'} width={44} height={49} />
       </div>
 
       {/* account */}

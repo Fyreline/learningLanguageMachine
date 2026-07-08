@@ -360,10 +360,14 @@ def get_manifest(
     ).scalar_one_or_none()
     partner = None
     if partner_row:
+        partner_settings = json.loads(partner_row.settings_json or "{}")
         partner = {
             "display_name": partner_row.display_name,
             "current_lesson_id": current_lesson_id(db, partner_row.id),
             "words_known": _words_known(db, partner_row.id),
+            # the partner's own chosen palette so their ghost renders in it,
+            # not a hardcoded tone (default clay for an unset/legacy account)
+            "tone": partner_settings.get("kitsune_tone", "clay"),
         }
 
     trip_date = date.fromisoformat(m.get("trip_date_default", "2026-09-15"))

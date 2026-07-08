@@ -4,7 +4,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dialogue, DialogueTurnNpc, DialogueTurnYou, Item } from '../../curriculum/types'
 import { speak } from '../../audio/tts'
-import { detectSttCapability, startListening, type SttSession } from '../../audio/stt'
+import { detectSttCapability } from '../../audio/stt'
+import { useHoldToSpeak } from '../../audio/useHoldToSpeak'
 import { gradeSpeech, shuffled } from '../../engine/grading'
 import { getSettings } from '../../settings'
 import { ChoiceCards, JapaneseLine, type Verdict } from './shared'
@@ -193,39 +194,21 @@ function DialogueSpeak({
   stakes: string
   onLand: (item: Item, verdict: Verdict, mode: string) => void
 }) {
-  const [listening, setListening] = useState(false)
-  const [transcript, setTranscript] = useState('')
   const [retried, setRetried] = useState(false)
-  const sessionRef = useRef<SttSession | null>(null)
-  const finalRef = useRef('')
 
-  useEffect(() => () => sessionRef.current?.stop(), [])
-
-  function start() {
-    if (listening) return
-    finalRef.current = ''
-    setTranscript('')
-    const session = startListening(
-      (r) => {
-        setTranscript(r.transcript)
-        if (r.isFinal) finalRef.current = r.transcript
-      },
-      () => {
-        setListening(false)
-        const heard = finalRef.current
-        if (!heard) return
-        const { verdict } = gradeSpeech(item.jp, heard)
-        if (verdict === 'close' && !retried) {
-          setRetried(true)
-          return
-        }
-        onLand(item, verdict, 'dialogue-speak')
-      },
-    )
-    if (!session) return
-    sessionRef.current = session
-    setListening(true)
+  // Empty `heard` (mic pressed, nothing spoken) returns before grading, so it
+  // is never recorded as a turn attempt (§4.4).
+  function settle(heard: string) {
+    if (!heard) return
+    const { verdict } = gradeSpeech(item.jp, heard)
+    if (verdict === 'close' && !retried) {
+      setRetried(true)
+      return
+    }
+    onLand(item, verdict, 'dialogue-speak')
   }
+
+  const { listening, processing, transcript, start, stop } = useHoldToSpeak(settle)
 
   return (
     <div className="text-center">
@@ -233,19 +216,36 @@ function DialogueSpeak({
       <JapaneseLine jp={item.jp} furigana={item.furigana} romaji={item.romaji} size="md" />
       <button
         type="button"
+        disabled={processing}
         onPointerDown={start}
-        onPointerUp={() => sessionRef.current?.stop()}
-        aria-label={listening ? 'Stop listening' : 'Hold to talk'}
+        onPointerUp={stop}
+        aria-label={processing ? 'Processing' : listening ? 'Stop listening' : 'Hold to talk'}
         className={`mt-5 inline-flex h-[72px] w-[72px] items-center justify-center rounded-full text-paper transition active:scale-95 ${
-          listening ? 'animate-pulse bg-clay motion-reduce:animate-none' : 'bg-ink'
+          processing
+            ? 'bg-clay'
+            : listening
+              ? 'animate-pulse bg-clay motion-reduce:animate-none'
+              : 'bg-ink'
         }`}
       >
-        <svg viewBox="0 0 24 24" aria-hidden width="28" height="28">
-          <rect x="9" y="4" width="6" height="11" rx="3" fill="currentColor" />
-          <path d="M6.5 12a5.5 5.5 0 0 0 11 0M12 17.5V20.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-        </svg>
+        {processing ? (
+          <svg viewBox="0 0 24 24" aria-hidden width="26" height="26" className="motion-safe:animate-spin">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2.4" strokeOpacity="0.3" />
+            <path d="M12 3a9 9 0 0 1 9 9" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" aria-hidden width="28" height="28">
+            <rect x="9" y="4" width="6" height="11" rx="3" fill="currentColor" />
+            <path d="M6.5 12a5.5 5.5 0 0 0 11 0M12 17.5V20.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+          </svg>
+        )}
       </button>
-      {retried && !listening && (
+      {processing && (
+        <p className="mt-3 text-sm text-ink-mid" aria-live="polite">
+          One moment…
+        </p>
+      )}
+      {retried && !listening && !processing && (
         <p className="mt-3 text-sm text-ink-mid" aria-live="polite">
           Close — one more try?
         </p>

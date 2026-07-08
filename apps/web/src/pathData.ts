@@ -4,6 +4,7 @@
 // real progress. Mock mode never touches the server and shows a banner chip.
 
 import { get } from './api'
+import type { KitsuneTone } from './components/AnimatedKitsune'
 
 export type LessonState = 'done' | 'current' | 'available' | 'locked'
 
@@ -31,7 +32,7 @@ export interface PathManifest {
   units: PathUnit[]
   kana_trail: Record<string, { id: string; state: string; stars: number }[]>
   summit: { trip_ready_pct: number; days_to_trip: number }
-  partner: { display_name: string; current_lesson_id: string | null; words_known: number } | null
+  partner: { display_name: string; current_lesson_id: string | null; words_known: number; tone: KitsuneTone } | null
 }
 
 export interface StatsMe {
@@ -49,7 +50,7 @@ export interface StatsMe {
 export interface Household {
   partners: {
     display_name: string
-    avatar: 'clay' | 'sky'
+    tone: KitsuneTone
     streak: number
     words_known: number
     current_lesson_id: string | null
@@ -108,6 +109,7 @@ function mockManifest(real: PathManifest): PathManifest {
       display_name: real.partner?.display_name ?? 'Garfield',
       current_lesson_id: 'u05.l2',
       words_known: 148,
+      tone: real.partner?.tone ?? 'sky',
     },
   }
 }
@@ -134,7 +136,7 @@ function mockHousehold(real: Household): Household {
           ...real.partners,
           {
             display_name: 'Garfield',
-            avatar: 'sky' as const,
+            tone: 'sky' as const,
             streak: 0,
             words_known: 0,
             current_lesson_id: null,

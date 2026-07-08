@@ -12,6 +12,7 @@ import {
   type Household,
   type StatsMe,
 } from '../pathData'
+import { PALETTE } from './AnimatedKitsune'
 
 const BAND_LABEL = ['New', 'Seen', 'Learning', 'Known', 'Strong']
 const BAND_DOT = ['bg-cloud', 'bg-kraft', 'bg-oat border border-line-strong', 'bg-olive', 'bg-clay']
@@ -171,7 +172,8 @@ export function StatsPage() {
             {household.partners.map((p) => (
               <div key={p.display_name} className="flex items-center gap-3 rounded-md border border-line bg-paper p-3.5">
                 <span
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-medium text-paper ${p.avatar === 'clay' ? 'bg-clay' : 'bg-sky'}`}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-medium text-paper"
+                  style={{ backgroundColor: PALETTE[p.tone].body }}
                 >
                   {p.display_name.slice(0, 1).toUpperCase()}
                 </span>

@@ -17,6 +17,7 @@ const DEFAULTS: Required<UserSettings> = {
   trip_date: '2026-09-15',
   placement_done: false,
   stt_mode: 'auto',
+  kitsune_tone: 'clay',
 }
 
 let current: UserSettings = {}

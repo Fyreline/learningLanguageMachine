@@ -22,6 +22,10 @@ export interface UserSettings {
   trip_date?: string
   placement_done?: boolean
   stt_mode?: 'auto' | 'shadow'
+  /** Which of the shared kitsune palettes this account's walker wears; the
+   * literal union mirrors AnimatedKitsune's KitsuneTone (kept inline so this
+   * plumbing module has no component dependency). */
+  kitsune_tone?: 'clay' | 'sky' | 'teal' | 'plum' | 'cyan'
 }
 
 export interface Me {

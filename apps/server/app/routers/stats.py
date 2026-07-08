@@ -161,12 +161,15 @@ def stats_household(
     }
 
     partners = []
-    for i, u in enumerate(users):
+    for u in users:
         current = current_lesson_id(db, u.id)
+        u_settings = json.loads(u.settings_json or "{}")
         partners.append(
             {
                 "display_name": u.display_name,
-                "avatar": "clay" if i == 0 else "sky",
+                # each user's own chosen kitsune palette (default clay if unset
+                # or a legacy row) — the buddies swatch matches their walker
+                "tone": u_settings.get("kitsune_tone", "clay"),
                 "streak": _streak(db, u.id, today)["current"],
                 "words_known": _words_known(db, u.id),
                 "current_lesson_id": current,

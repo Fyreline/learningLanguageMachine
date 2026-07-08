@@ -14,7 +14,8 @@ users
   created_at TEXT NOT NULL
   settings_json TEXT NOT NULL DEFAULT '{}'
       -- {romaji: "show"|"fade"|"hide", tts_rate: 0.9, daily_goal_xp: 30,
-      --  trip_date: "2026-09-15", placement_done: bool, stt_mode: "auto"|"shadow"}
+      --  trip_date: "2026-09-15", placement_done: bool, stt_mode: "auto"|"shadow",
+      --  kitsune_tone: "clay"|"sky"|"teal"|"plum"|"cyan"}
 
 refresh_tokens                           -- line-for-line port of Mishka's
   id INTEGER PK

@@ -236,6 +236,7 @@ class SettingsPatchBody(BaseModel):
     trip_date: str | None = None
     placement_done: bool | None = None
     stt_mode: str | None = None
+    kitsune_tone: str | None = None
 
 
 @router.put("/auth/settings")

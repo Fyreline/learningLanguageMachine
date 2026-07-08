@@ -2,8 +2,9 @@
 // §4.8 (pass >= 0.75, close 0.55-0.75 with one free retry). On devices
 // without SpeechRecognition (Safari/Firefox/no-mic) this silently becomes
 // shadow mode: listen, say it aloud, reveal, self-grade — never a dead end.
-import { useEffect, useRef, useState } from 'react'
-import { detectSttCapability, startListening, type SttSession } from '../../audio/stt'
+import { useState } from 'react'
+import { detectSttCapability } from '../../audio/stt'
+import { useHoldToSpeak } from '../../audio/useHoldToSpeak'
 import { gradeSpeech } from '../../engine/grading'
 import { getSettings } from '../../settings'
 import { AudioStage, JapaneseLine, PromptLine, type ExerciseProps, type Verdict } from './shared'
@@ -13,6 +14,16 @@ function MicGlyph() {
     <svg viewBox="0 0 24 24" aria-hidden width="34" height="34">
       <rect x="9" y="4" width="6" height="11" rx="3" fill="currentColor" />
       <path d="M6.5 12a5.5 5.5 0 0 0 11 0M12 17.5V20.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+/** Shown between release and grading so the async settle doesn't look dead. */
+function SpinnerGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden width="32" height="32" className="motion-safe:animate-spin">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2.4" strokeOpacity="0.3" />
+      <path d="M12 3a9 9 0 0 1 9 9" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
     </svg>
   )
 }
@@ -30,40 +41,12 @@ export function Speak({ item, locked, onResult }: ExerciseProps) {
 }
 
 function MicMode({ item, locked, onResult }: Pick<ExerciseProps, 'item' | 'locked' | 'onResult'>) {
-  const [listening, setListening] = useState(false)
-  const [transcript, setTranscript] = useState('')
   const [retried, setRetried] = useState(false)
   const [closeOnce, setCloseOnce] = useState<string | null>(null)
-  const sessionRef = useRef<SttSession | null>(null)
-  const finalRef = useRef('')
 
-  useEffect(() => () => sessionRef.current?.stop(), [])
-
-  function start() {
-    if (locked || listening) return
-    finalRef.current = ''
-    setTranscript('')
-    const session = startListening(
-      (r) => {
-        setTranscript(r.transcript)
-        if (r.isFinal) finalRef.current = r.transcript
-      },
-      () => {
-        setListening(false)
-        settle()
-      },
-    )
-    if (!session) return
-    sessionRef.current = session
-    setListening(true)
-  }
-
-  function stop() {
-    sessionRef.current?.stop()
-  }
-
-  function settle() {
-    const heard = finalRef.current || transcript
+  // `heard` is '' when nothing was transcribed — return before grading so a
+  // mic press with no speech is never recorded as an attempt (§4.4).
+  function settle(heard: string) {
     if (!heard) return
     const { verdict } = gradeSpeech(item.jp, heard)
     if (verdict === 'close' && !retried) {
@@ -75,6 +58,8 @@ function MicMode({ item, locked, onResult }: Pick<ExerciseProps, 'item' | 'locke
     onResult({ verdict, given: heard, mode: 'speak' })
   }
 
+  const { listening, processing, transcript, start, stop } = useHoldToSpeak(settle, locked)
+
   return (
     <div>
       <PromptLine>Say it aloud</PromptLine>
@@ -85,7 +70,7 @@ function MicMode({ item, locked, onResult }: Pick<ExerciseProps, 'item' | 'locke
       <div className="mt-8 flex flex-col items-center gap-3">
         <button
           type="button"
-          disabled={locked}
+          disabled={locked || processing}
           onPointerDown={start}
           onPointerUp={stop}
           onKeyDown={(e) => {
@@ -94,15 +79,19 @@ function MicMode({ item, locked, onResult }: Pick<ExerciseProps, 'item' | 'locke
               listening ? stop() : start()
             }
           }}
-          aria-label={listening ? 'Stop listening' : 'Hold to talk'}
+          aria-label={processing ? 'Processing' : listening ? 'Stop listening' : 'Hold to talk'}
           className={`inline-flex h-[88px] w-[88px] items-center justify-center rounded-full text-paper transition active:scale-95 ${
-            listening ? 'animate-pulse bg-clay motion-reduce:animate-none' : 'bg-ink'
+            processing
+              ? 'bg-clay'
+              : listening
+                ? 'animate-pulse bg-clay motion-reduce:animate-none'
+                : 'bg-ink'
           }`}
         >
-          <MicGlyph />
+          {processing ? <SpinnerGlyph /> : <MicGlyph />}
         </button>
-        <p className="text-xs text-ink-soft">
-          {listening ? 'Listening — release when done' : 'Hold to talk, or press space'}
+        <p className="text-xs text-ink-soft" aria-live="polite">
+          {processing ? 'One moment…' : listening ? 'Listening — release when done' : 'Hold to talk, or press space'}
         </p>
         {transcript && (
           <p lang="ja" className="font-jp text-xl text-ink" aria-live="polite">

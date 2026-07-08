@@ -23,7 +23,8 @@ GET /api/curriculum/manifest        → content/manifest.json + per-lesson learn
       state: "done"|"current"|"available"|"locked", stars, best_score}]}],
     kana_trail: {...same state merge},
     summit: {trip_ready_pct, days_to_trip},
-    partner: {display_name, current_lesson_id, words_known} | null}
+    partner: {display_name, current_lesson_id, words_known,
+      tone: "clay"|"sky"|"teal"|"plum"|"cyan"} | null}   # tone = partner's chosen kitsune palette
 GET /api/curriculum/lessons/{lesson_id} → the lesson's full content slice:
    {lesson:{id,title,kind}, items:[Item...] (new + a server-picked warm-up/review set with
     current strengths), steps: Step[] | null, dialogues: [...] when referenced}
@@ -69,9 +70,11 @@ GET /api/stats/me        → {streak:{current, rest_day_used}, words_known, minu
                             xp_week:[{date,xp} x7], daily_goal_xp, accuracy_recent,
                             strength_bands: {0:n,1:n,2:n,3:n,4:n},
                             forecast:[{date, due} x7], trip_ready_pct}
-GET /api/stats/household → {partners:[{display_name, avatar: "clay"|"sky", streak,
+GET /api/stats/household → {partners:[{display_name,
+                            tone: "clay"|"sky"|"teal"|"plum"|"cyan", streak,
                             words_known, current_lesson_id, current_unit_title}],
                             together_phrases: int}   # both users, aggregates only
+                            # tone = each user's chosen kitsune palette (default clay)
 ```
 
 ## Misc
