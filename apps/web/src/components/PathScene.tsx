@@ -816,15 +816,15 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
               )}
               {/* the kitsune, alive on the current node */}
               {l.state === 'current' && (
-                <g transform={`translate(${n.x - 26} ${n.y - 78})`} aria-label="You are here">
-                  <AnimatedKitsune mood={celebrating ? 'celebrating' : 'idle'} width={60} height={53} className="" />
+                <g transform={`translate(${n.x - 26} ${n.y - 81})`} aria-label="You are here">
+                  <AnimatedKitsune mood={celebrating ? 'celebrating' : 'idle'} width={52} height={58} className="" />
                 </g>
               )}
               {/* partner's ghost kitsune (sky tone), presence not competition */}
               {partnerNode?.lesson.id === l.id && partner && (
-                <g transform={`translate(${n.x + 18} ${n.y - 58})`} opacity="0.8">
+                <g transform={`translate(${n.x + 16} ${n.y - 66})`} opacity="0.8">
                   <title>{`${partner.display_name} is here`}</title>
-                  <AnimatedKitsune tone="sky" width={44} height={39} className="" />
+                  <AnimatedKitsune tone="sky" width={38} height={42} className="" />
                 </g>
               )}
             </g>
