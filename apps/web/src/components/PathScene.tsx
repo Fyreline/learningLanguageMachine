@@ -12,7 +12,7 @@
  * motion's useScroll; scenery sprites live in PathScenery.tsx.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { motion as m, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import type { PathLesson, PathManifest, PathUnit } from '../pathData'
 import { useSettings } from '../settings'
@@ -333,6 +333,20 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
   const totalH = TOP_PAD + BOT_PAD + (nodeCount - 1) * STEP
 
   const nodes = useMemo(() => buildNodes(units, totalH, W), [units, totalH, W])
+
+  // Which side of each node is clear of the trail: the curve is heading
+  // toward whichever neighbour has the larger x, so anything tucked in on
+  // THAT side risks crossing the stroke a few px along the curve — offset
+  // decorations (stars, the lesson number) to the OPPOSITE side instead.
+  // -1 = offset left, 1 = offset right.
+  const clearSide = useMemo(() => {
+    return nodes.map((_, i) => {
+      const prev = nodes[Math.max(0, i - 1)]
+      const next = nodes[Math.min(nodes.length - 1, i + 1)]
+      const dx = next.x - prev.x
+      return dx >= 0 ? -1 : 1
+    })
+  }, [nodes])
   const currentNode = nodes.find((n) => n.lesson.state === 'current')
   const partnerNode = partner?.current_lesson_id
     ? nodes.find((n) => n.lesson.id === partner.current_lesson_id)
@@ -344,10 +358,20 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
   }, [nodes, currentNode])
   const full = useMemo(() => smoothPath(nodes.map(({ x, y }) => ({ x, y }))), [nodes])
 
-  const currentRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    currentRef.current?.scrollIntoView({ block: 'center' })
-  }, [])
+  // Scrolls to the ACTUAL current node (not the unit header, which sits at
+  // the top of the unit and can be several lessons above wherever the
+  // learner really is) — on mount, and every time PathPage force-remounts
+  // this component after a lesson (App.tsx's `key={pathVersion}`).
+  // useLayoutEffect (synchronous, pre-paint), NOT useEffect+rAF: a remount
+  // starts scrolled at 0 — the top of the mountain, i.e. the dark night-sky
+  // summit — and an rAF-deferred scroll let the browser paint that dark
+  // frame before jumping down to the real (likely daylight) position, a
+  // one-frame flash. Correcting scroll before paint means that frame is
+  // never shown at all.
+  const currentAnchorRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    currentAnchorRef.current?.scrollIntoView({ block: 'center' })
+  }, [currentNode])
 
   // The mountain body: converging sides, sampled top→bottom each side with a
   // hashed wobble so the edges read hand-cut, not ruled.
@@ -408,8 +432,17 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
         rects.push({ x0: um.landmarkX - 44, x1: um.landmarkX + 44, y0: um.landmarkY - 40, y1: um.landmarkY + 40 })
       }
     }
+    // the star cluster and lesson-number label beside each node — keep
+    // scenery sprites from landing on either
+    for (const n of nodes) {
+      if (n.lesson.kind === 'checkpoint') continue
+      const starX = n.x + clearSide[n.i] * 38
+      if (n.lesson.state === 'done') rects.push({ x0: starX - 9, x1: starX + 9, y0: n.y + 5, y1: n.y + 51 })
+      const numX = n.x - clearSide[n.i] * 38
+      rects.push({ x0: numX - 12, x1: numX + 12, y0: n.y - 10, y1: n.y + 10 })
+    }
     return rects
-  }, [unitMeta, W])
+  }, [unitMeta, W, nodes, clearSide])
   const bodyPath = useMemo(() => {
     const baseY = totalH
     const STEPS = 84
@@ -700,6 +733,7 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
           in Settings repaints the walker immediately. */}
       {currentNode && (
         <div
+          ref={currentAnchorRef}
           className="pointer-events-none absolute -translate-x-1/2 -translate-y-full"
           style={{
             left: `${(currentNode.x / W) * 100}%`,
@@ -747,7 +781,6 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
             data-header={u.id}
             className={`absolute w-[30%] max-w-[230px] ${headerSide === 'left' ? 'left-[2%] text-left' : 'right-[2%] text-right'}`}
             style={{ top: `${headerTopPct}%` }}
-            ref={u.lessons.some((l) => l.state === 'current') ? currentRef : undefined}
           >
             <p className={`font-mono text-[10px] uppercase tracking-[0.08em] ${night ? 'text-night-soft' : 'text-ink-soft'}`}>{u.kicker}</p>
             <h2 className={`font-display text-base font-semibold leading-tight ${night ? 'text-night-ink' : 'text-ink'}`}>{u.title}</h2>
@@ -843,13 +876,34 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
                   />
                 </>
               )}
-              {/* stars under done nodes */}
+              {/* stars — a vertical cluster to whichever side the trail's
+                  curve leaves clear, never crossing the stroke under the
+                  node the way a centred row could */}
               {l.state === 'done' && !isGate && (
                 <g>
                   {[0, 1, 2].map((s) => (
-                    <Star key={s} cx={n.x - 12 + s * 12} cy={n.y + 38} filled={s < l.stars} />
+                    <Star
+                      key={s}
+                      cx={n.x + clearSide[n.i] * 38}
+                      cy={n.y + 14 + s * 14}
+                      filled={s < l.stars}
+                    />
                   ))}
                 </g>
+              )}
+              {/* the lesson number — opposite side from the stars */}
+              {!isGate && (
+                <text
+                  x={n.x - clearSide[n.i] * 38}
+                  y={n.y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  className={`select-none font-mono text-[13px] ${
+                    l.state === 'locked' ? 'fill-cloud' : 'fill-ink-soft'
+                  }`}
+                >
+                  {n.i + 1}
+                </text>
               )}
             </g>
           )
