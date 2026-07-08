@@ -265,12 +265,27 @@ mechanism itself.
 **Animation** (transforms only, no new geometry — everything behind
 prefers-reduced-motion): the tail (household-requested) **flicks upward**
 on a loop — a quick snap up, slower ease back down, not a symmetric sway —
-faster still on `walking`/`celebrating`. The eyes (white patch + both brow
-strokes) blink. Everything else breathes gently, and hops on `celebrating`.
-`walking` is built and exported but not yet wired to a call site — the
-natural next step is a path-advance transit animation (walk from the
-just-completed node to the next one) rather than the instant snap the path
-currently does.
+faster still on `walking`/`celebrating`. The eyes (just the two brow/closed-
+eye strokes) blink. The white muzzle patch is static, painted before the
+nose/mouth so they stay visible always — it used to sit in the blinking
+group, painting over the nose/mouth permanently except during the blink's
+squash, which is why they briefly "appeared" only mid-blink; fixed by
+moving the muzzle to the static body group. Everything else breathes
+gently, and hops on `celebrating`. `walking` is built and exported but not
+yet wired to a call site — the natural next step is a path-advance transit
+animation (walk from the just-completed node to the next one) rather than
+the instant snap the path currently does.
+
+**Rendering fix (same day)**: the walker and partner-ghost used to be drawn
+inside PathScene's per-segment SVGs (a raster-budget slicing workaround —
+§5b) — a segment's viewBox clips anything past its edge, so a node sitting
+near a segment boundary cropped the walker's head, and could hide the
+partner ghost entirely. Both now render as HTML overlays (the same
+percentage-positioned pattern unit headers/landmarks already used, which
+never had this problem for exactly this reason), immune to segment
+boundaries. `tone` is also now genuinely reactive (`useSettings()`, not a
+`getSettings()` snapshot) so a Settings colour change repaints the walker
+immediately.
 
 ## 6. Stats — the travel journal
 
