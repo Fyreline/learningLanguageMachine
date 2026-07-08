@@ -223,6 +223,35 @@ screenshot tooling whites out beyond ~16384 device px of page height — deep
 regions must be verified in a real browser or at narrow widths, not declared
 broken (a full afternoon says hello).
 
+## 5c. The kitsune walker, v2 (shipped 2026-07-08, same day as v1)
+
+Redrawn again the same day per fresh household reference (the Duolingo owl,
+Overwatch Kiriko's spirit-fox, a doodle of a fox sitting cat-style) —
+`AnimatedKitsune.tsx`. Two real construction changes from the morning's
+standing-bipedal version:
+
+- **Eyes**: the genuine Duo/Kiriko technique — a big white oval, the head's
+  OWN body colour dipping down over its top rim to read as a brow (no
+  separate eyebrow stroke; that's how Duo's face is actually built), a black
+  pupil, one catchlight dot.
+- **Posture**: sitting cat-style, not standing — haunches down, tail curling
+  from behind round to rest in front, two front paws visible at the base.
+
+Palette is still a fixed two-tone `{body, shadow}` pair per `tone` (not
+currentColor/theme tokens — `clay-deep` inverts brighter in dark mode for
+hover states, which would break the shading illusion). `tone` is now
+user-selectable (Settings → "Kitsune colour"; five options: clay, sky, teal,
+plum, cyan) and the partner ghost renders the partner's own actual choice
+(read from their settings, surfaced through both the manifest and household
+endpoints) rather than a hardcoded sky.
+
+Walking mood: since the sitting silhouette has no articulated legs, "walking"
+is a bouncy toddling waddle — the whole body hops forward while the two
+front paws alternate a small lift and the tail swishes faster. Built and
+exported but not yet wired to a call site — the natural next step is a
+path-advance transit animation (walk from the just-completed node to the
+next one) rather than the instant snap the path currently does.
+
 ## 6. Stats — the travel journal
 
 Four zones on one scrolling page (cards `bg-paper-mid border-line rounded-lg p-6`):
