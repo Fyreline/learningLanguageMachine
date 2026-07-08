@@ -15,6 +15,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion as m, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import type { PathLesson, PathManifest, PathUnit } from '../pathData'
+import { getSettings } from '../settings'
 import { AnimatedKitsune } from './AnimatedKitsune'
 import { Birds, buildScenery, CloudPuff, hash, ramp, SkyLanterns, SpriteGlyph, Stars, SummitTorii } from './PathScenery'
 
@@ -814,17 +815,18 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
                   ))}
                 </g>
               )}
-              {/* the kitsune, alive on the current node */}
+              {/* the kitsune, alive on the current node — in the account's own
+                  chosen palette (Settings › Your kitsune) */}
               {l.state === 'current' && (
-                <g transform={`translate(${n.x - 26} ${n.y - 81})`} aria-label="You are here">
-                  <AnimatedKitsune mood={celebrating ? 'celebrating' : 'idle'} width={52} height={58} className="" />
+                <g transform={`translate(${n.x - 32} ${n.y - 84})`} aria-label="You are here">
+                  <AnimatedKitsune mood={celebrating ? 'celebrating' : 'idle'} tone={getSettings().kitsune_tone} width={61} height={64} className="" />
                 </g>
               )}
-              {/* partner's ghost kitsune (sky tone), presence not competition */}
+              {/* partner's ghost kitsune (their real chosen tone), presence not competition */}
               {partnerNode?.lesson.id === l.id && partner && (
-                <g transform={`translate(${n.x + 16} ${n.y - 66})`} opacity="0.8">
+                <g transform={`translate(${n.x - 4} ${n.y - 67})`} opacity="0.8">
                   <title>{`${partner.display_name} is here`}</title>
-                  <AnimatedKitsune tone="sky" width={38} height={42} className="" />
+                  <AnimatedKitsune tone={partner.tone} width={43} height={45} className="" />
                 </g>
               )}
             </g>
