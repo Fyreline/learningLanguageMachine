@@ -113,7 +113,12 @@ export function AnimatedKitsune({
 }) {
   return (
     <svg
-      viewBox="0 0 440 460"
+      // Padded well past the artwork's own 0 0 440 460 bounds: the tail's
+      // flick ROTATES it (a CSS transform on `.kit-tail`), which sweeps its
+      // tip outside the artwork's static bounding box — an unpadded viewBox
+      // clips that swing every cycle. The padding is pure headroom; the
+      // artwork itself hasn't moved.
+      viewBox="-55 -55 550 570"
       aria-hidden
       width={width}
       height={height}
@@ -121,8 +126,9 @@ export function AnimatedKitsune({
     >
       <style>{KIT_CSS}</style>
       <defs>
-        <filter id="kit-sticker" x="-15%" y="-15%" width="130%" height="130%">
-          <feMorphology in="SourceAlpha" operator="dilate" radius="9" result="dilated" />
+        {/* thinner sticker edge (was radius 9 / stroke 5 — read as heavy) */}
+        <filter id="kit-sticker" x="-20%" y="-20%" width="140%" height="140%">
+          <feMorphology in="SourceAlpha" operator="dilate" radius="5" result="dilated" />
           <feFlood floodColor="#ffffff" result="white" />
           <feComposite in="white" in2="dilated" operator="in" result="outline" />
           <feMerge>
@@ -133,7 +139,7 @@ export function AnimatedKitsune({
       </defs>
       <g
         stroke="#1E6D7E"
-        strokeWidth="5"
+        strokeWidth="3.5"
         strokeLinejoin="round"
         strokeLinecap="round"
         style={{ filter: `url(#kit-sticker) hue-rotate(${HUE_ROTATE[tone]}deg)` }}
