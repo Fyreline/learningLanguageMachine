@@ -15,7 +15,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion as m, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import type { PathLesson, PathManifest, PathUnit } from '../pathData'
-import { getSettings } from '../settings'
+import { useSettings } from '../settings'
 import { AnimatedKitsune } from './AnimatedKitsune'
 import { Birds, buildScenery, CloudPuff, hash, ramp, SkyLanterns, SpriteGlyph, Stars, SummitTorii } from './PathScenery'
 
@@ -291,6 +291,10 @@ export interface PathSceneProps {
 }
 
 export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
+  // Reactive (not a one-shot getSettings() snapshot) — otherwise picking a
+  // new kitsune colour in Settings doesn't repaint the walker until
+  // something else forces a remount.
+  const { kitsune_tone: myTone } = useSettings()
   // One round of hops when arriving back from a just-completed lesson — the
   // score screen (or anything else) sets sessionStorage 'michi-celebrate'.
   const [celebrating, setCelebrating] = useState(
@@ -687,6 +691,38 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
         ))}
       </m.div>
 
+      {/* the kitsune and the partner's ghost — HTML overlays (like the unit
+          headers/landmarks below), NOT inside the segmented SVGs: a segment's
+          own viewBox clips anything drawn past its edge, and the walker's
+          head reaches high enough above its node that a node sitting near a
+          segment boundary got its head cut off. `tone` is reactive
+          (useSettings, not a getSettings() snapshot) so picking a new colour
+          in Settings repaints the walker immediately. */}
+      {currentNode && (
+        <div
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-full"
+          style={{
+            left: `${(currentNode.x / W) * 100}%`,
+            top: `${((currentNode.y - 28) / totalH) * 100}%`,
+          }}
+          aria-label="You are here"
+        >
+          <AnimatedKitsune mood={celebrating ? 'celebrating' : 'idle'} tone={myTone} width={61} height={64} />
+        </div>
+      )}
+      {partnerNode && partner && (
+        <div
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-full opacity-80"
+          style={{
+            left: `${((partnerNode.x + 20) / W) * 100}%`,
+            top: `${((partnerNode.y - 20) / totalH) * 100}%`,
+          }}
+          title={`${partner.display_name} is here`}
+        >
+          <AnimatedKitsune tone={partner.tone} width={43} height={45} />
+        </div>
+      )}
+
       {/* the trip-readiness meter, just below the summit torii */}
       <div
         className="absolute inset-x-0 flex flex-col items-center text-center"
@@ -813,20 +849,6 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
                   {[0, 1, 2].map((s) => (
                     <Star key={s} cx={n.x - 12 + s * 12} cy={n.y + 38} filled={s < l.stars} />
                   ))}
-                </g>
-              )}
-              {/* the kitsune, alive on the current node — in the account's own
-                  chosen palette (Settings › Your kitsune) */}
-              {l.state === 'current' && (
-                <g transform={`translate(${n.x - 32} ${n.y - 84})`} aria-label="You are here">
-                  <AnimatedKitsune mood={celebrating ? 'celebrating' : 'idle'} tone={getSettings().kitsune_tone} width={61} height={64} className="" />
-                </g>
-              )}
-              {/* partner's ghost kitsune (their real chosen tone), presence not competition */}
-              {partnerNode?.lesson.id === l.id && partner && (
-                <g transform={`translate(${n.x - 4} ${n.y - 67})`} opacity="0.8">
-                  <title>{`${partner.display_name} is here`}</title>
-                  <AnimatedKitsune tone={partner.tone} width={43} height={45} className="" />
                 </g>
               )}
             </g>

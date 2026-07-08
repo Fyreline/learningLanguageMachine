@@ -2,14 +2,13 @@
  * day) with the household's own hand-designed kitsune — a sticker-style
  * sitting spirit-fox (white outline via an SVG feMorphology-dilate filter),
  * built in Claude Design: https://claude.ai/design/p/c513c49a-0c9e-4a70-9c1c-8e0a7064f7f2
- * The artwork is verbatim EXCEPT one repair: the pasted path for the ear
- * decoration (`d="M224 216 ... L270 318 L278 "`) was cut off mid-coordinate
- * — no y-value, no closing Z, almost certainly a copy/paste truncation. It
- * was closed here as `L278 306 Z` (306 chosen to sit plausibly on the
- * existing curve) to make it valid; that endpoint is a guess, not the
- * original data — worth a glance against the source if that shape looks
- * off. Everything else is untouched geometry; this file only adds the
- * animation groupings and the tone-recolour mechanism.
+ * The artwork’s geometry is verbatim, including the ear-decoration path
+ * ending `L278 ` with no explicit closing `Z` — intentional in the source,
+ * not a paste error (an earlier pass here mistakenly "fixed" it; reverted
+ * per the household). Browsers auto-close an open path for FILL purposes
+ * (straight back to the initial M), so it renders correctly without one.
+ * This file only adds the animation groupings and the tone-recolour
+ * mechanism.
  *
  * Earlier redesign attempts this same day (standing-bipedal, then a
  * flat-shaded sitting-cat silhouette) both read as "red panda" against
@@ -33,9 +32,11 @@
  * Animation groups (transforms only, no new geometry): `kit-tail` (the
  * first two paths — the bushy curled tail) gets the household-requested
  * upward flick — a quick rotate up, slower ease back down, looping, faster
- * still on `walking`/`celebrating`. `kit-eyes` (the white eye patch + both
- * brow strokes) blinks. `kit-body` (everything else) breathes gently and
- * hops on `celebrating`. All motion behind prefers-reduced-motion. */
+ * still on `walking`/`celebrating`. `kit-eyes` (the two brow strokes only —
+ * the white muzzle patch stays static, nose/mouth painted after it so they
+ * stay visible always, not just mid-blink) blinks. `kit-body` (everything
+ * else, muzzle/nose/mouth included) breathes gently and hops on
+ * `celebrating`. All motion behind prefers-reduced-motion. */
 
 export type KitsuneMood = 'idle' | 'walking' | 'celebrating'
 export type KitsuneTone = 'clay' | 'sky' | 'teal' | 'plum' | 'cyan'
@@ -182,7 +183,7 @@ export function AnimatedKitsune({
           <path fill="none" strokeWidth="4" d="M262 392 L262 402" />
           <path
             fill="#C7F3F7"
-            d="M224 216 C250 224 268 238 274 250 L300 258 L282 272 L302 288 L280 296 L294 314 L270 318 L278 306 Z"
+            d="M224 216 C250 224 268 238 274 250 L300 258 L282 272 L302 288 L280 296 L294 314 L270 318 L278 "
           />
           <path
             fill="#E9FCFD"
@@ -204,13 +205,17 @@ export function AnimatedKitsune({
             d="M228 96 C252 96 272 104 282 118 L292 134 L318 144 L296 162 L316 180 L292 190 L302 210 L278 214 C266 228 248 236 228 236 C208 236 190 228 178 214 L154 210 L164 190 L140 180 L160 162 L138 144 L164 134 L174 118 C184 104 204 96 228 96 Z"
           />
           <path fill="#C7F3F7" d="M202 102 L214 76 L225 94 L237 72 L247 100 C233 93 216 93 202 102 Z" />
+          {/* the white muzzle patch — static, never blinks; nose and mouth
+              painted AFTER it so they stay visible on top at all times (they
+              used to sit under the eye-white ellipse when it lived in the
+              blinking group, only surfacing during the squashed blink frame) */}
+          <ellipse cx="228" cy="198" rx="38" ry="27" fill="#EFFDFE" stroke="none" />
           <path fill="#174B57" stroke="none" d="M219 189 L237 189 Q239 191 237 194 L230 201 Q228 203 226 201 L219 194 Q217 191 219 189 Z" />
           <path fill="none" stroke="#174B57" strokeWidth="5" d="M217 208 Q228 216 239 208" />
         </g>
 
-        {/* eyes — blink lives here */}
+        {/* eyebrows only — the blink */}
         <g className="kit-eyes">
-          <ellipse cx="228" cy="198" rx="38" ry="27" fill="#EFFDFE" stroke="none" />
           <path fill="none" stroke="#174B57" strokeWidth="6" d="M176 168 Q191 152 206 166" />
           <path fill="none" stroke="#174B57" strokeWidth="6" d="M250 166 Q265 152 280 168" />
         </g>
