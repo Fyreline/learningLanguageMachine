@@ -2,10 +2,11 @@
 // Japanese typography, choice cards, and the one result contract every
 // exercise reports through.
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Item } from '../../curriculum/types'
 import { speak, subscribeSpeaking } from '../../audio/tts'
 import { useSettings } from '../../settings'
+import { speakerFor, SpeakerAvatar } from '../SpeakerAvatar'
 
 export type Verdict = 'pass' | 'close' | 'miss'
 
@@ -64,6 +65,9 @@ export function AudioStage({ text, autoPlay = true, size = 'lg' }: { text: strin
   const [speaking, setSpeaking] = useState(false)
   const played = useRef(false)
   const { tts_rate: rate } = useSettings()
+  // same phrase always shows the same "someone saying it" — a recurring
+  // cast, not a randomiser flickering between every exercise
+  const speaker = useMemo(() => speakerFor(text), [text])
 
   useEffect(() => subscribeSpeaking(setSpeaking), [])
   useEffect(() => {
@@ -80,6 +84,8 @@ export function AudioStage({ text, autoPlay = true, size = 'lg' }: { text: strin
   const big = size === 'lg'
   return (
     <div className="flex items-center justify-center gap-4">
+      {/* "someone saying it" — a face for the voice, docs/DESIGN.md §4 */}
+      <SpeakerAvatar spec={speaker} speaking={speaking} width={big ? 60 : 40} height={big ? 60 : 40} />
       <span className="relative inline-flex">
         {speaking && (
           <span
