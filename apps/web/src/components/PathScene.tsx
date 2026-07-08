@@ -334,17 +334,82 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
 
   const nodes = useMemo(() => buildNodes(units, totalH, W), [units, totalH, W])
 
-  // Which side of each node is clear of the trail: the curve is heading
-  // toward whichever neighbour has the larger x, so anything tucked in on
-  // THAT side risks crossing the stroke a few px along the curve — offset
-  // decorations (stars, the lesson number) to the OPPOSITE side instead.
-  // -1 = offset left, 1 = offset right.
+  // Where to put each node's star cluster (and, mirrored, its lesson
+  // number) so NEITHER crosses the trail — not just a coarse "which way is
+  // the curve heading" guess, but an actual clearance check against the
+  // real rendered curve, trying small vertical nudges before resorting to
+  // the other side entirely (cheapest fix first, per the household's ask).
   const clearSide = useMemo(() => {
-    return nodes.map((_, i) => {
+    // The segment immediately BELOW node i (connecting i-1 -> i) is the one
+    // stars risk crossing, since they sit at y > node.y (higher i = smaller
+    // y — the path climbs, so "below" a node is toward the previous one).
+    // Reconstructs the exact same Catmull-Rom control points smoothPath
+    // uses, so clearance is checked against the curve as actually drawn.
+    function sampleIncomingSegment(i: number) {
+      const p0 = nodes[Math.max(0, i - 2)]
+      const p1 = nodes[Math.max(0, i - 1)]
+      const p2 = nodes[i]
+      const p3 = nodes[Math.min(nodes.length - 1, i + 1)]
+      const c1 = { x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 }
+      const c2 = { x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 }
+      const pts: { x: number; y: number }[] = []
+      // only the half nearest node i — the far half is well past where a
+      // star cluster (y0+14..y0+56) could ever reach
+      for (let k = 0; k <= 12; k++) {
+        const t = 0.5 + (0.5 * k) / 12
+        const mt = 1 - t
+        pts.push({
+          x: mt ** 3 * p1.x + 3 * mt ** 2 * t * c1.x + 3 * mt * t ** 2 * c2.x + t ** 3 * p2.x,
+          y: mt ** 3 * p1.y + 3 * mt ** 2 * t * c1.y + 3 * mt * t ** 2 * c2.y + t ** 3 * p2.y,
+        })
+      }
+      return pts
+    }
+
+    const SAFE = 19 // trail half-width (7) + star radius (~5) + margin
+    return nodes.map((n, i) => {
       const prev = nodes[Math.max(0, i - 1)]
       const next = nodes[Math.min(nodes.length - 1, i + 1)]
-      const dx = next.x - prev.x
-      return dx >= 0 ? -1 : 1
+      const preferredSide = next.x - prev.x >= 0 ? -1 : 1
+      const curve = sampleIncomingSegment(i)
+
+      const clearance = (side: number, shift: number) => {
+        let min = Infinity
+        for (let s = 0; s < 3; s++) {
+          const sx = n.x + side * 38
+          const sy = n.y + 14 + shift + s * 14
+          for (const c of curve) {
+            const d = Math.hypot(sx - c.x, sy - c.y)
+            if (d < min) min = d
+          }
+        }
+        return min
+      }
+
+      // cheapest fix first: no change, then small nudges, then bigger
+      // nudges, and only then the other side entirely
+      const candidates: { side: number; shift: number }[] = [
+        { side: preferredSide, shift: 0 },
+        { side: preferredSide, shift: -10 }, { side: preferredSide, shift: 10 },
+        { side: preferredSide, shift: -20 }, { side: preferredSide, shift: 20 },
+        { side: -preferredSide, shift: 0 },
+        { side: -preferredSide, shift: -10 }, { side: -preferredSide, shift: 10 },
+        { side: -preferredSide, shift: -20 }, { side: -preferredSide, shift: 20 },
+      ]
+      let best = candidates[0]
+      let bestClearance = -Infinity
+      for (const cand of candidates) {
+        const cl = clearance(cand.side, cand.shift)
+        if (cl > bestClearance) {
+          bestClearance = cl
+          best = cand
+        }
+        if (cl >= SAFE) {
+          best = cand
+          break
+        }
+      }
+      return best
     })
   }, [nodes])
   const currentNode = nodes.find((n) => n.lesson.state === 'current')
@@ -436,9 +501,12 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
     // scenery sprites from landing on either
     for (const n of nodes) {
       if (n.lesson.kind === 'checkpoint') continue
-      const starX = n.x + clearSide[n.i] * 38
-      if (n.lesson.state === 'done') rects.push({ x0: starX - 9, x1: starX + 9, y0: n.y + 5, y1: n.y + 51 })
-      const numX = n.x - clearSide[n.i] * 38
+      const { side, shift } = clearSide[n.i]
+      const starX = n.x + side * 38
+      if (n.lesson.state === 'done') {
+        rects.push({ x0: starX - 9, x1: starX + 9, y0: n.y + 5 + shift, y1: n.y + 51 + shift })
+      }
+      const numX = n.x - side * 38
       rects.push({ x0: numX - 12, x1: numX + 12, y0: n.y - 10, y1: n.y + 10 })
     }
     return rects
@@ -876,16 +944,16 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
                   />
                 </>
               )}
-              {/* stars — a vertical cluster to whichever side the trail's
-                  curve leaves clear, never crossing the stroke under the
-                  node the way a centred row could */}
+              {/* stars — a vertical cluster on whichever side (and with
+                  whatever small vertical nudge) actually clears the trail's
+                  real curve near this node, not just a coarse guess */}
               {l.state === 'done' && !isGate && (
                 <g>
                   {[0, 1, 2].map((s) => (
                     <Star
                       key={s}
-                      cx={n.x + clearSide[n.i] * 38}
-                      cy={n.y + 14 + s * 14}
+                      cx={n.x + clearSide[n.i].side * 38}
+                      cy={n.y + 14 + clearSide[n.i].shift + s * 14}
                       filled={s < l.stars}
                     />
                   ))}
@@ -894,7 +962,7 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
               {/* the lesson number — opposite side from the stars */}
               {!isGate && (
                 <text
-                  x={n.x - clearSide[n.i] * 38}
+                  x={n.x - clearSide[n.i].side * 38}
                   y={n.y}
                   textAnchor="middle"
                   dominantBaseline="central"
