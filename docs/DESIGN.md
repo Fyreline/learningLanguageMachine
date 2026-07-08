@@ -223,34 +223,54 @@ screenshot tooling whites out beyond ~16384 device px of page height — deep
 regions must be verified in a real browser or at narrow widths, not declared
 broken (a full afternoon says hello).
 
-## 5c. The kitsune walker, v2 (shipped 2026-07-08, same day as v1)
+## 5c. The kitsune walker — history and the current (v4) design
 
-Redrawn again the same day per fresh household reference (the Duolingo owl,
-Overwatch Kiriko's spirit-fox, a doodle of a fox sitting cat-style) —
-`AnimatedKitsune.tsx`. Two real construction changes from the morning's
-standing-bipedal version:
+Went through four passes in one day (2026-07-08):
 
-- **Eyes**: the genuine Duo/Kiriko technique — a big white oval, the head's
-  OWN body colour dipping down over its top rim to read as a brow (no
-  separate eyebrow stroke; that's how Duo's face is actually built), a black
-  pupil, one catchlight dot.
-- **Posture**: sitting cat-style, not standing — haunches down, tail curling
-  from behind round to rest in front, two front paws visible at the base.
+- **v1**: standing-bipedal, Duolingo-owl-proportioned. Direct feedback: "more
+  like a red panda than anything else."
+- **v2**: Duo/Kiriko eye construction (white oval, the head's own colour
+  dipping over the rim as the brow, black pupil, catchlight) + sitting-cat
+  posture. Same red-panda feedback persisted — round teddy ears, a round
+  muzzle patch, pupils too large relative to the white all still read wrong.
+- **v3** (same session, unshipped): tried fixing v2's issues with taller
+  ears, a tapered face, and a single continuous sitting silhouette. Closer,
+  but still Fable's own illustration, not what the household actually
+  wanted.
+- **v4 (shipped, current)**: replaced entirely with **the household's own
+  hand-designed kitsune**, built in Claude Design — a sticker-style sitting
+  spirit-fox with a white outline (SVG `feMorphology` dilate technique).
+  Design source: https://claude.ai/design/p/c513c49a-0c9e-4a70-9c1c-8e0a7064f7f2
+  `AnimatedKitsune.tsx`'s geometry is verbatim from that design except one
+  repair — a path in the pasted source was truncated mid-coordinate (almost
+  certainly a copy/paste cut-off); it was closed with a plausible endpoint,
+  flagged in the file's header comment as a guess rather than original data.
 
-Palette is still a fixed two-tone `{body, shadow}` pair per `tone` (not
-currentColor/theme tokens — `clay-deep` inverts brighter in dark mode for
-hover states, which would break the shading illusion). `tone` is now
-user-selectable (Settings → "Kitsune colour"; five options: clay, sky, teal,
-plum, cyan) and the partner ghost renders the partner's own actual choice
-(read from their settings, surfaced through both the manifest and household
-endpoints) rather than a hardcoded sky.
+**Tone**: the source art is one fixed cyan illustration (six flat shades +
+a dark ink for the brows/nose/mouth). Recolouring per selectable tone
+(clay/sky/teal/plum/cyan) is a CSS `hue-rotate` filter chained onto the
+artwork's own sticker-outline filter — `filter: url(#sticker)
+hue-rotate(Ndeg)` — with degrees computed from each tone's actual hue
+relative to the art's native ~186° cyan (via `colorsys`, not eyeballed).
+`cyan` is a 0° no-op — the art as designed. This preserves every hand-tuned
+shade in the source art rather than requiring six-shades-×-five-tones of
+manual recolouring, at the cost of the hue-rotated tones staying as
+low-saturation/pastel as the source cyan rather than matching the UI's
+vivid clay/sky/etc — a real trade-off, not hidden: worth a look together
+before calling it final. `PALETTE` (flat swatch hex for Settings' picker
+and the Stats buddies-panel dot) is unchanged from v2/v3 — those consumers
+only ever needed one representative hex per tone, not the recolour
+mechanism itself.
 
-Walking mood: since the sitting silhouette has no articulated legs, "walking"
-is a bouncy toddling waddle — the whole body hops forward while the two
-front paws alternate a small lift and the tail swishes faster. Built and
-exported but not yet wired to a call site — the natural next step is a
-path-advance transit animation (walk from the just-completed node to the
-next one) rather than the instant snap the path currently does.
+**Animation** (transforms only, no new geometry — everything behind
+prefers-reduced-motion): the tail (household-requested) **flicks upward**
+on a loop — a quick snap up, slower ease back down, not a symmetric sway —
+faster still on `walking`/`celebrating`. The eyes (white patch + both brow
+strokes) blink. Everything else breathes gently, and hops on `celebrating`.
+`walking` is built and exported but not yet wired to a call site — the
+natural next step is a path-advance transit animation (walk from the
+just-completed node to the next one) rather than the instant snap the path
+currently does.
 
 ## 6. Stats — the travel journal
 
