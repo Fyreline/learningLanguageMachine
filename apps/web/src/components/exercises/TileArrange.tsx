@@ -3,7 +3,9 @@
 // Tap-to-place with keyboard support: 1-9 places the nth remaining tile,
 // Backspace withdraws the last placed one.
 import { useEffect, useMemo, useState } from 'react'
+import { speak } from '../../audio/tts'
 import { gradeTiles, shuffled, tilesFor } from '../../engine/grading'
+import { getSettings } from '../../settings'
 import { AudioStage, PromptLine, type ExerciseProps } from './shared'
 
 export function TileArrange({ item, locked, onResult }: ExerciseProps) {
@@ -18,10 +20,13 @@ export function TileArrange({ item, locked, onResult }: ExerciseProps) {
 
   function place(tile: { id: number; text: string }) {
     if (locked) return
+    void speak(tile.text, { rate: getSettings().tts_rate })
     setPlaced((p) => [...p, tile])
   }
   function withdraw(id: number) {
     if (locked) return
+    const tile = placed.find((t) => t.id === id)
+    if (tile) void speak(tile.text, { rate: getSettings().tts_rate })
     setPlaced((p) => p.filter((t) => t.id !== id))
   }
   function check() {

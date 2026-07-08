@@ -27,9 +27,15 @@ export function KanaGlyph({ item, options, locked, onResult }: ExerciseProps) {
     return (
       <div>
         <PromptLine>Which sound is this</PromptLine>
-        <p lang="ja" className="mb-8 text-center font-jp text-[64px] leading-none text-ink">
+        <button
+          type="button"
+          onClick={() => void speak(item.jp, { rate: getSettings().tts_rate })}
+          aria-label={`Hear ${item.jp}`}
+          lang="ja"
+          className="mb-8 block w-full text-center font-jp text-[64px] leading-none text-ink transition active:scale-95"
+        >
           {item.jp}
-        </p>
+        </button>
         <ChoiceCards
           choices={shuffledOptions.map((o) => ({
             key: o.id,

@@ -229,7 +229,7 @@ function AuthenticatedApp({ user }: { user: AuthUser }) {
                 type="button"
                 onClick={() => setTab(t.id)}
                 aria-current={tab === t.id ? 'page' : undefined}
-                className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                className={`inline-flex items-center gap-1.5 rounded-b-md px-3 py-1.5 text-sm font-medium transition ${
                   tab === t.id
                     ? 'text-ink border-b-2 border-clay'
                     : 'text-ink-mid hover:bg-oat'
