@@ -16,7 +16,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion as m, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import type { PathLesson, PathManifest, PathUnit } from '../pathData'
 import { AnimatedKitsune } from './AnimatedKitsune'
-import { MichiMark } from './MichiMark'
 import { Birds, buildScenery, CloudPuff, hash, ramp, SkyLanterns, SpriteGlyph, Stars, SummitTorii } from './PathScenery'
 
 const STEP = 132 // vertical px between nodes ≈ the ~140px arc of the spec
@@ -817,15 +816,15 @@ export function PathScene({ manifest, onSelectLesson }: PathSceneProps) {
               )}
               {/* the kitsune, alive on the current node */}
               {l.state === 'current' && (
-                <g transform={`translate(${n.x - 19} ${n.y - 62})`} aria-label="You are here">
-                  <AnimatedKitsune mood={celebrating ? 'celebrating' : 'idle'} width={50} height={46} className="" />
+                <g transform={`translate(${n.x - 26} ${n.y - 78})`} aria-label="You are here">
+                  <AnimatedKitsune mood={celebrating ? 'celebrating' : 'idle'} width={60} height={53} className="" />
                 </g>
               )}
-              {/* partner's ghost cat (sky), presence not competition */}
+              {/* partner's ghost kitsune (sky tone), presence not competition */}
               {partnerNode?.lesson.id === l.id && partner && (
-                <g transform={`translate(${n.x + 22} ${n.y - 50})`} opacity="0.75">
+                <g transform={`translate(${n.x + 18} ${n.y - 58})`} opacity="0.8">
                   <title>{`${partner.display_name} is here`}</title>
-                  <MichiMark variant="kitsune" width={37} height={34} className="text-sky" />
+                  <AnimatedKitsune tone="sky" width={44} height={39} className="" />
                 </g>
               )}
             </g>
