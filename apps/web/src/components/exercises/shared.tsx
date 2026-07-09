@@ -2,11 +2,10 @@
 // Japanese typography, choice cards, and the one result contract every
 // exercise reports through.
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Item } from '../../curriculum/types'
 import { speak, subscribeSpeaking } from '../../audio/tts'
 import { useSettings } from '../../settings'
-import { speakerFor, SpeakerAvatar } from '../SpeakerAvatar'
 
 export type Verdict = 'pass' | 'close' | 'miss'
 
@@ -60,14 +59,13 @@ function TurtleGlyph() {
 
 /** The 88px clay audio circle + 44px turtle replay (docs/DESIGN.md §4.3).
  * Auto-plays once on mount (never re-steals focus); a ring pulses while TTS
- * speaks. Turtle replays at 0.65. */
+ * speaks. Turtle replays at 0.65. The speaker-avatar cast that used to
+ * stand beside the button was retired at the household's request
+ * (2026-07-09) — it looked better without them. */
 export function AudioStage({ text, autoPlay = true, size = 'lg' }: { text: string; autoPlay?: boolean; size?: 'lg' | 'sm' }) {
   const [speaking, setSpeaking] = useState(false)
   const played = useRef(false)
   const { tts_rate: rate } = useSettings()
-  // same phrase always shows the same "someone saying it" — a recurring
-  // cast, not a randomiser flickering between every exercise
-  const speaker = useMemo(() => speakerFor(text), [text])
 
   useEffect(() => subscribeSpeaking(setSpeaking), [])
   useEffect(() => {
@@ -84,8 +82,6 @@ export function AudioStage({ text, autoPlay = true, size = 'lg' }: { text: strin
   const big = size === 'lg'
   return (
     <div className="flex items-center justify-center gap-4">
-      {/* "someone saying it" — a face for the voice, docs/DESIGN.md §4 */}
-      <SpeakerAvatar spec={speaker} speaking={speaking} width={big ? 60 : 40} height={big ? 60 : 40} />
       <span className="relative inline-flex">
         {speaking && (
           <span

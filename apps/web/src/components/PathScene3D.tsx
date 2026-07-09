@@ -33,51 +33,51 @@ import { PALETTE, type KitsuneTone } from './AnimatedKitsune'
 
 const HPATH = 22 // trail summit height
 const PLATEAU_Y = 22.9 // the flat summit
-// Wider base + slightly wider top = a steeper taper: each turn tucks well
-// inside the slope below it, so the upper terraces never overhang the
-// trail beneath (household note, round seven).
-const R0 = 19 // base radius
-const RTOP = 7.5 // radius where the plateau rim sits — a fat, standable top
-// 3 revolutions, down from 4 (household, round eight): a looser spiral
-// climbs more per wrap, so each terrace sits well above AND well back from
-// the one below — the last trace of overhang goes with it. Integral, to
-// keep the carve grid's seam stitching clean.
+// 3 revolutions: a loose spiral that climbs plenty per wrap. Integral, to
+// keep the terrace grid's seam stitching clean.
 const TURNS = 3
-const DEPTH = 2.4 // deep enough that a torii's inner pillar clears the cut wall
-const PATH_IN = 0.95 // path centreline, measured out from the cut wall's base
 const THETA0 = -Math.PI / 2
 const NIGHT_LINE = 0.55
 
-/** Frustum silhouette — linear taper from R0 to RTOP, flat above. Linear on
- * purpose: it makes the constant-arc spiral below solvable in closed form. */
-function mountainR(y: number): number {
-  return R0 - ((R0 - RTOP) / PLATEAU_Y) * Math.min(Math.max(y, 0), PLATEAU_Y)
-}
-
-// Terrace-out: how far the shelf pushes past the natural slope line.
-// 0.9 at the base (the foreground bulge otherwise hides trail objects),
-// GROWING to ~2.55 at the summit — the top loop becomes a full balcony
-// wrapping OUTSIDE the plateau's rim. Round eight had it shrinking
-// instead, which drove the final loop underneath the plateau's edge: the
-// mountain "stops rising" at the flat top, so the cut had nothing to lean
-// back into and the rim itself became a roof the last torii clipped
-// through (household diagnosis, round nine).
-const OUT0 = 0.9
-const OUT_SLOPE = 0.075
-function terraceOut(y: number): number {
-  return OUT0 + OUT_SLOPE * Math.min(Math.max(y, 0), HPATH)
-}
+// THE TERRACED CONE (household cross-section sketch, round ten). There is
+// no longer a "natural silhouette" with a notch cut into it — the mountain
+// surface IS a staircase derived from the trail spiral: each loop is a flat
+// step whose OUTER edge (the lip) lies on the mountain's outline, a short
+// riser climbs from the step's inner edge, and one sloped face runs up to
+// the next loop's lip. Every horizontal slice is wider than every slice
+// above it, so nothing can ever overhang the trail.
+const LIP_OUT = 1.05 // shelf continues this far outside the path centreline
+const WALL_IN = 1.6 // ...and this far inside, to the riser's foot
+// (shelf width = 2.65; a torii spans ±0.73 and sits fully on it, centred)
 
 // The trail is a CONSTANT-ARC spiral, not a linear helix: with dθ/dt fixed,
 // arc-per-lesson shrinks with radius and the summit lessons bunched into a
 // crowd (household note). Solve dθ/dt = C / r(t) with r(t) = A − B·t linear
-// (the terrace-out shift is linear in t too, so it folds into A and B)
 // → θ(t) = θ0 + (C/B)·ln(A / (A − B·t)), and every lesson is the same
 // stride apart from base to summit.
-const SPIRAL_A = R0 - DEPTH + PATH_IN + OUT0
-// the growing terrace-out SLOWS the radius shrink (minus sign): the top
-// loop stays wide even as the cone narrows
-const SPIRAL_B = ((R0 - RTOP) / PLATEAU_Y) * HPATH - OUT_SLOPE * HPATH
+const SPIRAL_A = 18.45 // path radius at the trailhead
+// Per-turn shrink of 3.65: each loop's OUTER edge sits inside the loop
+// below's INNER edge, which is exactly the no-overhang staircase condition.
+const SPIRAL_B = 10.95
+
+/** The path spiral's radius at height y — the terraced surface, scenery
+ * and camera all derive from this envelope now. */
+function pathR(y: number): number {
+  return SPIRAL_A - (SPIRAL_B * Math.min(Math.max(y, 0), HPATH)) / HPATH
+}
+
+// plateau rim: just inside the top loop's riser
+const RTOP = SPIRAL_A - SPIRAL_B - WALL_IN - 0.4
+
+/** Legacy-named envelope used by scenery/camera placement: mid-face line
+ * of the terraced surface at height y. */
+function mountainR(y: number): number {
+  return pathR(y) - 0.3
+}
+
+// the mountain's footprint (the trailhead lip) — base scenery rings, the
+// train track and the ground plain all measure out from here
+const R0 = SPIRAL_A + LIP_OUT
 const SPIRAL_C =
   (TURNS * 2 * Math.PI * SPIRAL_B) / Math.log(SPIRAL_A / (SPIRAL_A - SPIRAL_B))
 
@@ -114,7 +114,7 @@ const APPROACH_A = (() => {
 })()
 const ANCHOR = (() => {
   const h = T_BEND * HPATH
-  const r = mountainR(h) - DEPTH + PATH_IN + terraceOut(h)
+  const r = pathR(h)
   return new THREE.Vector3(Math.cos(APPROACH_A) * r, h + 0.02, Math.sin(APPROACH_A) * r)
 })()
 
@@ -137,7 +137,7 @@ function pathPoint(t: number): THREE.Vector3 {
   }
   const h = t * HPATH
   const a = trailAngle(t)
-  const r = mountainR(h) - DEPTH + PATH_IN + terraceOut(h)
+  const r = pathR(h)
   return new THREE.Vector3(Math.cos(a) * r, h + 0.02, Math.sin(a) * r)
 }
 
@@ -226,44 +226,28 @@ function usePalette(): ScenePalette {
 
 /* --------------------------- the mountain mesh --------------------------- */
 
-// Row offsets relative to each helix pass. The sharp radius step between
-// -0.15 (outer lip) and 0 (wall base) IS the flat shelf; 0→2.4 leans the
-// cut wall back out to the natural slope.
-// Compact: the constant-arc spiral packs the top turns ~3.3 apart
-// vertically, so a turn's rows must span less than that or they fold into
-// the turn above.
-const ROW_OFFS = [-0.65, -0.28, -0.1, 0, 0.1, 0.3, 0.65, 1.1, 1.7, 2.35]
-
-// extra plain rows filling the stretch between one turn's cut band and the
-// next — without them a single band of very tall stretched quads spanned
-// the whole gap (household note, round five). Four rows now: the 3-turn
-// spiral opens the bottom gap to ~12 units.
-const GAP_FRACS = [0.22, 0.42, 0.62, 0.82]
+// Row offsets relative to each loop of the terrace staircase: a hair below
+// the lip (the outline), the lip itself, the shelf's inner edge (the sharp
+// radius drop between −0.06 and 0 IS the flat step), then two riser rows.
+const ROW_OFFS = [-0.5, -0.06, 0, 0.9, 1.6]
+// sloped-face rows running from the riser's top to the next loop's lip
+const GAP_FRACS = [0.2, 0.4, 0.6, 0.8]
 const ROWS_PER_TURN = ROW_OFFS.length + GAP_FRACS.length
 
-// `ds` scales the cut depth (0 = plain slope). The wall stays near-full
-// depth to dy≈1.1 then releases — the old early lean-back swallowed the
-// tops of torii pillars standing on the shelf (household note, round six).
-// The LIP takes no terrace-out: flaring it made every turn an eave hanging
-// over the trail below (household note, round seven) — the shelf floor
-// simply runs out to the natural slope line instead.
-// The lip carries 60% of the terrace-out: enough floor that the path and
-// its stones stay well inside the shelf edge as the balcony grows toward
-// the summit, while the eave over the loop below stays tucked inside the
-// slope's own descent (checked against the 3-turn gaps).
-function cutRadius(base: number, offIdx: number, out: number, ds: number): number {
+/** Radius of a terrace row. `rp` is the path radius at the loop's height;
+ * `ds` fades the step back into a plain cone face past the walkway anchor. */
+function terraceRadius(rp: number, offIdx: number, ds: number): number {
+  const face = rp // the melted (stepless) face just follows the envelope
+  let step: number
   switch (offIdx) {
-    case 0: return base // untouched slope below
-    case 1: return base + (0.12 + out * 0.4) * ds
-    case 2: return base + (0.25 + out * 0.6) * ds // the lip
-    case 3: return base - DEPTH * ds + out * ds // shelf inner edge / wall base
-    case 4: return base - (DEPTH - 0.05) * ds + out * ds // wall, near vertical
-    case 5: return base - DEPTH * 0.97 * ds + out * 0.7 * ds
-    case 6: return base - DEPTH * 0.93 * ds + out * 0.4 * ds
-    case 7: return base - DEPTH * 0.85 * ds + out * 0.15 * ds
-    case 8: return base - DEPTH * 0.55 * ds
-    default: return base
+    case 0: step = rp + LIP_OUT + 0.07; break // outline just below the lip
+    case 1: step = rp + LIP_OUT; break // the lip — the mountain's outline
+    case 2: step = rp - WALL_IN; break // shelf inner edge / riser foot
+    case 3: step = rp - WALL_IN - 0.06; break // riser
+    case 4: step = rp - WALL_IN - 0.12; break // riser top
+    default: step = rp
   }
+  return face + (step - face) * ds
 }
 
 function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
@@ -295,49 +279,47 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
       const hNext =
         k < TURNS - 1
           ? tAtAngle(THETA0 + (thetaNorm + k + 1) * Math.PI * 2) * HPATH
-          : PLATEAU_Y + 0.4
-      // the cut fades out entirely just before t=1: the trail's last metres
-      // are the straight walkway ON the plateau, and the leftover curl of
-      // carved channel past the bend-off point was the grey apron smeared
-      // across the summit (household note)
+          : PLATEAU_Y + 0.5
       const tk = h / HPATH
-      // full depth through the walkway anchor (T_BEND), gone right after —
-      // the straight climb takes over from there
+      // the step melts back into a plain cone face past the walkway anchor
+      // (T_BEND) — the straight climb takes over from there
       const ds = k < 0 ? 0 : 1 - Math.min(1, Math.max(0, (tk - T_BEND) / (1 - T_BEND)))
+      const rp = pathR(h)
+      const rpNext = pathR(Math.min(hNext, HPATH))
+      // the sloped face between this loop's riser top and the next loop's
+      // lip — always INWARD-going-up (the staircase condition), never an
+      // overhang
+      const faceFrom = { y: h + 1.6, r: rp - WALL_IN - 0.12 }
+      const faceTo = { y: hNext - 0.5, r: rpNext + LIP_OUT + 0.07 }
       for (let oi = 0; oi < ROW_OFFS.length; oi++) {
         let y = h + ROW_OFFS[oi]
-        // Facet jitter — never on the carve band (the shelf stays true),
-        // and seeded from (column, row) rather than drawn from a running
-        // stream, or the wrap-around seam's twin columns diverge.
+        // Jitter only on the outline row, seeded from (column, row) rather
+        // than drawn from a running stream, or the seam's twins diverge.
         const jrnd = mulberry(jj * 7919 + (k + 1) * 131 + oi)
-        if (oi === 0 || oi === 9 || ds < 0.4) y += (jrnd() - 0.5) * 0.3 * (ds < 0.4 ? 0.6 : 1)
-        // clamp BEFORE computing the radius: rows squashed onto the plateau
-        // must not keep their mid-slope radius or the rim grows overhangs
+        if (oi === 0 || ds < 0.4) y += (jrnd() - 0.5) * 0.25 * (ds < 0.4 ? 0.6 : 1)
         y = Math.min(clampY, Math.max(0.02, y))
-        let r = cutRadius(mountainR(y), oi, terraceOut(y), ds)
-        if (oi === 0 || oi === 9) r += (jrnd() - 0.5) * 0.55
-        // the river carves its own groove where the trail hasn't
-        if (angDiff(phi, riverPhi(y)) < 0.1 && (oi <= 1 || oi >= 8 || ds === 0)) r -= 0.5
-        // shallow cave-mouth recess (the darkness does the heavy lifting)
+        let r = terraceRadius(rp, oi, ds)
+        if (oi === 0) r += (jrnd() - 0.5) * 0.3
+        // river groove + cave shadows live on the open faces, not the step
+        if (angDiff(phi, riverPhi(y)) < 0.1 && (oi === 0 || ds === 0)) r -= 0.5
         for (const c of CAVES) {
           const e = (angDiff(phi, c.phi) / c.rp) ** 2 + ((y - c.y) / c.ry) ** 2
-          if (e < 1 && (oi <= 1 || oi >= 8 || ds === 0)) r -= 0.9 * (1 - e)
+          if (e < 1 && (oi === 0 || ds === 0)) r -= 0.9 * (1 - e)
         }
-        // rows squashed onto the rim JOIN it exactly — recessed leftovers
-        // here were the grey apron; bulges were the overhangs
+        // rows squashed onto the rim JOIN it exactly
         if (y >= clampY - 0.02) r = RTOP
         col.push({ y, r: Math.max(0.05, r) })
       }
-      // filler rows across the open slope to the next turn — one stretched
-      // band here read as a wall of skyscraper quads (household note)
+      // the open face up to the next loop's lip
       for (let gi = 0; gi < GAP_FRACS.length; gi++) {
         const jrnd = mulberry(jj * 6577 + (k + 1) * 149 + gi)
-        let y =
-          h + ROW_OFFS[ROW_OFFS.length - 1] +
-          GAP_FRACS[gi] * (hNext + ROW_OFFS[0] - (h + ROW_OFFS[ROW_OFFS.length - 1])) +
-          (jrnd() - 0.5) * 0.3
+        const f = GAP_FRACS[gi]
+        let y = faceFrom.y + f * (faceTo.y - faceFrom.y) + (jrnd() - 0.5) * 0.3
         y = Math.min(clampY, Math.max(0.02, y))
-        let r = mountainR(y) + (jrnd() - 0.5) * 0.5
+        // interpolate along the face line, by height
+        const fy = Math.min(1, Math.max(0, (y - faceFrom.y) / Math.max(0.001, faceTo.y - faceFrom.y)))
+        let r = faceFrom.r + fy * (faceTo.r - faceFrom.r) + (jrnd() - 0.5) * 0.4
+        if (k < 0) r = pathR(y) + LIP_OUT + 0.07 + (jrnd() - 0.5) * 0.4
         if (angDiff(phi, riverPhi(y)) < 0.1) r -= 0.5
         for (const c of CAVES) {
           const e = (angDiff(phi, c.phi) / c.rp) ** 2 + ((y - c.y) / c.ry) ** 2
@@ -480,14 +462,10 @@ function buildPlateauCap(pal: ScenePalette): THREE.BufferGeometry {
 
   const positions: number[] = []
   const tri = (a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3) => {
-    // NO triangles above the walkway at all (household ask, round nine):
-    // faces whose centroid falls in the stairs' corridor are simply not
-    // emitted — the widened ribbon fills the opening.
-    const cxm = (a.x + b.x + c.x) / 3
-    const czm = (a.z + b.z + c.z) / 3
-    if (Math.hypot(cxm, czm) > RTOP * 0.42 && angDiff(Math.atan2(czm, cxm), APPROACH_A) < 0.2) {
-      return
-    }
+    // (round ten: the corridor wedge deletion is gone — with the terraced
+    // cone the walkway anchors OUTSIDE the rim and is already at plateau
+    // height before it crosses, so the cap never sits above the stairs;
+    // deleting faces only opened sky-holes beside the ribbon)
     // force the upward winding regardless of walk order
     const crossY = (b.z - a.z) * (c.x - a.x) - (b.x - a.x) * (c.z - a.z)
     if (crossY >= 0) positions.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z)
@@ -746,7 +724,7 @@ function Kitsune3D({ position, angle, tone, ghost = false, scale = 1 }: {
   useFrame(({ clock }) => {
     const s = clock.elapsedTime
     if (group.current) group.current.position.y = position.y + Math.sin(s * 2.1) * 0.035
-    if (tail.current) tail.current.rotation.z = 0.5 + Math.sin(s * 2.6) * 0.16
+    if (tail.current) tail.current.rotation.z = Math.sin(s * 2.6) * 0.14
   })
 
   return (
@@ -777,13 +755,16 @@ function Kitsune3D({ position, angle, tone, ghost = false, scale = 1 }: {
         <coneGeometry args={[0.075, 0.24, 4]} />
         <meshStandardMaterial color={shadow} {...matProps} />
       </mesh>
-      <group ref={tail} position={[0, 0.28, -0.26]} rotation={[0, 0, 0.5]}>
-        <mesh position={[0, 0.26, -0.08]} rotation={[0.5, 0, 0]}>
-          <coneGeometry args={[0.16, 0.62, 6]} />
+      {/* tail: narrow end ATTACHED at the rump, bushy wide end swept up and
+          out behind — inverted from the first pass, which had the fat end
+          on the body (household note, round ten) */}
+      <group ref={tail} position={[0, 0.32, -0.22]}>
+        <mesh position={[0, 0.2, -0.22]} rotation={[2.55, 0, 0]}>
+          <coneGeometry args={[0.2, 0.62, 6]} />
           <meshStandardMaterial color={shadow} {...matProps} />
         </mesh>
-        <mesh position={[0, 0.56, -0.22]}>
-          <sphereGeometry args={[0.11, 6, 5]} />
+        <mesh position={[0, 0.4, -0.4]}>
+          <sphereGeometry args={[0.14, 6, 5]} />
           <meshStandardMaterial color="#f6efdf" {...matProps} />
         </mesh>
       </group>
@@ -1018,18 +999,14 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
   const plateauCap = useMemo(() => buildPlateauCap(pal), [pal])
   useEffect(() => () => plateauCap.dispose(), [plateauCap])
 
-  // the summit walkway: one straight, CONSTANT-WIDTH ribbon from the
-  // second-to-last lesson's anchor up over the rim to the gate
+  // The summit walkway: constant width, built from a polyline that STARTS
+  // on the spiral shelf (two pre-anchor samples follow the trail's curve),
+  // so the join with the main trail is a smooth curve rather than a straight
+  // ribbon jutting off it (household note, round ten). Side vectors are
+  // per-segment, so the width holds through the bend.
   const walkway = useMemo(() => {
-    const positions: number[] = []
-    const dir = new THREE.Vector3().subVectors(SUMMIT_CENTRE, ANCHOR)
-    dir.y = 0
-    dir.normalize()
-    // 1.15 half-width: wide enough to fully floor the wedge deleted from
-    // the plateau cap above it
-    const side = new THREE.Vector3(-dir.z, 0, dir.x).multiplyScalar(1.15)
     const N = 10
-    const at = (u: number) => {
+    const climb = (u: number) => {
       const s = u * u * (3 - 2 * u)
       const sUp = Math.min(1, s * 3.4) // must match pathPoint's climb curve
       return new THREE.Vector3(
@@ -1038,9 +1015,21 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
         ANCHOR.z + (SUMMIT_CENTRE.z - ANCHOR.z) * s,
       )
     }
-    for (let i = 0; i < N; i++) {
-      const p0 = at(i / N)
-      const p1 = at((i + 1) / N)
+    const pts: THREE.Vector3[] = [
+      pathPoint(T_BEND - 0.007).setY(pathPoint(T_BEND - 0.007).y + 0.06),
+      pathPoint(T_BEND - 0.0035).setY(pathPoint(T_BEND - 0.0035).y + 0.06),
+    ]
+    for (let i = 0; i <= N; i++) pts.push(climb(i / N))
+    const positions: number[] = []
+    const HALF = 1.15
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i]
+      const p1 = pts[i + 1]
+      const dir = new THREE.Vector3().subVectors(p1, p0)
+      dir.y = 0
+      if (dir.lengthSq() < 1e-6) continue
+      dir.normalize()
+      const side = new THREE.Vector3(-dir.z, 0, dir.x).multiplyScalar(HALF)
       const l0 = p0.clone().sub(side), r0 = p0.clone().add(side)
       const l1 = p1.clone().sub(side), r1 = p1.clone().add(side)
       positions.push(l0.x, l0.y, l0.z, r0.x, r0.y, r0.z, l1.x, l1.y, l1.z)
@@ -1308,14 +1297,39 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
                 flatShading
               />
             </mesh>
-            {!n.isGate && <NumberSprite n={i + 1} colour={n.state === 'locked' ? pal.cloud : pal.ink} position={n.pos} />}
+            {/* three stars = one BIG star in place of the number; one or
+                two sit in a semicircle round the platform's outward base
+                (household layout, round ten) */}
+            {!n.isGate && !(n.state === 'done' && n.stars >= 3) && (
+              <NumberSprite n={i + 1} colour={n.state === 'locked' ? pal.cloud : pal.ink} position={n.pos} />
+            )}
+            {n.state === 'done' && n.stars >= 3 && (
+              <mesh position={[n.pos.x, n.pos.y + 0.62, n.pos.z]} rotation={[0, 0.5, 0]}>
+                <octahedronGeometry args={[0.24, 0]} />
+                <meshStandardMaterial color={pal.gold} emissive={pal.gold} emissiveIntensity={0.5} flatShading />
+              </mesh>
+            )}
             {n.state === 'done' &&
-              Array.from({ length: n.stars }, (_, k) => (
-                <mesh key={k} position={[n.pos.x, n.pos.y + 0.5 + k * 0.24, n.pos.z]} rotation={[0, k * 0.7, 0]}>
-                  <octahedronGeometry args={[0.09, 0]} />
-                  <meshStandardMaterial color={pal.gold} emissive={pal.gold} emissiveIntensity={0.35} flatShading />
-                </mesh>
-              ))}
+              n.stars > 0 &&
+              n.stars < 3 &&
+              Array.from({ length: n.stars }, (_, k) => {
+                const out = new THREE.Vector3(n.pos.x, 0, n.pos.z).normalize()
+                const spread = n.stars === 1 ? 0 : k === 0 ? -0.5 : 0.5
+                const dir = out
+                  .clone()
+                  .applyAxisAngle(new THREE.Vector3(0, 1, 0), spread)
+                  .multiplyScalar(0.85)
+                return (
+                  <mesh
+                    key={k}
+                    position={[n.pos.x + dir.x, n.pos.y + 0.12, n.pos.z + dir.z]}
+                    rotation={[0, k * 0.7, 0]}
+                  >
+                    <octahedronGeometry args={[0.1, 0]} />
+                    <meshStandardMaterial color={pal.gold} emissive={pal.gold} emissiveIntensity={0.4} flatShading />
+                  </mesh>
+                )
+              })}
             {/* checkpoint torii — except the last lesson, whose gate IS the
                 big summit gate. Centred on the trail again (round seven):
                 the round-six outward nudge kept them clear of the wall but
