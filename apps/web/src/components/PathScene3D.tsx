@@ -1180,11 +1180,27 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
   const riverMouthPhi = riverPhi(0)
   const unitOfFocus = units[nodes[Math.min(nodes.length - 1, Math.max(0, currentIndex))]?.unitIndex ?? 0]
 
+  // Fill the whole viewport between the header and the mobile tab bar
+  // (household ask, 2026-07-09) — measured live, so any header height or
+  // breakpoint change stays correct. Negative margins on the wrapper eat
+  // the main element's paddings.
+  const [sceneH, setSceneH] = useState(() => Math.max(340, window.innerHeight - 121))
+  useEffect(() => {
+    const compute = () => {
+      const header = document.querySelector('header')?.getBoundingClientRect().height ?? 57
+      const bottomBar = window.matchMedia('(max-width: 639px)').matches ? 64 : 0
+      setSceneH(Math.max(340, window.innerHeight - header - bottomBar))
+    }
+    compute()
+    window.addEventListener('resize', compute)
+    return () => window.removeEventListener('resize', compute)
+  }, [])
+
   return (
     <div
-      className="relative left-1/2 w-screen -translate-x-1/2 select-none overflow-hidden"
+      className="relative left-1/2 -mt-8 -mb-24 w-screen -translate-x-1/2 select-none overflow-hidden sm:-mb-10"
       style={{
-        height: 'min(78vh, 720px)',
+        height: sceneH,
         touchAction: 'none',
         background: `linear-gradient(color-mix(in oklab, ${pal.ink} ${Math.round(shade * 82)}%, ${pal.paper}), ${pal.paper})`,
         transition: 'background 600ms',

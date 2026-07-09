@@ -43,8 +43,14 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
         runtimeCaching: [
           {
-            // Curriculum content, phrasebook item bank, course manifest —
-            // read-mostly and safe to serve stale-while-revalidate offline.
+            // Curriculum content, phrasebook item bank, course manifest.
+            // NetworkFirst, NOT stale-while-revalidate: these responses
+            // carry the caller's live progress, and SWR served the STALE
+            // manifest to the post-lesson refresh (the fresh copy only
+            // landed in the cache for next time) — the kitsune wouldn't
+            // move to its new stone until a remount refetched (household
+            // bug report, 2026-07-09). Network-first keeps it live online
+            // and still falls back to the cache within 3s when offline.
             // These responses are per-caller (progress, partner presence),
             // not shared static content, so the cache key includes a hash of
             // the bearer token — without that, two accounts signed in on the
@@ -53,9 +59,10 @@ export default defineConfig({
             // cached progress while offline.
             urlPattern: ({ url, request }: { url: URL; request: Request }) =>
               request.method === 'GET' && url.pathname.startsWith('/api/curriculum/'),
-            handler: 'StaleWhileRevalidate',
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'michi-content',
+              networkTimeoutSeconds: 3,
               plugins: [
                 {
                   cacheKeyWillBeUsed: async ({ request }: { request: Request }) => {
