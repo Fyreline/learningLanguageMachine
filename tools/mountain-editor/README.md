@@ -71,6 +71,13 @@ take 5173/8000 (Mishka Hub) or 8100 (production Michi API).
   export as remove/move/add by id in the patch's scenery section; base ids
   re-place themselves when the shape changes, while moved/added items keep
   their absolute spots.
+- **Variant kinds** — beyond the stock set, the add dropdown carries add-in
+  variants with no procedural placements of their own: weathered, fallen
+  and broken torii; cedar, snowy pine, maple, bamboo and dead trees; a
+  wayside shrine and a stone lantern (which glows at night in Michi, like
+  the trail lanterns). "Swap selected to this kind" replaces any object
+  in place, keeping its position, rotation and scale — handy for turning a
+  procedural pine into a maple, or the odd trail torii spot into a ruin.
 - Undo (⌘Z), wireframe/double-sided/reference toggles, save/load.
 
 ## Getting edits into Michi

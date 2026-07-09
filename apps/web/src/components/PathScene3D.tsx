@@ -53,10 +53,14 @@ interface CameraTuning {
 
 /** The decorative dressing — every placeable object except the ones the
  * curriculum owns (lesson stones, checkpoint torii, kitsune, summit gate),
- * which keep deriving from the manifest. `angle` is plain rotation.y. */
+ * which keep deriving from the manifest. `angle` is plain rotation.y.
+ * The second row are add-in variants with no procedural placements of
+ * their own — swap-ins and extras for the household to scatter. */
 type SceneryKind =
   | 'pine' | 'sakura' | 'rock' | 'lantern' | 'bridge'
   | 'house' | 'onsen' | 'torii' | 'hill' | 'pond'
+  | 'cedar' | 'snowpine' | 'maple' | 'bamboo' | 'deadtree'
+  | 'torii-worn' | 'torii-fallen' | 'torii-broken' | 'shrine' | 'toro'
 
 interface SceneryItem {
   id: string
@@ -1557,6 +1561,12 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
             patch's scenery section (tools/mountain-editor) */}
         {DECOR.map((it) => {
           const pos = new THREE.Vector3(it.x, it.y, it.z)
+          // weathered timber: clay washed toward stone-grey; cedar darker
+          // than pine so the two species read apart at a glance
+          const worn = `#${new THREE.Color(pal.clay).lerp(new THREE.Color(pal.cloud), 0.55).getHexString()}`
+          const cedarGreen = `#${new THREE.Color(pal.olive).lerp(new THREE.Color(pal.ink), 0.3).getHexString()}`
+          const bambooLight = `#${new THREE.Color(pal.olive).lerp(new THREE.Color('#ffffff'), 0.18).getHexString()}`
+          const snow = '#f3f6f5'
           switch (it.kind) {
             case 'pine':
               return <Pine key={it.id} position={pos} scale={it.scale} foliage={pal.olive} trunk={pal.kraft} />
@@ -1618,6 +1628,201 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
                   <cylinderGeometry args={[2.5, 2.7, 0.14, 12]} />
                   <meshStandardMaterial color={pal.liquid} flatShading />
                 </mesh>
+              )
+            case 'cedar':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[0, 0.35, 0]}>
+                    <cylinderGeometry args={[0.06, 0.09, 0.7, 5]} />
+                    <meshStandardMaterial color={pal.kraft} flatShading />
+                  </mesh>
+                  {([[0.32, 0.7, 0.9], [0.25, 0.6, 1.32], [0.17, 0.52, 1.72]] as const).map(([r, h, y], i) => (
+                    <mesh key={i} position={[0, y, 0]}>
+                      <coneGeometry args={[r, h, 6]} />
+                      <meshStandardMaterial color={cedarGreen} flatShading />
+                    </mesh>
+                  ))}
+                </group>
+              )
+            case 'snowpine':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[0, 0.25, 0]}>
+                    <cylinderGeometry args={[0.07, 0.1, 0.5, 5]} />
+                    <meshStandardMaterial color={pal.kraft} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.72, 0]}>
+                    <coneGeometry args={[0.42, 0.8, 6]} />
+                    <meshStandardMaterial color={pal.olive} flatShading />
+                  </mesh>
+                  <mesh position={[0, 1.02, 0]}>
+                    <coneGeometry args={[0.34, 0.32, 6]} />
+                    <meshStandardMaterial color={snow} flatShading />
+                  </mesh>
+                  <mesh position={[0, 1.24, 0]}>
+                    <coneGeometry args={[0.26, 0.55, 6]} />
+                    <meshStandardMaterial color={pal.olive} flatShading />
+                  </mesh>
+                  <mesh position={[0, 1.5, 0]}>
+                    <coneGeometry args={[0.2, 0.28, 6]} />
+                    <meshStandardMaterial color={snow} flatShading />
+                  </mesh>
+                </group>
+              )
+            case 'maple':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[0, 0.3, 0]}>
+                    <cylinderGeometry args={[0.07, 0.11, 0.6, 5]} />
+                    <meshStandardMaterial color={pal.kraft} flatShading />
+                  </mesh>
+                  <mesh position={[0.05, 0.85, 0]}>
+                    <dodecahedronGeometry args={[0.45, 0]} />
+                    <meshStandardMaterial color={pal.clay} flatShading />
+                  </mesh>
+                  <mesh position={[-0.27, 0.62, 0.1]}>
+                    <dodecahedronGeometry args={[0.28, 0]} />
+                    <meshStandardMaterial color={pal.kraft} flatShading />
+                  </mesh>
+                  <mesh position={[0.22, 0.58, -0.16]}>
+                    <dodecahedronGeometry args={[0.24, 0]} />
+                    <meshStandardMaterial color={pal.gold} flatShading />
+                  </mesh>
+                </group>
+              )
+            case 'bamboo':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  {([[-0.13, 1.45, 0.05, 0.06], [0.02, 1.7, -0.03, -0.03], [0.15, 1.3, 0.02, 0.08]] as const).map(
+                    ([x, h, z, tilt], i) => (
+                      <group key={i} position={[x, 0, z]} rotation={[0, 0, tilt]}>
+                        <mesh position={[0, h / 2, 0]}>
+                          <cylinderGeometry args={[0.035, 0.04, h, 5]} />
+                          <meshStandardMaterial color={i === 1 ? bambooLight : pal.olive} flatShading />
+                        </mesh>
+                        <mesh position={[0.05, h + 0.08, 0]}>
+                          <dodecahedronGeometry args={[0.16, 0]} />
+                          <meshStandardMaterial color={pal.olive} flatShading />
+                        </mesh>
+                      </group>
+                    ),
+                  )}
+                </group>
+              )
+            case 'deadtree':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[0, 0.45, 0]}>
+                    <cylinderGeometry args={[0.05, 0.1, 0.9, 5]} />
+                    <meshStandardMaterial color={pal.kraft} flatShading />
+                  </mesh>
+                  <mesh position={[0.16, 0.82, 0]} rotation={[0, 0, -0.85]}>
+                    <cylinderGeometry args={[0.02, 0.04, 0.45, 4]} />
+                    <meshStandardMaterial color={pal.kraft} flatShading />
+                  </mesh>
+                  <mesh position={[-0.12, 0.66, 0.05]} rotation={[0.2, 0, 0.75]}>
+                    <cylinderGeometry args={[0.02, 0.035, 0.35, 4]} />
+                    <meshStandardMaterial color={pal.kraft} flatShading />
+                  </mesh>
+                </group>
+              )
+            case 'torii-worn':
+              return (
+                <group key={it.id} position={pos} rotation={[0.02, it.angle, 0.06]} scale={it.scale}>
+                  <Torii position={new THREE.Vector3(0, 0, 0)} angle={0} colour={worn} />
+                </group>
+              )
+            case 'torii-fallen':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[-0.62, 0.16, 0]} rotation={[0, 0, 0.08]}>
+                    <cylinderGeometry args={[0.09, 0.11, 0.32, 6]} />
+                    <meshStandardMaterial color={worn} flatShading />
+                  </mesh>
+                  <mesh position={[0.62, 0.12, 0]} rotation={[0.06, 0, -0.1]}>
+                    <cylinderGeometry args={[0.09, 0.11, 0.24, 6]} />
+                    <meshStandardMaterial color={worn} flatShading />
+                  </mesh>
+                  <mesh position={[0.14, 0.08, 0.78]} rotation={[0, 0.28, 0]}>
+                    <boxGeometry args={[1.85, 0.15, 0.22]} />
+                    <meshStandardMaterial color={worn} flatShading />
+                  </mesh>
+                  <mesh position={[-0.2, 0.05, 1.06]} rotation={[0, 0.55, 0]}>
+                    <boxGeometry args={[1.46, 0.1, 0.15]} />
+                    <meshStandardMaterial color={worn} flatShading />
+                  </mesh>
+                </group>
+              )
+            case 'torii-broken':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[-0.62, 0.65, 0]}>
+                    <cylinderGeometry args={[0.09, 0.11, 1.35, 6]} />
+                    <meshStandardMaterial color={pal.clay} flatShading />
+                  </mesh>
+                  <mesh position={[0.62, 0.24, 0]} rotation={[0, 0, -0.07]}>
+                    <cylinderGeometry args={[0.09, 0.105, 0.48, 6]} />
+                    <meshStandardMaterial color={pal.clay} flatShading />
+                  </mesh>
+                  <mesh position={[0.95, 0.1, 0.4]} rotation={[1.45, 0, 0.5]}>
+                    <cylinderGeometry args={[0.08, 0.095, 0.72, 6]} />
+                    <meshStandardMaterial color={pal.clay} flatShading />
+                  </mesh>
+                  <mesh position={[-0.05, 0.78, 0.1]} rotation={[0.1, 0.1, -0.5]}>
+                    <boxGeometry args={[1.85, 0.15, 0.22]} />
+                    <meshStandardMaterial color={pal.clay} flatShading />
+                  </mesh>
+                </group>
+              )
+            case 'shrine':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[0, 0.1, 0]}>
+                    <boxGeometry args={[0.7, 0.2, 0.6]} />
+                    <meshStandardMaterial color={pal.cloud} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.42, 0]}>
+                    <boxGeometry args={[0.5, 0.45, 0.42]} />
+                    <meshStandardMaterial color="#efe7d6" flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.42, 0.215]}>
+                    <boxGeometry args={[0.18, 0.26, 0.02]} />
+                    <meshStandardMaterial color={pal.ink} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.76, 0]} rotation={[0, Math.PI / 4, 0]}>
+                    <coneGeometry args={[0.52, 0.34, 4]} />
+                    <meshStandardMaterial color={pal.ink} flatShading />
+                  </mesh>
+                </group>
+              )
+            case 'toro':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[0, 0.06, 0]}>
+                    <cylinderGeometry args={[0.16, 0.2, 0.12, 6]} />
+                    <meshStandardMaterial color={pal.cloud} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.3, 0]}>
+                    <cylinderGeometry args={[0.07, 0.09, 0.36, 6]} />
+                    <meshStandardMaterial color={pal.cloud} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.52, 0]}>
+                    <cylinderGeometry args={[0.15, 0.11, 0.08, 6]} />
+                    <meshStandardMaterial color={pal.cloud} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.66, 0]}>
+                    <boxGeometry args={[0.22, 0.2, 0.22]} />
+                    <meshStandardMaterial color="#efe7d6" emissive={pal.gold} emissiveIntensity={shade > 0.15 ? 0.6 : 0} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.82, 0]}>
+                    <coneGeometry args={[0.24, 0.16, 6]} />
+                    <meshStandardMaterial color={pal.cloud} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.94, 0]}>
+                    <sphereGeometry args={[0.05, 6, 5]} />
+                    <meshStandardMaterial color={pal.cloud} flatShading />
+                  </mesh>
+                </group>
               )
           }
         })}
