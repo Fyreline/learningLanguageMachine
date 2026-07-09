@@ -123,6 +123,27 @@
   </fieldset>
 
   <fieldset>
+    <legend>Shape</legend>
+    <div class="counts">the spiral itself — same trailhead and summit,
+      everything between re-solved; trail, stones, camera and scenery in
+      Michi all follow</div>
+    <label class="row">base radius <input type="number" id="shBase" step="0.25" value="18.45"></label>
+    <label class="row">top radius <input type="number" id="shTop" step="0.25" value="7.5"></label>
+    <label class="row">height <input type="number" id="shHeight" step="0.5" value="22"></label>
+    <div class="counts" id="shrinkInfo"></div>
+    <button id="shapeApply">Apply shape</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>Camera</legend>
+    <label class="row"><input type="checkbox" id="camPreview"> preview Michi's camera</label>
+    <label class="row">walk <input type="range" id="camT" min="0" max="1" step="0.002" value="0.25" style="flex:1"></label>
+    <label class="row">distance <input type="number" id="camDistMin" step="0.5" value="9"> to <input type="number" id="camDistMax" step="0.5" value="12"></label>
+    <label class="row">height <input type="number" id="camHeight" step="0.2" value="3.4"> look-at <input type="number" id="camLook" step="0.1" value="0.6"></label>
+    <label class="row">look-ahead bias <input type="number" id="camBias" step="0.02" value="0.12"></label>
+  </fieldset>
+
+  <fieldset>
     <legend>File</legend>
     <button id="saveBtn">Save patch</button>
     <button id="loadBtn">Load patch</button>
@@ -158,39 +179,65 @@ const PAL = {
   kraft: '#d08770', cloud: '#90a5ab', liquid: '#c5e0dd',
 }
 
-const HPATH = 22
-const PLATEAU_Y = 22.9
 const TURNS = 3
 const THETA0 = -Math.PI / 2
 const LIP_OUT = 1.05
 const WALL_IN = 1.6
-const SPIRAL_A = 18.45
-const SPIRAL_B = 10.95
+const T_BEND = 0.9945
+const BLEND0 = T_BEND - 0.0001
+// the no-overhang staircase floor: each loop must shrink by at least
+// LIP_OUT + WALL_IN (2.65) plus sloped-face/jitter margin, per turn
+const MIN_SHRINK_PER_TURN = 3.05
+
+// The spiral's proportions and the camera feel are household-adjustable —
+// they export in the patch and PathScene3D initialises its constants from
+// them, so the trail, lesson stones, camera and scenery all follow.
+const DEFAULT_SHAPE = { baseRadius: 18.45, topRadius: 7.5, height: 22 }
+const DEFAULT_CAM = { distMin: 9, distMax: 12, height: 3.4, azimuthBias: 0.12, lookAtHeight: 0.6 }
+let SHAPE = { ...DEFAULT_SHAPE }
+let CAM = { ...DEFAULT_CAM }
+
+function clampShape(s) {
+  const out = { ...DEFAULT_SHAPE, ...s }
+  out.height = Math.min(60, Math.max(8, out.height))
+  out.baseRadius = Math.min(40, Math.max(12, out.baseRadius))
+  out.topRadius = Math.max(2.6, out.topRadius) // plateau must survive: RTOP = topRadius − 2
+  if (out.baseRadius - out.topRadius < MIN_SHRINK_PER_TURN * TURNS) {
+    out.topRadius = out.baseRadius - MIN_SHRINK_PER_TURN * TURNS
+  }
+  return out
+}
+
+let HPATH, PLATEAU_Y, SPIRAL_A, SPIRAL_B, RTOP, R0, SPIRAL_C, APPROACH_A, ANCHOR, SUMMIT_CENTRE
+
+function computeDerived() {
+  HPATH = SHAPE.height
+  PLATEAU_Y = HPATH + 0.9
+  SPIRAL_A = SHAPE.baseRadius
+  SPIRAL_B = SPIRAL_A - SHAPE.topRadius
+  RTOP = SPIRAL_A - SPIRAL_B - WALL_IN - 0.4
+  R0 = SPIRAL_A + LIP_OUT
+  SPIRAL_C = (TURNS * 2 * Math.PI * SPIRAL_B) / Math.log(SPIRAL_A / (SPIRAL_A - SPIRAL_B))
+  APPROACH_A = trailAngle(T_BEND)
+  const h = T_BEND * HPATH
+  const r = pathR(h)
+  ANCHOR = new THREE.Vector3(Math.cos(APPROACH_A) * r, h + 0.02, Math.sin(APPROACH_A) * r)
+  SUMMIT_CENTRE = new THREE.Vector3(0, PLATEAU_Y + 0.16, 0)
+}
 
 function pathR(y) {
   return SPIRAL_A - (SPIRAL_B * Math.min(Math.max(y, 0), HPATH)) / HPATH
 }
-const RTOP = SPIRAL_A - SPIRAL_B - WALL_IN - 0.4
-const R0 = SPIRAL_A + LIP_OUT
-const SPIRAL_C =
-  (TURNS * 2 * Math.PI * SPIRAL_B) / Math.log(SPIRAL_A / (SPIRAL_A - SPIRAL_B))
-
+function mountainR(y) {
+  return pathR(y) - 0.3
+}
 function trailAngle(t) {
   return THETA0 + (SPIRAL_C / SPIRAL_B) * Math.log(SPIRAL_A / (SPIRAL_A - SPIRAL_B * t))
 }
 function tAtAngle(thetaTotal) {
   return (SPIRAL_A / SPIRAL_B) * (1 - Math.exp((-(thetaTotal - THETA0) * SPIRAL_B) / SPIRAL_C))
 }
-
-const SUMMIT_CENTRE = new THREE.Vector3(0, PLATEAU_Y + 0.16, 0)
-const T_BEND = 0.9945
-const BLEND0 = T_BEND - 0.0001
-const APPROACH_A = trailAngle(T_BEND)
-const ANCHOR = (() => {
-  const h = T_BEND * HPATH
-  const r = pathR(h)
-  return new THREE.Vector3(Math.cos(APPROACH_A) * r, h + 0.02, Math.sin(APPROACH_A) * r)
-})()
+computeDerived()
 
 function pathPoint(t) {
   if (t > BLEND0) {
@@ -464,8 +511,8 @@ function buildPlateauCap() {
    diff back against the base soup, by face index.
    ===================================================================== */
 
-const base = buildMountainArrays()
-const BASE_FACE_COUNT = base.positions.length / 9
+let base = buildMountainArrays()
+const BASE_FACE_COUNT = base.positions.length / 9 // fixed grid — shape moves points, never topology
 
 // verts: { p:[x,y,z], base: welded-base-vertex-id | -1 (created by edits) }
 // faces: { v:[a,b,c], col:[[r,g,b]×3], recol:[bool×3], base: base-face-index | -1 }
@@ -547,12 +594,40 @@ function buildPatch() {
     }
   }
   return {
-    version: 1,
+    version: 2,
     baseFaceCount: BASE_FACE_COUNT,
+    shape: { ...SHAPE },
+    camera: { ...CAM },
     movedCorners: [...moved.entries()].map(([ci, p]) => [ci, ...p]).sort((a, b) => a[0] - b[0]),
     recoloredCorners: recoloured.sort((a, b) => a[0] - b[0]),
     deletedFaces: [...deleted].sort((a, b) => a - b),
     addedFaces: added,
+  }
+}
+
+/** Apply mesh edits onto a freshly reset base (moves here are absolute,
+ * saved against the SAME shape the base was just generated with). */
+function applyEditRecord(rec) {
+  const cornerVert = (ci) => faces[Math.floor(ci / 3)].v[ci % 3]
+  for (const [ci, x, y, z] of rec.movedCorners ?? []) {
+    verts[cornerVert(ci)].p = [x, y, z]
+  }
+  for (const [ci, r, g, b] of rec.recoloredCorners ?? []) {
+    const face = faces[Math.floor(ci / 3)]
+    face.col[ci % 3] = [r, g, b]
+    face.recol[ci % 3] = true
+  }
+  const drop = new Set(rec.deletedFaces ?? [])
+  faces = faces.filter((f) => !drop.has(f.base))
+  const lookup = new Map()
+  verts.forEach((v, i) => lookup.set(vkey(...v.p), i))
+  for (const af of rec.addedFaces ?? []) {
+    const v = [], col = []
+    for (let k = 0; k < 3; k++) {
+      v.push(vertAt(af.positions[k * 3], af.positions[k * 3 + 1], af.positions[k * 3 + 2], lookup))
+      col.push([af.colors[k * 3], af.colors[k * 3 + 1], af.colors[k * 3 + 2]])
+    }
+    faces.push({ v, col, recol: [true, true, true], base: -1 })
   }
 }
 
@@ -561,29 +636,39 @@ function applyPatch(patch) {
     setStatus('That patch was saved against a different mountain build — not loaded.')
     return false
   }
+  // shape first: the patch's mesh edits were saved against ITS shape
+  SHAPE = clampShape(patch.shape ?? {})
+  CAM = { ...DEFAULT_CAM, ...(patch.camera ?? {}) }
+  computeDerived()
+  base = buildMountainArrays()
   resetToBase()
-  const cornerVert = (ci) => faces[Math.floor(ci / 3)].v[ci % 3]
-  for (const [ci, x, y, z] of patch.movedCorners ?? []) {
-    verts[cornerVert(ci)].p = [x, y, z]
-  }
-  for (const [ci, r, g, b] of patch.recoloredCorners ?? []) {
-    const face = faces[Math.floor(ci / 3)]
-    face.col[ci % 3] = [r, g, b]
-    face.recol[ci % 3] = true
-  }
-  const drop = new Set(patch.deletedFaces ?? [])
-  faces = faces.filter((f) => !drop.has(f.base))
-  const lookup = new Map()
-  verts.forEach((v, i) => lookup.set(vkey(...v.p), i))
-  for (const af of patch.addedFaces ?? []) {
-    const v = [], col = []
-    for (let k = 0; k < 3; k++) {
-      v.push(vertAt(af.positions[k * 3], af.positions[k * 3 + 1], af.positions[k * 3 + 2], lookup))
-      col.push([af.colors[k * 3], af.colors[k * 3 + 1], af.colors[k * 3 + 2]])
-    }
-    faces.push({ v, col, recol: [true, true, true], base: -1 })
-  }
+  applyEditRecord(patch)
   return true
+}
+
+/** Change the spiral's proportions in place: mesh edits carry across as
+ * offsets from the old base, so a flare or a dent survives a reshape. */
+function applyShape(rawShape) {
+  const next = clampShape(rawShape)
+  const rec = buildPatch()
+  const deltas = rec.movedCorners.map(([ci, x, y, z]) => [
+    ci,
+    x - base.positions[ci * 3],
+    y - base.positions[ci * 3 + 1],
+    z - base.positions[ci * 3 + 2],
+  ])
+  SHAPE = next
+  computeDerived()
+  base = buildMountainArrays()
+  resetToBase()
+  rec.movedCorners = deltas.map(([ci, dx, dy, dz]) => [
+    ci,
+    base.positions[ci * 3] + dx,
+    base.positions[ci * 3 + 1] + dy,
+    base.positions[ci * 3 + 2] + dz,
+  ])
+  applyEditRecord(rec)
+  return rec.addedFaces.length
 }
 
 /* --------------------------- undo ----------------------------------- */
@@ -665,16 +750,26 @@ const ground = new THREE.Mesh(
 )
 ground.position.y = -0.5
 scene.add(ground)
+const trailPoints = () =>
+  Array.from({ length: 241 }, (_, i) => {
+    const p = pathPoint(i / 240)
+    return new THREE.Vector3(p.x, p.y + 0.25, p.z)
+  })
 const trailLine = new THREE.Line(
-  new THREE.BufferGeometry().setFromPoints(
-    Array.from({ length: 241 }, (_, i) => {
-      const p = pathPoint(i / 240)
-      return new THREE.Vector3(p.x, p.y + 0.25, p.z)
-    }),
-  ),
+  new THREE.BufferGeometry().setFromPoints(trailPoints()),
   new THREE.LineBasicMaterial({ color: '#e8b84b' }),
 )
 scene.add(trailLine)
+
+/** Re-derive everything that depends on the shape but is not the mesh. */
+function updateReferences() {
+  capMesh.geometry.dispose()
+  capMesh.geometry = buildPlateauCap()
+  trailLine.geometry.dispose()
+  trailLine.geometry = new THREE.BufferGeometry().setFromPoints(trailPoints())
+  ground.geometry.dispose()
+  ground.geometry = new THREE.CylinderGeometry(R0 + 15, R0 + 16, 1, 36)
+}
 
 // selection markers
 const vertMarker = new THREE.Mesh(
@@ -1160,6 +1255,93 @@ document.getElementById('bridgeEdges').onclick = bridgeEdges
 document.getElementById('flipBridge').onclick = flipBridge
 document.getElementById('undoBtn').onclick = undo
 
+/* shape */
+const shapeInputs = { shBase: 'baseRadius', shTop: 'topRadius', shHeight: 'height' }
+const camInputs = {
+  camDistMin: 'distMin', camDistMax: 'distMax', camHeight: 'height',
+  camBias: 'azimuthBias', camLook: 'lookAtHeight',
+}
+function syncShapeCamInputs() {
+  for (const [id, key] of Object.entries(shapeInputs)) document.getElementById(id).value = SHAPE[key]
+  for (const [id, key] of Object.entries(camInputs)) document.getElementById(id).value = CAM[key]
+  updateShrinkInfo()
+}
+function updateShrinkInfo() {
+  const b = parseFloat(document.getElementById('shBase').value)
+  const t = parseFloat(document.getElementById('shTop').value)
+  const el = document.getElementById('shrinkInfo')
+  if (!Number.isFinite(b) || !Number.isFinite(t)) { el.textContent = ''; return }
+  const shrink = (b - t) / TURNS
+  el.innerHTML = shrink < MIN_SHRINK_PER_TURN
+    ? `shrink ${shrink.toFixed(2)} per turn — <span style="color:#e05a72">below ${MIN_SHRINK_PER_TURN} the loops would overhang the trail; Apply will clamp</span>`
+    : `shrink ${shrink.toFixed(2)} per turn (floor ${MIN_SHRINK_PER_TURN} keeps the staircase overhang-free)`
+}
+for (const id of Object.keys(shapeInputs)) document.getElementById(id).addEventListener('input', updateShrinkInfo)
+
+document.getElementById('shapeApply').onclick = () => {
+  const raw = {}
+  for (const [id, key] of Object.entries(shapeInputs)) raw[key] = parseFloat(document.getElementById(id).value)
+  if (!Object.values(raw).every(Number.isFinite)) { setStatus('Shape values must be numbers.'); return }
+  if (splitting) cancelSplit()
+  const floating = applyShape(raw)
+  undoStack.length = 0
+  clearSelection()
+  updateReferences()
+  rebuild()
+  syncShapeCamInputs()
+  if (camPreviewOn) applyMichiCamera()
+  setStatus(
+    `Spiral re-solved: base ${SHAPE.baseRadius}, top ${SHAPE.topRadius}, height ${SHAPE.height}. ` +
+    `Vertex moves carried across as offsets; ${floating ? `${floating} added/split face${floating === 1 ? ' keeps' : 's keep'} absolute spots and may float; ` : ''}` +
+    'undo history cleared.',
+  )
+}
+
+/* camera preview — the exact CameraRig formula from PathScene3D */
+let camPreviewOn = false
+function readCamInputs() {
+  for (const [id, key] of Object.entries(camInputs)) {
+    const n = parseFloat(document.getElementById(id).value)
+    if (Number.isFinite(n)) CAM[key] = n
+  }
+}
+function applyMichiCamera() {
+  const t = Math.min(1, Math.max(0, parseFloat(document.getElementById('camT').value)))
+  const focus = pathPoint(t)
+  const aspect = viewport.clientWidth / viewport.clientHeight
+  const wantFov = aspect < 1 ? 58 : 48
+  const halfWidth = 3.2
+  const dist = Math.min(CAM.distMax, Math.max(CAM.distMin, halfWidth / (Math.tan((wantFov * Math.PI) / 360) * aspect)))
+  const biasFade = 1 - Math.min(1, Math.max(0, (t - 0.9) / 0.08))
+  const a = trailAngle(Math.min(t, T_BEND)) + CAM.azimuthBias * biasFade
+  const bulge = mountainR(Math.max(0, focus.y - 3)) + 4
+  const rEye = Math.max(Math.hypot(focus.x, focus.z) + dist, bulge)
+  camera.fov = wantFov
+  camera.position.set(Math.cos(a) * rEye, focus.y + CAM.height, Math.sin(a) * rEye)
+  camera.lookAt(focus.x, focus.y + CAM.lookAtHeight, focus.z)
+  camera.updateProjectionMatrix()
+}
+document.getElementById('camPreview').onchange = (e) => {
+  camPreviewOn = e.target.checked
+  controls.enabled = !camPreviewOn
+  if (camPreviewOn) {
+    applyMichiCamera()
+    setStatus("Michi's camera — scrub the walk slider to ride the trail; untick to orbit freely again.")
+  } else {
+    camera.fov = 48
+    camera.updateProjectionMatrix()
+    setStatus('Free orbit again.')
+  }
+}
+document.getElementById('camT').addEventListener('input', () => { if (camPreviewOn) applyMichiCamera() })
+for (const id of Object.keys(camInputs)) {
+  document.getElementById(id).addEventListener('change', () => {
+    readCamInputs()
+    syncShapeCamInputs()
+    if (camPreviewOn) applyMichiCamera()
+  })
+}
+
 document.getElementById('showWire').onchange = (e) => { wire.visible = e.target.checked }
 document.getElementById('showBack').onchange = (e) => {
   material.side = e.target.checked ? THREE.DoubleSide : THREE.FrontSide
@@ -1185,24 +1367,32 @@ document.getElementById('loadInput').addEventListener('change', async (e) => {
   if (!file) return
   try {
     const patch = JSON.parse(await file.text())
-    pushUndo()
     if (applyPatch(patch)) {
+      undoStack.length = 0
       clearSelection()
+      updateReferences()
       rebuild()
-      setStatus(`Loaded ${file.name}.`)
-    } else {
-      undoStack.pop()
+      syncShapeCamInputs()
+      if (camPreviewOn) applyMichiCamera()
+      setStatus(`Loaded ${file.name}. Undo history cleared.`)
     }
   } catch {
     setStatus('Could not read that file as a patch.')
   }
 })
 document.getElementById('resetBtn').onclick = () => {
-  if (!confirm('Throw away every edit and return to the generated mountain?')) return
-  pushUndo()
+  if (!confirm('Throw away every edit, shape and camera change, and return to the generated mountain?')) return
+  SHAPE = { ...DEFAULT_SHAPE }
+  CAM = { ...DEFAULT_CAM }
+  computeDerived()
+  base = buildMountainArrays()
   resetToBase()
+  undoStack.length = 0
   clearSelection()
+  updateReferences()
   rebuild()
+  syncShapeCamInputs()
+  if (camPreviewOn) applyMichiCamera()
   setStatus('Back to the pristine generated mountain.')
 }
 
@@ -1225,15 +1415,17 @@ function resize() {
   renderer.setSize(w, h)
   camera.aspect = w / h
   camera.updateProjectionMatrix()
+  if (camPreviewOn) applyMichiCamera()
 }
 addEventListener('resize', resize)
 resize()
 
 renderer.setAnimationLoop(() => {
-  controls.update()
+  if (!camPreviewOn) controls.update()
   renderer.render(scene, camera)
 })
 
+syncShapeCamInputs()
 rebuild()
 setStatus(`Mountain rebuilt: <strong>${faces.length}</strong> faces, ${verts.length} welded vertices. Vertex mode — click the mesh to begin.`)
 </script>

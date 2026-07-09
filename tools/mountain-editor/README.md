@@ -32,18 +32,32 @@ take 5173/8000 (Mishka Hub) or 8100 (production Michi API).
   exact coordinates.
 - **Recolour a vertex** — pick a colour, then "Paint vertex" (blends across
   the touching faces) or "Paint touching faces" (solid facets).
-- **Reshape the silhouette** — vertex mode, select a vertex to set the height
-  line, then "Move points below" pushes every vertex at or below that height
-  out from the centre (negative amounts pull in). "Equal" shifts the whole
-  skirt uniformly; "tapered" scales the move from full at the base to zero at
-  the line, which changes the slope angle — the safe equivalent of retuning
-  the spiral constants. (Changing `SPIRAL_A`/`SPIRAL_B` themselves would move
-  the trail, and the lesson stones, torii, camera and scenery all place
-  themselves from that spiral — do not go that way.) Keep moves on trail
-  loops modest: the shelf is part of the mesh but Michi's lesson stones keep
-  their generated spots, so a big flare strands them. A whole-mountain
-  reshape records a move for most vertices and makes the patch a few hundred
-  KB — fine, it gzips well in the build.
+- **Reshape the silhouette (mesh-only)** — vertex mode, select a vertex to
+  set the height line, then "Move points below" pushes every vertex at or
+  below that height out from the centre (negative amounts pull in). "Equal"
+  shifts the whole skirt uniformly; "tapered" scales the move from full at
+  the base to zero at the line. Keep moves on trail loops modest: this moves
+  the mesh only, so Michi's lesson stones keep their generated spots and a
+  big flare strands them. A whole-mountain reshape records a move for most
+  vertices and makes the patch a few hundred KB — fine, it gzips well.
+- **Reshape the spiral itself** — the Shape panel: base radius, top radius
+  and height. Unlike the mesh-only tool this re-solves the actual trail
+  spiral, and because everything in `PathScene3D` derives from it, the
+  lesson stones, torii, camera orbit, walkway, bridges and scenery rings all
+  follow in Michi. Same trailhead-to-summit journey, different proportions:
+  widen the base or shrink the top and the sides slope more. The panel shows
+  the per-turn shrink live — the staircase stays overhang-free above 3.05
+  per turn (lip + wall + jitter margin) and both the editor and Michi clamp
+  below that, so you cannot reintroduce overhangs above the path. Applying a
+  shape carries vertex moves across as offsets from the regenerated base;
+  added/bridged/split faces keep their absolute spots (they may need
+  redoing), and the undo history clears.
+- **Preview and tune Michi's camera** — the Camera panel runs the exact
+  CameraRig formula from `PathScene3D` (distance clamp, height, look-ahead
+  bias, look-at height): tick "preview Michi's camera" and scrub the walk
+  slider to ride the trail as the app frames it, with whatever shape you
+  have applied. The five tuning values export in the patch and Michi's
+  camera reads them at load.
 - Undo (⌘Z), wireframe/double-sided/reference toggles, save/load.
 
 ## Getting edits into Michi

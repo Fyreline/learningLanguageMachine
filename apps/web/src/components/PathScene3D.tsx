@@ -30,10 +30,81 @@ import { useSettings } from '../settings'
 import { PALETTE, type KitsuneTone } from './AnimatedKitsune'
 import mountainPatchJson from '../mountainPatch.json'
 
+/* ---------------- household patch & tuning (tools/mountain-editor) ------- */
+
+/** The spiral's household-adjustable proportions: the trail still starts at
+ * the trailhead (t=0, radius baseRadius) and ends at the summit centre —
+ * everything between (mountain surface, camera, lesson stones, scenery,
+ * even the train's track) derives from these three numbers. */
+interface MountainShape {
+  baseRadius: number
+  topRadius: number
+  height: number
+}
+
+/** Close-third-person camera feel. Purely presentational — safe to tune. */
+interface CameraTuning {
+  distMin: number
+  distMax: number
+  height: number
+  azimuthBias: number
+  lookAtHeight: number
+}
+
+/** Hand edits to the generated mountain, made in tools/mountain-editor and
+ * saved over src/mountainPatch.json. A patch is a diff against the generator's
+ * output, keyed by face index: vertex moves land BEFORE the paint pass (so
+ * moved faces re-band by their new altitude and stay theme-aware), while
+ * recolours are absolute overrides and deletions/additions come last. Face
+ * indices only mean something for the build they were saved against, hence
+ * the baseFaceCount guard — if buildMountain changes shape, re-export the
+ * patch from the editor after re-porting it there. (shape/camera overrides
+ * don't disturb the guard: the grid's topology is fixed, only positions
+ * move, and the editor always saves its mesh edits against its own shape.) */
+interface MountainPatch {
+  version: number
+  baseFaceCount: number | null
+  movedCorners: [number, number, number, number][]
+  recoloredCorners: [number, number, number, number][]
+  deletedFaces: number[]
+  addedFaces: { positions: number[]; colors: number[] }[]
+  shape?: Partial<MountainShape>
+  camera?: Partial<CameraTuning>
+}
+
+const mountainPatch = mountainPatchJson as unknown as MountainPatch
+
+const SHAPE: MountainShape = {
+  baseRadius: 18.45,
+  topRadius: 7.5,
+  height: 22,
+  ...mountainPatch.shape,
+}
+SHAPE.height = Math.min(60, Math.max(8, SHAPE.height))
+SHAPE.baseRadius = Math.min(40, Math.max(12, SHAPE.baseRadius))
+SHAPE.topRadius = Math.max(2.6, SHAPE.topRadius) // plateau must survive: RTOP = topRadius − 2
+// The no-overhang staircase floor: each loop must shrink by at least
+// LIP_OUT + WALL_IN (2.65) plus sloped-face/jitter margin, per turn — any
+// less and a loop's lip juts over the shelf below.
+const MIN_SHRINK_PER_TURN = 3.05
+if (SHAPE.baseRadius - SHAPE.topRadius < MIN_SHRINK_PER_TURN * 3) {
+  console.warn('michi: mountain shape would overhang the trail — clamping the top radius')
+  SHAPE.topRadius = SHAPE.baseRadius - MIN_SHRINK_PER_TURN * 3
+}
+
+const CAM: CameraTuning = {
+  distMin: 9,
+  distMax: 12,
+  height: 3.4,
+  azimuthBias: 0.12,
+  lookAtHeight: 0.6,
+  ...mountainPatch.camera,
+}
+
 /* ------------------------------ geometry -------------------------------- */
 
-const HPATH = 22 // trail summit height
-const PLATEAU_Y = 22.9 // the flat summit
+const HPATH = SHAPE.height // trail summit height
+const PLATEAU_Y = HPATH + 0.9 // the flat summit
 // 3 revolutions: a loose spiral that climbs plenty per wrap. Integral, to
 // keep the terrace grid's seam stitching clean.
 const TURNS = 3
@@ -56,10 +127,11 @@ const WALL_IN = 1.6 // ...and this far inside, to the riser's foot
 // crowd (household note). Solve dθ/dt = C / r(t) with r(t) = A − B·t linear
 // → θ(t) = θ0 + (C/B)·ln(A / (A − B·t)), and every lesson is the same
 // stride apart from base to summit.
-const SPIRAL_A = 18.45 // path radius at the trailhead
-// Per-turn shrink of 3.65: each loop's OUTER edge sits inside the loop
-// below's INNER edge, which is exactly the no-overhang staircase condition.
-const SPIRAL_B = 10.95
+const SPIRAL_A = SHAPE.baseRadius // path radius at the trailhead (default 18.45)
+// Default per-turn shrink of 3.65: each loop's OUTER edge sits inside the
+// loop below's INNER edge, which is exactly the no-overhang staircase
+// condition — MIN_SHRINK_PER_TURN above enforces the floor for overrides.
+const SPIRAL_B = SPIRAL_A - SHAPE.topRadius
 
 /** The path spiral's radius at height y — the terraced surface, scenery
  * and camera all derive from this envelope now. */
@@ -230,25 +302,6 @@ function usePalette(): ScenePalette {
 // Row offsets relative to each loop of the terrace staircase: a hair below
 // the lip (the outline), the lip itself, the shelf's inner edge (the sharp
 // radius drop between −0.06 and 0 IS the flat step), then two riser rows.
-/** Hand edits to the generated mountain, made in tools/mountain-editor and
- * saved over src/mountainPatch.json. A patch is a diff against the generator's
- * output, keyed by face index: vertex moves land BEFORE the paint pass (so
- * moved faces re-band by their new altitude and stay theme-aware), while
- * recolours are absolute overrides and deletions/additions come last. Face
- * indices only mean something for the build they were saved against, hence
- * the baseFaceCount guard — if buildMountain changes shape, re-export the
- * patch from the editor after re-porting it there. */
-interface MountainPatch {
-  version: number
-  baseFaceCount: number | null
-  movedCorners: [number, number, number, number][]
-  recoloredCorners: [number, number, number, number][]
-  deletedFaces: number[]
-  addedFaces: { positions: number[]; colors: number[] }[]
-}
-
-const mountainPatch = mountainPatchJson as unknown as MountainPatch
-
 const ROW_OFFS = [-0.5, -0.06, 0, 0.9, 1.6]
 // sloped-face rows running from the riser's top to the next loop's lip
 const GAP_FRACS = [0.2, 0.4, 0.6, 0.8]
@@ -904,11 +957,11 @@ function CameraRig({ nav }: { nav: React.MutableRefObject<Nav> }) {
     const focus = pathPoint(s.t)
     const halfWidth = 3.2 // ~1.3 node spacings each side (3-turn spiral packs nodes tighter)
     const aspect = size.width / size.height
-    // floor of 9: any closer and the slope at eye height grazes the frame
-    // edges on wide viewports (reads as clipping into the mountain).
-    // ceiling of 12: keeps the low camera orbit OUTSIDE the base forest
-    // ring, whose trees otherwise end up edge-on across the lens.
-    const dist = Math.min(12, Math.max(9, halfWidth / (Math.tan((wantFov * Math.PI) / 360) * aspect)))
+    // floor (default 9): any closer and the slope at eye height grazes the
+    // frame edges on wide viewports (reads as clipping into the mountain).
+    // ceiling (default 12): keeps the low camera orbit OUTSIDE the base
+    // forest ring, whose trees otherwise end up edge-on across the lens.
+    const dist = Math.min(CAM.distMax, Math.max(CAM.distMin, halfWidth / (Math.tan((wantFov * Math.PI) / 360) * aspect)))
     // bias the azimuth a touch toward what's ahead — fading to zero over
     // the final stretch so the camera comes to rest EXACTLY square to the
     // summit gate and the climbing bend, not drifted past it (household
@@ -919,14 +972,14 @@ function CameraRig({ nav }: { nav: React.MutableRefObject<Nav> }) {
     const biasFade = 1 - Math.min(1, Math.max(0, (tc - 0.9) / 0.08))
     // clamp at T_BEND: past it the walkway runs straight and radial, and
     // the camera must rest exactly on its axis, square to the gate
-    const a = trailAngle(Math.min(tc, T_BEND)) + 0.12 * biasFade
+    const a = trailAngle(Math.min(tc, T_BEND)) + CAM.azimuthBias * biasFade
     // never orbit inside the terrain's local bulge below the eye — the
     // lower mountain widens toward the foot, and an orbit radius chosen
     // only from the path's radius clips through that flank
     const bulge = mountainR(Math.max(0, focus.y - 3)) + 4
     const rEye = Math.max(Math.hypot(focus.x, focus.z) + dist, bulge)
-    camera.position.set(Math.cos(a) * rEye, focus.y + 3.4, Math.sin(a) * rEye)
-    camera.lookAt(focus.x, focus.y + 0.6, focus.z)
+    camera.position.set(Math.cos(a) * rEye, focus.y + CAM.height, Math.sin(a) * rEye)
+    camera.lookAt(focus.x, focus.y + CAM.lookAtHeight, focus.z)
   })
   return null
 }
