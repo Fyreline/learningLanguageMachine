@@ -10,7 +10,9 @@ import { detectSttCapability } from '../audio/stt'
 import { detectTtsCapability, speak } from '../audio/tts'
 import { getSettings, patchSettings, useSettings } from '../settings'
 import type { UserSettings } from '../api'
+import { getUser } from '../auth'
 import { AnimatedKitsune, PALETTE, type KitsuneTone } from './AnimatedKitsune'
+import { pathIs3D } from './PathPage'
 import { ThemeToggle } from './ThemeToggle'
 
 type VoiceState = 'idle' | 'speaking' | 'done' | 'error'
@@ -40,6 +42,7 @@ export function SettingsPage() {
   const [jaVoiceCount, setJaVoiceCount] = useState(0)
   const [sttSupported, setSttSupported] = useState<boolean | null>(null)
   const [voiceState, setVoiceState] = useState<VoiceState>('idle')
+  const [path3D, setPath3D] = useState(pathIs3D)
 
   useEffect(() => {
     detectTtsCapability().then((cap) => {
@@ -237,6 +240,37 @@ export function SettingsPage() {
         <ThemeToggle />
       </div>
 
+      {/* the path's dimension — per-device, like the theme */}
+      <div className="mt-4 rounded-lg border border-line bg-paper-mid p-6">
+        <h2 className="font-display text-base font-medium text-ink">The path</h2>
+        <p className="mt-1 text-sm text-ink-soft">
+          The mountain in the round, or the classic flat scroll.
+        </p>
+        <div className="mt-2.5 inline-flex rounded-lg border border-line-strong p-1">
+          {(
+            [
+              { value: true, label: '3D mountain' },
+              { value: false, label: '2D scroll' },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.label}
+              type="button"
+              aria-pressed={path3D === opt.value}
+              onClick={() => {
+                localStorage.setItem('michi-path-3d', opt.value ? '1' : '0')
+                setPath3D(opt.value)
+              }}
+              className={`min-h-9 rounded-md px-3.5 py-1.5 text-sm font-medium transition ${
+                path3D === opt.value ? 'bg-clay text-paper' : 'text-ink-mid hover:bg-oat'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* your kitsune */}
       <div className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-line bg-paper-mid p-6">
         <div>
@@ -264,11 +298,13 @@ export function SettingsPage() {
         <AnimatedKitsune tone={settings.kitsune_tone ?? 'clay'} width={44} height={49} />
       </div>
 
-      {/* account */}
+      {/* account — the header's avatar and sign-out moved here (2026-07-09) */}
       <div className="mt-4 flex items-center justify-between rounded-lg border border-line bg-paper-mid p-6">
         <div>
           <h2 className="font-display text-base font-medium text-ink">Account</h2>
-          <p className="mt-1 text-sm text-ink-soft">Signed in with your household login.</p>
+          <p className="mt-1 text-sm text-ink-soft">
+            Signed in as {getUser()?.display_name ?? 'your household login'}.
+          </p>
         </div>
         <button
           type="button"

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { bootstrap, getUser, logout, subscribe, type AuthUser } from './auth'
+import { bootstrap, getUser, subscribe, type AuthUser } from './auth'
 import { fetchReviewsDue } from './curriculum/loader'
 import { dismissSettingsError, loadSettings, retrySettingsPatch, useSettingsError } from './settings'
 import { LoginScreen } from './components/LoginScreen'
@@ -33,35 +33,6 @@ function PawPrint({ className = 'h-3.5 w-3.5' }: { className?: string }) {
       <ellipse cx="13.6" cy="6" rx="1.7" ry="2.2" fill="currentColor" />
       <ellipse cx="16.3" cy="9.5" rx="1.6" ry="2" fill="currentColor" />
     </svg>
-  )
-}
-
-function SignOutIcon() {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden className="h-4 w-4">
-      <path
-        d="M8 4H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M13 13.5 16.5 10 13 6.5M7 10h9.3"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function SignOutButton() {
-  return (
-    <button
-      type="button"
-      onClick={() => logout()}
-      aria-label="Sign out"
-      title="Sign out"
-      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line-strong bg-white text-ink-mid transition hover:bg-oat hover:text-ink dark:bg-paper-mid"
-    >
-      <SignOutIcon />
-    </button>
   )
 }
 
@@ -162,7 +133,7 @@ export default function App() {
   if (!user) {
     return <LoginScreen onLoggedIn={() => setUser(getUser())} />
   }
-  return <AuthenticatedApp user={user} />
+  return <AuthenticatedApp />
 }
 
 /** Clay due-review pill (CURRICULUM §6: "an invitation, never a guilt trip
@@ -212,7 +183,7 @@ function SettingsErrorBanner() {
   )
 }
 
-function AuthenticatedApp({ user }: { user: AuthUser }) {
+function AuthenticatedApp() {
   const [tab, setTab] = useState<Tab>('path')
   const [dueCount, setDueCount] = useState<number | null>(null)
   const [settingsReady, setSettingsReady] = useState(false)
@@ -274,6 +245,8 @@ function AuthenticatedApp({ user }: { user: AuthUser }) {
             ))}
           </nav>
 
+          {/* slim on purpose: the avatar initial and sign-out moved to
+              Settings (household ask, 2026-07-09) */}
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <span
               className="inline-flex items-center gap-1.5 rounded-full border border-line-strong px-2.5 py-1 font-mono text-[11px] tracking-[0.08em] text-clay"
@@ -282,14 +255,6 @@ function AuthenticatedApp({ user }: { user: AuthUser }) {
               <PawPrint />0
             </span>
             <ThemeToggle />
-            <span
-              aria-label={user.display_name}
-              title={user.display_name}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-clay text-xs font-medium text-paper"
-            >
-              {user.display_name.slice(0, 1).toUpperCase()}
-            </span>
-            <SignOutButton />
           </div>
         </div>
       </header>
