@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { bootstrap, getUser, logout, subscribe, type AuthUser } from './auth'
 import { fetchReviewsDue } from './curriculum/loader'
-import { loadSettings } from './settings'
+import { dismissSettingsError, loadSettings, retrySettingsPatch, useSettingsError } from './settings'
 import { LoginScreen } from './components/LoginScreen'
 import { MichiMark } from './components/MichiMark'
 import { PathPage } from './components/PathPage'
@@ -179,6 +179,39 @@ function DueBadge({ count, className = '' }: { count: number | null; className?:
   )
 }
 
+/** Surfaces a settings-save failure no matter which tab is active — a
+ * failed PUT used to die with whichever page triggered it (SettingsPage
+ * unmounts the instant you switch tabs), so a learner who picked a colour
+ * then immediately tapped away to look at it would never see it failed. */
+function SettingsErrorBanner() {
+  const error = useSettingsError()
+  const [retrying, setRetrying] = useState(false)
+  if (!error) return null
+  return (
+    <div className="sticky top-[57px] z-20 border-b border-fig/30 bg-fig/10 px-5 py-2 text-sm text-fig">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+        <span>Couldn't save your last settings change — {error}</span>
+        <div className="flex shrink-0 items-center gap-3">
+          <button
+            type="button"
+            disabled={retrying}
+            onClick={() => {
+              setRetrying(true)
+              retrySettingsPatch().finally(() => setRetrying(false))
+            }}
+            className="font-medium underline underline-offset-2 disabled:opacity-50"
+          >
+            {retrying ? 'Retrying…' : 'Retry'}
+          </button>
+          <button type="button" onClick={() => dismissSettingsError()} aria-label="Dismiss" className="text-fig/70 hover:text-fig">
+            ✕
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function AuthenticatedApp({ user }: { user: AuthUser }) {
   const [tab, setTab] = useState<Tab>('path')
   const [dueCount, setDueCount] = useState<number | null>(null)
@@ -260,6 +293,8 @@ function AuthenticatedApp({ user }: { user: AuthUser }) {
           </div>
         </div>
       </header>
+
+      <SettingsErrorBanner />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 pb-24 pt-8 sm:pb-10">
         {tab === 'path' && <PathPage key={pathVersion} />}

@@ -40,7 +40,6 @@ export function SettingsPage() {
   const [jaVoiceCount, setJaVoiceCount] = useState(0)
   const [sttSupported, setSttSupported] = useState<boolean | null>(null)
   const [voiceState, setVoiceState] = useState<VoiceState>('idle')
-  const [saveError, setSaveError] = useState<string | null>(null)
 
   useEffect(() => {
     detectTtsCapability().then((cap) => {
@@ -50,12 +49,14 @@ export function SettingsPage() {
     setSttSupported(detectSttCapability())
   }, [])
 
+  // Failures surface via the global SettingsErrorBanner (App.tsx) instead of
+  // local state — it survives navigating away, which local state can't (see
+  // settings.ts's error channel for why that matters here).
   async function save(patch: UserSettings) {
-    setSaveError(null)
     try {
       await patchSettings(patch)
-    } catch (e) {
-      setSaveError(e instanceof Error ? e.message : 'Could not save that just now')
+    } catch {
+      /* handled by the global banner */
     }
   }
 
@@ -73,10 +74,6 @@ export function SettingsPage() {
     <div className="mx-auto max-w-2xl">
       <h1 className="font-display text-2xl font-medium text-ink">Settings</h1>
       <p className="mt-1 text-sm text-ink-soft">Everything here applies straight away, everywhere in the app.</p>
-
-      {saveError && (
-        <p className="mt-3 rounded-md bg-fig/10 px-3 py-2 text-sm text-fig">{saveError}</p>
-      )}
 
       {/* learning */}
       <div className="mt-6 rounded-lg border border-line bg-paper-mid p-6">
