@@ -31,29 +31,58 @@ import { PALETTE, type KitsuneTone } from './AnimatedKitsune'
 
 /* ------------------------------ geometry -------------------------------- */
 
-const H = 27 // silhouette apex (never reached — the top is a plateau)
 const HPATH = 22 // trail summit height
 const PLATEAU_Y = 22.9 // the flat summit
 const R0 = 17 // base radius
+const RTOP = 7 // radius where the plateau rim sits — a fat, standable top
 const TURNS = 4 // helix revolutions (integral — keeps the carve grid clean)
-const DEPTH = 1.6 // how deep the trail terrace cuts in
+const DEPTH = 2.4 // deep enough that a torii's inner pillar clears the cut wall
+const PATH_IN = 0.95 // path centreline, measured out from the cut wall's base
 const THETA0 = -Math.PI / 2
 const NIGHT_LINE = 0.55
 
+/** Frustum silhouette — linear taper from R0 to RTOP, flat above. Linear on
+ * purpose: it makes the constant-arc spiral below solvable in closed form. */
 function mountainR(y: number): number {
-  return R0 * Math.pow(Math.max(0.002, 1 - y / H), 0.85)
+  return R0 - ((R0 - RTOP) / PLATEAU_Y) * Math.min(Math.max(y, 0), PLATEAU_Y)
 }
 
+// The trail is a CONSTANT-ARC spiral, not a linear helix: with dθ/dt fixed,
+// arc-per-lesson shrinks with radius and the summit lessons bunched into a
+// crowd (household note). Solve dθ/dt = C / r(t) with r(t) = A − B·t linear
+// → θ(t) = θ0 + (C/B)·ln(A / (A − B·t)), and every lesson is the same
+// stride apart from base to summit.
+const SPIRAL_A = R0 - DEPTH + PATH_IN
+const SPIRAL_B = ((R0 - RTOP) / PLATEAU_Y) * HPATH
+const SPIRAL_C =
+  (TURNS * 2 * Math.PI * SPIRAL_B) / Math.log(SPIRAL_A / (SPIRAL_A - SPIRAL_B))
+
 function trailAngle(t: number): number {
-  return THETA0 + t * TURNS * Math.PI * 2
+  return THETA0 + (SPIRAL_C / SPIRAL_B) * Math.log(SPIRAL_A / (SPIRAL_A - SPIRAL_B * t))
 }
+
+/** Inverse of trailAngle: progress t at a total unwrapped angle. */
+function tAtAngle(thetaTotal: number): number {
+  return (SPIRAL_A / SPIRAL_B) * (1 - Math.exp((-(thetaTotal - THETA0) * SPIRAL_B) / SPIRAL_C))
+}
+
+const SUMMIT_CENTRE = new THREE.Vector3(0, PLATEAU_Y + 0.04, 0)
+// after the second-to-last lesson the trail leaves the rim and bends to the
+// centre of the plateau, where the gate stands (household note)
+const BLEND0 = 82 / 83 - 0.0002
 
 /** Walk-level point on the carved shelf at progress t. */
 function pathPoint(t: number): THREE.Vector3 {
   const h = t * HPATH
   const a = trailAngle(t)
-  const r = mountainR(h) - DEPTH + 0.85
-  return new THREE.Vector3(Math.cos(a) * r, h + 0.02, Math.sin(a) * r)
+  const r = mountainR(h) - DEPTH + PATH_IN
+  const p = new THREE.Vector3(Math.cos(a) * r, h + 0.02, Math.sin(a) * r)
+  if (t > BLEND0) {
+    const f = Math.min(1, (t - BLEND0) / (1 - BLEND0))
+    const s = f * f * (3 - 2 * f)
+    p.lerp(SUMMIT_CENTRE, s)
+  }
+  return p
 }
 
 function mulberry(seed: number): () => number {
@@ -82,13 +111,12 @@ const CAVES = [
   { phi: 0.6, y: 10.8, rp: 0.24, ry: 1.1 },
 ]
 
-/** dy from height y to the nearest pass of the helix at azimuth phi, or
- * null when no turn passes nearby (above the trail's summit). */
+/** dy from height y to the nearest pass of the spiral at azimuth phi. */
 function nearestTurnDy(phi: number, y: number): number | null {
-  const thetaNorm = (((phi - THETA0) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / (Math.PI * 2)
+  const thetaOff = (((phi - THETA0) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
   let best: number | null = null
   for (let k = 0; k < TURNS; k++) {
-    const h = ((thetaNorm + k) / TURNS) * HPATH
+    const h = tAtAngle(THETA0 + thetaOff + k * Math.PI * 2) * HPATH
     const dy = y - h
     if (best === null || Math.abs(dy) < Math.abs(best)) best = dy
   }
@@ -145,7 +173,10 @@ function usePalette(): ScenePalette {
 // Row offsets relative to each helix pass. The sharp radius step between
 // -0.15 (outer lip) and 0 (wall base) IS the flat shelf; 0→2.4 leans the
 // cut wall back out to the natural slope.
-const ROW_OFFS = [-1.2, -0.5, -0.15, 0, 0.13, 0.45, 0.95, 1.6, 2.4, 3.3, 4.15]
+// Compact: the constant-arc spiral packs the top turns ~3.3 apart
+// vertically, so a turn's rows must span less than that or they fold into
+// the turn above.
+const ROW_OFFS = [-0.65, -0.28, -0.1, 0, 0.1, 0.3, 0.65, 1.1, 1.7, 2.35]
 
 function cutRadius(base: number, offIdx: number): number {
   switch (offIdx) {
@@ -154,10 +185,10 @@ function cutRadius(base: number, offIdx: number): number {
     case 2: return base + 0.25 // the lip
     case 3: return base - DEPTH // shelf inner edge / wall base
     case 4: return base - DEPTH + 0.05 // wall, near vertical
-    case 5: return base - DEPTH * 0.72
-    case 6: return base - DEPTH * 0.42
-    case 7: return base - DEPTH * 0.18
-    case 8: return base - DEPTH * 0.05
+    case 5: return base - DEPTH * 0.8
+    case 6: return base - DEPTH * 0.5
+    case 7: return base - DEPTH * 0.25
+    case 8: return base - DEPTH * 0.08
     default: return base
   }
 }
@@ -176,20 +207,19 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
     // radius the low camera orbits, shoving a dark wall across the frame.
     col.push({ y: 0, r: R0 + 0.8 })
     for (let k = 0; k < TURNS; k++) {
-      const h = ((thetaNorm + k) / TURNS) * HPATH
+      const h = tAtAngle(THETA0 + (thetaNorm + k) * Math.PI * 2) * HPATH
       for (let oi = 0; oi < ROW_OFFS.length; oi++) {
-        let y = Math.min(PLATEAU_Y, Math.max(0.02, h + ROW_OFFS[oi]))
-        let r = cutRadius(mountainR(y), oi)
+        let y = h + ROW_OFFS[oi]
         // Facet jitter — never on the carve band (the shelf stays true),
         // and seeded from (column, row) rather than drawn from a running
-        // stream: the wrap-around column is emitted twice (j=0 and j=COLS),
-        // and stream-ordered jitter gave the twins different offsets, which
-        // tore a dark seam crack straight down the trailhead azimuth.
-        if (oi === 0 || oi >= 9) {
-          const jrnd = mulberry(jj * 7919 + k * 131 + oi)
-          r += (jrnd() - 0.5) * 0.55
-          y += (jrnd() - 0.5) * 0.3
-        }
+        // stream, or the wrap-around seam's twin columns diverge.
+        const jrnd = mulberry(jj * 7919 + k * 131 + oi)
+        if (oi === 0 || oi === 9) y += (jrnd() - 0.5) * 0.3
+        // clamp BEFORE computing the radius: rows squashed onto the plateau
+        // must not keep their mid-slope radius or the rim grows overhangs
+        y = Math.min(PLATEAU_Y - 0.012, Math.max(0.02, y))
+        let r = cutRadius(mountainR(y), oi)
+        if (oi === 0 || oi === 9) r += (jrnd() - 0.5) * 0.55
         // the river carves its own groove where the trail hasn't
         if (angDiff(phi, riverPhi(y)) < 0.1 && (oi <= 1 || oi >= 8)) r -= 0.5
         // shallow cave-mouth recess (the darkness does the heavy lifting)
@@ -197,16 +227,16 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
           const e = (angDiff(phi, c.phi) / c.rp) ** 2 + ((y - c.y) / c.ry) ** 2
           if (e < 1 && (oi <= 1 || oi >= 8)) r -= 0.9 * (1 - e)
         }
+        // rows at the rim must stay inside it (household saw overhangs)
+        if (y >= PLATEAU_Y - 0.03) r = Math.min(r, RTOP)
         col.push({ y, r: Math.max(0.05, r) })
       }
     }
-    // the flat summit plateau: rim ring at the silhouette radius, then
-    // shrinking rings to a centre point — near-equal heights, so the top
-    // reads as a level ground you could stand on rather than a peak
-    const rimR = mountainR(PLATEAU_Y)
-    col.push({ y: PLATEAU_Y, r: rimR })
-    col.push({ y: PLATEAU_Y + 0.02, r: rimR * 0.55 })
-    col.push({ y: PLATEAU_Y + 0.04, r: rimR * 0.22 })
+    // the flat summit plateau: rim ring, then shrinking rings to a centre
+    // point — a level ground you can stand on rather than a peak
+    col.push({ y: PLATEAU_Y, r: RTOP })
+    col.push({ y: PLATEAU_Y + 0.02, r: RTOP * 0.55 })
+    col.push({ y: PLATEAU_Y + 0.04, r: RTOP * 0.22 })
     col.push({ y: PLATEAU_Y + 0.06, r: 0.03 })
     // enforce strictly climbing rows (clamps near the ground can stack)
     for (let i = 1; i < col.length; i++) {
@@ -289,8 +319,8 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
       if ((angDiff(phi, c.phi) / c.rp) ** 2 + ((cy - c.y) / c.ry) ** 2 < 0.8) inCave = true
     }
     const onShelf = dy !== null && dy > -0.22 && dy < 0.11 && cy < HPATH + 0.6
-    const onWall = dy !== null && dy >= 0.11 && dy < 1.5 && cy < HPATH + 1.4
-    const onRiver = angDiff(phi, riverPhi(cy)) < 0.11 && !(dy !== null && dy > -0.6 && dy < 1.5)
+    const onWall = dy !== null && dy >= 0.11 && dy < 1.3 && cy < HPATH + 1.4
+    const onRiver = angDiff(phi, riverPhi(cy)) < 0.11 && !(dy !== null && dy > -0.5 && dy < 1.3)
 
     if (inCave && !onShelf) tmp.copy(caveInk)
     else if (onShelf) tmp.copy(dirt)
@@ -529,7 +559,9 @@ function Kitsune3D({ position, angle, tone, ghost = false, scale = 1 }: {
   })
 
   return (
-    <group ref={group} position={position} rotation={[0, -angle + Math.PI, 0]} scale={scale}>
+    // -angle, no half-turn: the household caught the foxes walking the
+    // trail backwards
+    <group ref={group} position={position} rotation={[0, -angle, 0]} scale={scale}>
       <mesh position={[0, 0.34, 0]}>
         <coneGeometry args={[0.34, 0.72, 7]} />
         <meshStandardMaterial color={body} {...matProps} />
@@ -639,8 +671,10 @@ function CameraRig({ nav }: { nav: React.MutableRefObject<Nav> }) {
     // ceiling of 12: keeps the low camera orbit OUTSIDE the base forest
     // ring, whose trees otherwise end up edge-on across the lens.
     const dist = Math.min(12, Math.max(9, halfWidth / (Math.tan((wantFov * Math.PI) / 360) * aspect)))
-    // bias the azimuth a touch toward what's ahead
-    const a = Math.atan2(focus.z, focus.x) + 0.12
+    // bias the azimuth a touch toward what's ahead. Derived from the
+    // spiral, NOT atan2 of the focus point — at the summit the focus is the
+    // plateau centre, where atan2(0, 0) has no meaningful answer.
+    const a = trailAngle(Math.min(1, Math.max(0, s.t))) + 0.12
     // never orbit inside the terrain's local bulge below the eye — the
     // lower mountain widens toward the foot, and an orbit radius chosen
     // only from the path's radius clips through that flank
@@ -654,12 +688,12 @@ function CameraRig({ nav }: { nav: React.MutableRefObject<Nav> }) {
 
 // the summit gate: on the plateau, a stride inward from where the trail
 // tops out, facing the arriving walker
+// dead centre of the plateau — the trail's final bend delivers you here,
+// under the gate, and the camera at t=1 sees it face-on (household note:
+// the old rim-side gate sat off-centre and read ~90° rotated from the top
+// of the scroll)
 const GATE_A = trailAngle(1)
-const GATE_POS = new THREE.Vector3(
-  Math.cos(GATE_A) * (R0 * Math.pow(1 - PLATEAU_Y / H, 0.85) * 0.45),
-  PLATEAU_Y + 0.05,
-  Math.sin(GATE_A) * (R0 * Math.pow(1 - PLATEAU_Y / H, 0.85) * 0.45),
-)
+const GATE_POS = SUMMIT_CENTRE.clone()
 
 /** The reward for the last lesson: a hinomaru sun rising behind the summit
  * gate. It lives on the eye→gate ray, so it is centred in the gate's frame
@@ -674,7 +708,7 @@ function SummitSun({ nav, show, clay }: { nav: React.MutableRefObject<Nav>; show
     const rise = Math.min(1, Math.max(0, (nav.current.focusT - 0.88) / 0.12))
     g.visible = show && rise > 0.02
     if (!g.visible) return
-    const gateCentre = GATE_POS.clone().setY(PLATEAU_Y + 1.45)
+    const gateCentre = GATE_POS.clone().setY(PLATEAU_Y + 1.3)
     const dir = gateCentre.clone().sub(camera.position).normalize()
     const p = camera.position.clone().add(dir.multiplyScalar(camera.position.distanceTo(gateCentre) + 26))
     p.y -= (1 - rise) * 7 // dawn: starts sunk behind the plateau, rises into the gate
@@ -703,7 +737,9 @@ function SunRig({ nav }: { nav: React.MutableRefObject<Nav> }) {
   const fill = useRef<THREE.DirectionalLight>(null)
   useFrame(() => {
     const focus = pathPoint(nav.current.focusT)
-    const a = Math.atan2(focus.z, focus.x)
+    // spiral-derived azimuth (atan2 of the focus degenerates at the summit
+    // centre, where the trail's final bend ends)
+    const a = trailAngle(Math.min(1, Math.max(0, nav.current.focusT)))
     key.current?.position.set(Math.cos(a + 0.35) * 34, focus.y + 13, Math.sin(a + 0.35) * 34)
     // soft fill raking the TRAILING limb (the slope sliding past the left
     // frame edge) — between the key and true backlight it read as a black
@@ -778,24 +814,51 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
   const mountain = useMemo(() => buildMountain(pal), [pal])
   useEffect(() => () => mountain.dispose(), [mountain])
 
-  // bridges where the river ducks under the trail, one per crossing
+  // bridges where the river ducks under the trail, one per crossing —
+  // fixed-point iteration through the spiral's inverse, since the river's
+  // course wobbles with height
   const bridges = useMemo(() => {
     const list: { pos: THREE.Vector3; angle: number }[] = []
+    const crossT = (phi: number, k: number) => {
+      const off = (((phi - THETA0) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
+      return tAtAngle(THETA0 + off + k * Math.PI * 2)
+    }
     for (let k = 0; k < TURNS; k++) {
-      let h = (k / TURNS) * HPATH
-      let phi = riverPhi(h)
-      for (let it = 0; it < 3; it++) {
-        const thetaNorm = ((((phi - THETA0) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2)
-        const t = (thetaNorm + k) / TURNS
+      let h = ((k + 0.5) / TURNS) * HPATH
+      let t = 0
+      for (let it = 0; it < 4; it++) {
+        t = crossT(riverPhi(h), k)
         h = t * HPATH
-        phi = riverPhi(h)
       }
-      const thetaNorm = ((((phi - THETA0) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2)
-      const t = (thetaNorm + k) / TURNS
-      if (t > 0.02 && t < 0.99) list.push({ pos: pathPoint(t), angle: trailAngle(t) })
+      if (t > 0.02 && t < 0.97) list.push({ pos: pathPoint(t), angle: trailAngle(t) })
     }
     return list
   }, [])
+
+  // the lead-in: before lesson one the trail doesn't just stop — it bends
+  // away across the plain and carries on out of frame (household note)
+  const leadIn = useMemo(() => {
+    const positions: number[] = []
+    const N = 16
+    const a0 = trailAngle(0)
+    const rate = (SPIRAL_C / SPIRAL_A) * 0.85
+    const at = (u: number) => ({ a: a0 + u * rate, r: SPIRAL_A - u * 26 })
+    for (let i = 0; i < N; i++) {
+      const p0 = at(-0.15 + (0.15 * i) / N)
+      const p1 = at(-0.15 + (0.15 * (i + 1)) / N)
+      const y = 0.06
+      const l0 = [(p0.r - 0.85) * Math.cos(p0.a), y, (p0.r - 0.85) * Math.sin(p0.a)]
+      const r0 = [(p0.r + 0.85) * Math.cos(p0.a), y, (p0.r + 0.85) * Math.sin(p0.a)]
+      const l1 = [(p1.r - 0.85) * Math.cos(p1.a), y, (p1.r - 0.85) * Math.sin(p1.a)]
+      const r1 = [(p1.r + 0.85) * Math.cos(p1.a), y, (p1.r + 0.85) * Math.sin(p1.a)]
+      positions.push(...l0, ...r0, ...l1, ...l1, ...r0, ...r1)
+    }
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+    geo.computeVertexNormals()
+    return geo
+  }, [])
+  useEffect(() => () => leadIn.dispose(), [leadIn])
 
   const scenery = useMemo(() => {
     const rnd = mulberry(20260709)
@@ -809,7 +872,7 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
       const phi = rnd() * Math.PI * 2
       const dy = nearestTurnDy(phi, y)
       // generous keep-out above the trail — the camera flies through there
-      if (dy !== null && dy > -1.6 && dy < 4.4) continue
+      if (dy !== null && dy > -1.4 && dy < 2.6) continue
       if (angDiff(phi, riverPhi(y)) < 0.22) continue
       if (CAVES.some((c) => (angDiff(phi, c.phi) / (c.rp * 2)) ** 2 + ((y - c.y) / (c.ry * 2)) ** 2 < 1)) continue
       const r = mountainR(y) + 0.15
@@ -835,7 +898,7 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
     }
     // rubble scattered across the summit plateau (kept clear of the gate)
     const plateauRocks: { pos: THREE.Vector3; scale: number }[] = []
-    const rimR = R0 * Math.pow(1 - PLATEAU_Y / H, 0.85)
+    const rimR = RTOP
     for (let i = 0; i < 12; i++) {
       const a = rnd() * Math.PI * 2
       const d = rnd() * rimR * 0.82
@@ -847,7 +910,8 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
     for (let i = 0; i < 11; i++) {
       const t = 0.68 + (i / 11) * 0.3
       const p = pathPoint(t + 0.006)
-      const inward = new THREE.Vector3(-p.x, 0, -p.z).normalize().multiplyScalar(0.75)
+      // 0.6 in: any deeper and the lanterns pot themselves into the cut wall
+      const inward = new THREE.Vector3(-p.x, 0, -p.z).normalize().multiplyScalar(0.6)
       lanterns.push(p.clone().add(inward))
     }
     for (const t of [0.006, 0.018]) {
@@ -947,6 +1011,22 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
           <meshStandardMaterial color={pal.olive} flatShading />
         </mesh>
 
+        {/* the lead-in trail, bending away out of frame before lesson one */}
+        <mesh geometry={leadIn}>
+          <meshStandardMaterial color={pal.kraft} flatShading side={THREE.DoubleSide} />
+        </mesh>
+
+        {/* stepping stones for the final bend, rim to summit gate */}
+        {[0.991, 0.994, 0.997].map((t) => {
+          const p = pathPoint(t)
+          return (
+            <mesh key={t} position={[p.x, p.y + 0.05, p.z]}>
+              <cylinderGeometry args={[0.3, 0.34, 0.1, 6]} />
+              <meshStandardMaterial color={pal.kraft} flatShading />
+            </mesh>
+          )
+        })}
+
         {/* river mouth pond */}
         <mesh position={[Math.cos(riverMouthPhi) * (R0 + 3.2), 0.06, Math.sin(riverMouthPhi) * (R0 + 3.2)]}>
           <cylinderGeometry args={[2.5, 2.7, 0.14, 12]} />
@@ -985,7 +1065,11 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
                   <meshStandardMaterial color={pal.gold} emissive={pal.gold} emissiveIntensity={0.35} flatShading />
                 </mesh>
               ))}
-            {n.isGate && <Torii position={n.pos} angle={n.angle} scale={1.15} colour={pal.clay} />}
+            {/* checkpoint torii — except the last lesson, whose gate IS the
+                big summit gate (a mini one would stand inside it, edge-on) */}
+            {n.isGate && i < nodes.length - 1 && (
+              <Torii position={n.pos} angle={n.angle} scale={1.15} colour={pal.clay} />
+            )}
           </group>
         ))}
 
@@ -1008,8 +1092,12 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
           />
         )}
 
-        {/* the summit gate on the plateau + the earned sunrise behind it */}
-        <Torii position={GATE_POS} angle={GATE_A} scale={2} colour={pal.clay} />
+        {/* The summit gate at the plateau's centre + the earned sunrise
+            behind it. Angle is GATE_A − π/2: path torii point their crossbar
+            radially (you walk through them along the trail), but the final
+            approach arrives RADIALLY across the plateau, so this gate turns
+            a quarter to face the walker — and the camera — square on. */}
+        <Torii position={GATE_POS} angle={GATE_A - Math.PI / 2} scale={2.2} colour={pal.clay} />
         <SummitSun
           nav={nav}
           show={
