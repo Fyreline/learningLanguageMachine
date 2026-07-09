@@ -33,8 +33,11 @@ import { PALETTE, type KitsuneTone } from './AnimatedKitsune'
 
 const HPATH = 22 // trail summit height
 const PLATEAU_Y = 22.9 // the flat summit
-const R0 = 17 // base radius
-const RTOP = 7 // radius where the plateau rim sits — a fat, standable top
+// Wider base + slightly wider top = a steeper taper: each turn tucks well
+// inside the slope below it, so the upper terraces never overhang the
+// trail beneath (household note, round seven).
+const R0 = 19 // base radius
+const RTOP = 7.5 // radius where the plateau rim sits — a fat, standable top
 const TURNS = 4 // helix revolutions (integral — keeps the carve grid clean)
 const DEPTH = 2.4 // deep enough that a torii's inner pillar clears the cut wall
 const PATH_IN = 0.95 // path centreline, measured out from the cut wall's base
@@ -49,12 +52,14 @@ function mountainR(y: number): number {
 
 // The lower slopes bulge out below the trail (a frustum widens downward),
 // hiding stones and torii behind the foreground hillside. Compensate by
-// pushing the whole cut outward the further DOWN the spiral you are — at
-// the base the shelf juts out as a balcony terrace; by the summit it's a
-// pure carved notch (household note, round five).
-const OUT0 = 1.1
+// pushing the whole cut outward the further DOWN the spiral you are.
+// Gentler taper than round five (0.9 → ~0.4 at the summit, never zero):
+// the residual out-shift near the top is what keeps a torii's inner
+// pillar clear of the cut wall WITHOUT nudging the gates off the trail's
+// centreline (household note, round seven).
+const OUT0 = 0.9
 function terraceOut(y: number): number {
-  return OUT0 * Math.max(0, 1 - y / HPATH)
+  return OUT0 * (1 - (0.55 * Math.min(y, HPATH)) / HPATH)
 }
 
 // The trail is a CONSTANT-ARC spiral, not a linear helix: with dθ/dt fixed,
@@ -64,7 +69,7 @@ function terraceOut(y: number): number {
 // → θ(t) = θ0 + (C/B)·ln(A / (A − B·t)), and every lesson is the same
 // stride apart from base to summit.
 const SPIRAL_A = R0 - DEPTH + PATH_IN + OUT0
-const SPIRAL_B = ((R0 - RTOP) / PLATEAU_Y) * HPATH + OUT0
+const SPIRAL_B = ((R0 - RTOP) / PLATEAU_Y) * HPATH + OUT0 * 0.55
 const SPIRAL_C =
   (TURNS * 2 * Math.PI * SPIRAL_B) / Math.log(SPIRAL_A / (SPIRAL_A - SPIRAL_B))
 
@@ -79,13 +84,23 @@ function tAtAngle(thetaTotal: number): number {
 
 // slightly above the plateau's gently domed centre (the rings stack ~0.1)
 const SUMMIT_CENTRE = new THREE.Vector3(0, PLATEAU_Y + 0.16, 0)
-// After the second-to-last lesson the trail leaves the rim and bends to the
-// centre of the plateau. The bend is a STRAIGHT line from a fixed anchor
-// (the second-to-last lesson's spot) to the centre — blending from the
+// After the second-to-last lesson the trail keeps bending round the
+// mountain for another ~40° of wrap (nodes are compressed into t≤0.99·…,
+// see NODE_T — the household liked the spiral continuing before the climb)
+// and only THEN turns up to the centre of the plateau. The bend is a
+// STRAIGHT line from a fixed anchor to the centre — blending from the
 // still-moving spiral point curved the walkway ~30° off the camera's axis,
-// which read as the path arriving off-centre of the gate (household note).
-const T_BEND = 82 / 83
+// which read as the path arriving off-centre of the gate.
+const T_BEND = 0.9945
 const BLEND0 = T_BEND - 0.0001
+
+/** Where lesson i of n sits in t-space: the last lesson is the summit
+ * centre (t=1); everyone else spreads over [0, 0.99·(n−2)/(n−1)] so the
+ * spiral carries on past the final gate before the walkway turns up. */
+function nodeT(i: number, n: number): number {
+  if (i >= n - 1) return 1
+  return (0.99 * i) / (n - 1)
+}
 const APPROACH_A = (() => {
   return trailAngle(T_BEND)
 })()
@@ -218,11 +233,14 @@ const ROWS_PER_TURN = ROW_OFFS.length + GAP_FRACS.length
 // `ds` scales the cut depth (0 = plain slope). The wall stays near-full
 // depth to dy≈1.1 then releases — the old early lean-back swallowed the
 // tops of torii pillars standing on the shelf (household note, round six).
+// The LIP takes no terrace-out: flaring it made every turn an eave hanging
+// over the trail below (household note, round seven) — the shelf floor
+// simply runs out to the natural slope line instead.
 function cutRadius(base: number, offIdx: number, out: number, ds: number): number {
   switch (offIdx) {
     case 0: return base // untouched slope below
-    case 1: return base + (0.12 + out * 0.8) * ds
-    case 2: return base + (0.25 + out) * ds // the lip
+    case 1: return base + 0.12 * ds
+    case 2: return base + 0.25 * ds // the lip — natural line, no flare
     case 3: return base - DEPTH * ds + out * ds // shelf inner edge / wall base
     case 4: return base - (DEPTH - 0.05) * ds + out * ds // wall, near vertical
     case 5: return base - DEPTH * 0.97 * ds + out * 0.7 * ds
@@ -263,9 +281,9 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
       // carved channel past the bend-off point was the grey apron smeared
       // across the summit (household note)
       const tk = h / HPATH
-      // full depth through the second-to-last lesson (t≈0.988), gone by
-      // 0.998 — the walkway takes over from the anchor
-      const ds = k < 0 ? 0 : 1 - Math.min(1, Math.max(0, (tk - 0.988) / 0.01))
+      // full depth through the walkway anchor (T_BEND), gone right after —
+      // the straight climb takes over from there
+      const ds = k < 0 ? 0 : 1 - Math.min(1, Math.max(0, (tk - T_BEND) / (1 - T_BEND)))
       for (let oi = 0; oi < ROW_OFFS.length; oi++) {
         let y = h + ROW_OFFS[oi]
         // Facet jitter — never on the carve band (the shelf stays true),
@@ -430,9 +448,18 @@ function buildPlateauCap(pal: ScenePalette): THREE.BufferGeometry {
     Array.from({ length: n }, (_, i) => {
       const a = (i / n) * Math.PI * 2
       const wob = ri === 0 ? 0 : 1 + (rnd() - 0.5) * 0.14
+      let vy = y + (rnd() - 0.5) * 0.045
+      // the walkway's cutout: cap vertices in the approach corridor sink
+      // below the climbing ribbon, so the stairs pass THROUGH a notch in
+      // the top face instead of popping up through it (household note,
+      // round seven). Widest at the rim, gone by the third ring.
+      const corridor = ri === 0 ? 0.26 : ri === 1 ? 0.16 : 0
+      if (corridor > 0 && angDiff(a, APPROACH_A) < corridor) {
+        vy -= ri === 0 ? 0.6 : 0.22
+      }
       return new THREE.Vector3(
         Math.cos(a) * r * (wob || 1),
-        y + (rnd() - 0.5) * 0.045,
+        vy,
         Math.sin(a) * r * (wob || 1),
       )
     }),
@@ -946,7 +973,7 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
   const nodes = useMemo<Node3D[]>(() => {
     const all = units.flatMap((u, ui) => u.lessons.map((l) => ({ l, ui })))
     return all.map(({ l, ui }, i) => {
-      const t = all.length === 1 ? 0 : i / (all.length - 1)
+      const t = nodeT(i, all.length)
       return {
         id: l.id,
         state: l.state,
@@ -1095,12 +1122,12 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
       plateauRocks.push({ pos: p, scale: 0.1 + rnd() * 0.32 })
     }
     // lanterns line the trail's top third + greet you at the trailhead —
-    // on the OUTER lip of the shelf, where the cut wall can never swallow
-    // their tops (household note, round six)
+    // just off the stones' line toward the shelf's outer half, hugging the
+    // trail rather than perched on the lip (household note, round seven)
     for (let i = 0; i < 11; i++) {
       const t = 0.68 + (i / 11) * 0.28
       const p = pathPoint(t + 0.006)
-      const outward = new THREE.Vector3(p.x, 0, p.z).normalize().multiplyScalar(0.62)
+      const outward = new THREE.Vector3(p.x, 0, p.z).normalize().multiplyScalar(0.45)
       lanterns.push(p.clone().add(outward))
     }
     for (const t of [0.006, 0.018]) {
@@ -1217,7 +1244,7 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
         <mesh geometry={walkway}>
           <meshStandardMaterial color={pal.kraft} flatShading side={THREE.DoubleSide} />
         </mesh>
-        {[0.9905, 0.9935, 0.9965].map((t) => {
+        {[0.996, 0.9975, 0.999].map((t) => {
           const p = pathPoint(t)
           return (
             <mesh key={t} position={[p.x, p.y + 0.1, p.z]}>
@@ -1266,19 +1293,13 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
                 </mesh>
               ))}
             {/* checkpoint torii — except the last lesson, whose gate IS the
-                big summit gate (a mini one would stand inside it, edge-on).
-                Nudged outward on the shelf: at the node's centreline the
-                leaning cut wall swallowed the inner pillar (household note,
-                round six — "half in the mountain"). */}
+                big summit gate. Centred on the trail again (round seven):
+                the round-six outward nudge kept them clear of the wall but
+                left them straddling the shelf edge and clipping the lesson
+                stones; the residual terrace-out now provides the wall
+                clearance instead. */}
             {n.isGate && i < nodes.length - 1 && (
-              <Torii
-                position={n.pos.clone().add(
-                  new THREE.Vector3(n.pos.x, 0, n.pos.z).normalize().multiplyScalar(0.55),
-                )}
-                angle={n.angle}
-                scale={1}
-                colour={pal.clay}
-              />
+              <Torii position={n.pos} angle={n.angle} scale={1} colour={pal.clay} />
             )}
           </group>
         ))}
