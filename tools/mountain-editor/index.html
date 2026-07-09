@@ -1,0 +1,1194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Michi mountain editor</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --paper: #0f1d2b;
+    --panel: #16283a;
+    --line: #2d4a63;
+    --ink: #ecf6f4;
+    --soft: #8fa9b3;
+    --gold: #e8b84b;
+    --clay: #e05a72;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    display: flex; background: var(--paper); color: var(--ink);
+    font: 13px/1.45 -apple-system, "Helvetica Neue", sans-serif;
+  }
+  #viewport { flex: 1; position: relative; min-width: 0; }
+  #viewport canvas { display: block; }
+  #status {
+    position: absolute; left: 12px; bottom: 12px; right: 12px;
+    padding: 7px 12px; border-radius: 8px; pointer-events: none;
+    background: rgba(15, 29, 43, 0.82); color: var(--soft);
+  }
+  #status strong { color: var(--ink); font-weight: 600; }
+  #panel {
+    width: 272px; flex: none; overflow-y: auto; padding: 14px;
+    background: var(--panel); border-left: 1px solid var(--line);
+  }
+  h1 { font-size: 13px; margin: 0 0 2px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .sub { color: var(--soft); margin: 0 0 14px; }
+  fieldset {
+    border: 1px solid var(--line); border-radius: 8px;
+    margin: 0 0 12px; padding: 10px;
+  }
+  legend { color: var(--soft); padding: 0 5px; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
+  button {
+    font: inherit; color: var(--ink); background: #1f3549;
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 5px 9px; margin: 2px 3px 2px 0; cursor: pointer;
+  }
+  button:hover { background: #26405a; }
+  button.on { background: var(--gold); border-color: var(--gold); color: #17293a; }
+  button.danger { color: #ffd7de; border-color: #6b3644; }
+  button:disabled { opacity: 0.45; cursor: default; }
+  label.row { display: flex; align-items: center; gap: 6px; margin: 3px 0; color: var(--soft); }
+  input[type="number"] {
+    font: inherit; width: 64px; color: var(--ink); background: #0f1d2b;
+    border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px;
+  }
+  input[type="color"] { width: 40px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 5px; background: none; }
+  .sel { color: var(--gold); }
+  .counts { color: var(--soft); margin-top: 4px; }
+  #hint { color: var(--soft); margin: 8px 0 0; }
+  kbd {
+    font: 11px ui-monospace, monospace; background: #0f1d2b;
+    border: 1px solid var(--line); border-radius: 4px; padding: 0 4px;
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "/apps/web/node_modules/three/build/three.module.js",
+    "three/addons/": "/apps/web/node_modules/three/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="viewport"><div id="status">Loading three.js…</div></div>
+<aside id="panel">
+  <h1>Michi mountain editor</h1>
+  <p class="sub">edits export as <code>mountainPatch.json</code></p>
+
+  <fieldset>
+    <legend>Mode</legend>
+    <button id="modeVertex" class="on">Vertex</button>
+    <button id="modeEdge">Edge</button>
+  </fieldset>
+
+  <fieldset id="vertexBox">
+    <legend>Vertex</legend>
+    <div>selected: <span id="vertLabel" class="sel">none</span></div>
+    <label class="row">x <input type="number" id="vx" step="0.05"> y <input type="number" id="vy" step="0.05"> z <input type="number" id="vz" step="0.05"></label>
+    <label class="row">colour <input type="color" id="vertColour" value="#8a9aa0">
+      <button id="paintVertex">Paint vertex</button></label>
+    <label class="row"><button id="paintFaces">Paint touching faces</button></label>
+    <label class="row"><button id="splitBtn">Split from corner</button>
+      <button id="splitDone" disabled>Finish</button></label>
+  </fieldset>
+
+  <fieldset id="edgeBox">
+    <legend>Edge</legend>
+    <div>selected: <span id="edgeLabel" class="sel">none</span></div>
+    <div>second (shift-click): <span id="edge2Label" class="sel">none</span></div>
+    <button id="deleteEdge" class="danger">Delete edge</button>
+    <button id="bridgeEdges">Bridge edges</button>
+    <button id="flipBridge" disabled>Flip bridge</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>View</legend>
+    <label class="row"><input type="checkbox" id="showWire"> wireframe</label>
+    <label class="row"><input type="checkbox" id="showBack"> double-sided (hides holes)</label>
+    <label class="row"><input type="checkbox" id="showCap" checked> plateau cap (reference)</label>
+    <label class="row"><input type="checkbox" id="showTrail" checked> trail line (reference)</label>
+  </fieldset>
+
+  <fieldset>
+    <legend>File</legend>
+    <button id="saveBtn">Save patch</button>
+    <button id="loadBtn">Load patch</button>
+    <input type="file" id="loadInput" accept=".json,application/json" hidden>
+    <button id="undoBtn">Undo</button>
+    <button id="resetBtn" class="danger">Reset all</button>
+    <div class="counts" id="counts"></div>
+  </fieldset>
+
+  <p id="hint">
+    Drag to orbit, scroll to zoom. Click picks the nearest vertex or edge.
+    With a vertex selected, drag its gold marker to move it (or type
+    coordinates). <kbd>⌫</kbd> deletes the selected edge, <kbd>⌘Z</kbd>
+    undoes, <kbd>esc</kbd> clears or cancels a split.
+  </p>
+</aside>
+
+<script type="module">
+import * as THREE from 'three'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+
+/* =====================================================================
+   PART 1 — verbatim port of the mountain generator from
+   apps/web/src/components/PathScene3D.tsx ("round ten"). The patch this
+   tool saves is keyed to the face order this code produces, so if the
+   generator in Michi changes, regenerate the patch from here after
+   re-porting. Colours are baked with the light Aizome palette — in Michi
+   they stay procedural (theme-aware) except where you repaint.
+   ===================================================================== */
+
+const PAL = {
+  paper: '#f7fbfa', ink: '#17293a', clay: '#c33c54', olive: '#2e8b74',
+  kraft: '#d08770', cloud: '#90a5ab', liquid: '#c5e0dd',
+}
+
+const HPATH = 22
+const PLATEAU_Y = 22.9
+const TURNS = 3
+const THETA0 = -Math.PI / 2
+const LIP_OUT = 1.05
+const WALL_IN = 1.6
+const SPIRAL_A = 18.45
+const SPIRAL_B = 10.95
+
+function pathR(y) {
+  return SPIRAL_A - (SPIRAL_B * Math.min(Math.max(y, 0), HPATH)) / HPATH
+}
+const RTOP = SPIRAL_A - SPIRAL_B - WALL_IN - 0.4
+const R0 = SPIRAL_A + LIP_OUT
+const SPIRAL_C =
+  (TURNS * 2 * Math.PI * SPIRAL_B) / Math.log(SPIRAL_A / (SPIRAL_A - SPIRAL_B))
+
+function trailAngle(t) {
+  return THETA0 + (SPIRAL_C / SPIRAL_B) * Math.log(SPIRAL_A / (SPIRAL_A - SPIRAL_B * t))
+}
+function tAtAngle(thetaTotal) {
+  return (SPIRAL_A / SPIRAL_B) * (1 - Math.exp((-(thetaTotal - THETA0) * SPIRAL_B) / SPIRAL_C))
+}
+
+const SUMMIT_CENTRE = new THREE.Vector3(0, PLATEAU_Y + 0.16, 0)
+const T_BEND = 0.9945
+const BLEND0 = T_BEND - 0.0001
+const APPROACH_A = trailAngle(T_BEND)
+const ANCHOR = (() => {
+  const h = T_BEND * HPATH
+  const r = pathR(h)
+  return new THREE.Vector3(Math.cos(APPROACH_A) * r, h + 0.02, Math.sin(APPROACH_A) * r)
+})()
+
+function pathPoint(t) {
+  if (t > BLEND0) {
+    const f = Math.min(1, (t - BLEND0) / (1 - BLEND0))
+    const s = f * f * (3 - 2 * f)
+    const sUp = Math.min(1, s * 3.4)
+    return new THREE.Vector3(
+      ANCHOR.x + (SUMMIT_CENTRE.x - ANCHOR.x) * s,
+      ANCHOR.y + (SUMMIT_CENTRE.y - ANCHOR.y) * sUp,
+      ANCHOR.z + (SUMMIT_CENTRE.z - ANCHOR.z) * s,
+    )
+  }
+  const h = t * HPATH
+  const a = trailAngle(t)
+  const r = pathR(h)
+  return new THREE.Vector3(Math.cos(a) * r, h + 0.02, Math.sin(a) * r)
+}
+
+function mulberry(seed) {
+  let s = seed
+  return () => {
+    s |= 0
+    s = (s + 0x6d2b79f5) | 0
+    let x = Math.imul(s ^ (s >>> 15), 1 | s)
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+function angDiff(a, b) {
+  return Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)))
+}
+
+const riverPhi = (y) => 2.1 + 0.35 * Math.sin(y * 0.5 + 1)
+const CAVES = [
+  { phi: 5.7, y: 6.2, rp: 0.3, ry: 1.3 },
+  { phi: 0.6, y: 10.8, rp: 0.24, ry: 1.1 },
+]
+
+function nearestTurnDy(phi, y) {
+  const thetaOff = (((phi - THETA0) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
+  let best = null
+  for (let k = 0; k < TURNS; k++) {
+    const h = tAtAngle(THETA0 + thetaOff + k * Math.PI * 2) * HPATH
+    const dy = y - h
+    if (best === null || Math.abs(dy) < Math.abs(best)) best = dy
+  }
+  return best
+}
+
+const ROW_OFFS = [-0.5, -0.06, 0, 0.9, 1.6]
+const GAP_FRACS = [0.2, 0.4, 0.6, 0.8]
+const ROWS_PER_TURN = ROW_OFFS.length + GAP_FRACS.length
+
+function terraceRadius(rp, offIdx, ds) {
+  const face = rp
+  let step
+  switch (offIdx) {
+    case 0: step = rp + LIP_OUT + 0.07; break
+    case 1: step = rp + LIP_OUT; break
+    case 2: step = rp - WALL_IN; break
+    case 3: step = rp - WALL_IN - 0.06; break
+    case 4: step = rp - WALL_IN - 0.12; break
+    default: step = rp
+  }
+  return face + (step - face) * ds
+}
+
+/** Positions + colours in exactly the order Michi's buildMountain emits. */
+function buildMountainArrays() {
+  const COLS = 112
+
+  const rows = []
+  for (let j = 0; j < COLS; j++) {
+    const jj = j
+    const phi = THETA0 + (jj / COLS) * Math.PI * 2
+    const thetaNorm = jj / COLS
+    const inCorridor = angDiff(phi, APPROACH_A) < 0.16
+    const clampY = inCorridor ? PLATEAU_Y - 0.5 : PLATEAU_Y - 0.012
+    const col = []
+    col.push({ y: 0, r: R0 + 0.8 })
+    for (let k = -1; k < TURNS; k++) {
+      const h = tAtAngle(THETA0 + (thetaNorm + k) * Math.PI * 2) * HPATH
+      const hNext =
+        k < TURNS - 1
+          ? tAtAngle(THETA0 + (thetaNorm + k + 1) * Math.PI * 2) * HPATH
+          : PLATEAU_Y + 0.5
+      const tk = h / HPATH
+      const ds = k < 0 ? 0 : 1 - Math.min(1, Math.max(0, (tk - T_BEND) / (1 - T_BEND)))
+      const rp = pathR(h)
+      const rpNext = pathR(Math.min(hNext, HPATH))
+      const faceFrom = { y: h + 1.6, r: rp - WALL_IN - 0.12 }
+      const faceTo = { y: hNext - 0.5, r: rpNext + LIP_OUT + 0.07 }
+      for (let oi = 0; oi < ROW_OFFS.length; oi++) {
+        let y = h + ROW_OFFS[oi]
+        const jrnd = mulberry(jj * 7919 + (k + 1) * 131 + oi)
+        if (oi === 0 || ds < 0.4) y += (jrnd() - 0.5) * 0.25 * (ds < 0.4 ? 0.6 : 1)
+        y = Math.min(clampY, Math.max(0.02, y))
+        let r = terraceRadius(rp, oi, ds)
+        if (oi === 0) r += (jrnd() - 0.5) * 0.3
+        if (angDiff(phi, riverPhi(y)) < 0.1 && (oi === 0 || ds === 0)) r -= 0.5
+        for (const c of CAVES) {
+          const e = (angDiff(phi, c.phi) / c.rp) ** 2 + ((y - c.y) / c.ry) ** 2
+          if (e < 1 && (oi === 0 || ds === 0)) r -= 0.9 * (1 - e)
+        }
+        if (y >= clampY - 0.02) r = RTOP
+        col.push({ y, r: Math.max(0.05, r) })
+      }
+      for (let gi = 0; gi < GAP_FRACS.length; gi++) {
+        const jrnd = mulberry(jj * 6577 + (k + 1) * 149 + gi)
+        const f = GAP_FRACS[gi]
+        let y = faceFrom.y + f * (faceTo.y - faceFrom.y) + (jrnd() - 0.5) * 0.3
+        y = Math.min(clampY, Math.max(0.02, y))
+        const fy = Math.min(1, Math.max(0, (y - faceFrom.y) / Math.max(0.001, faceTo.y - faceFrom.y)))
+        let r = faceFrom.r + fy * (faceTo.r - faceFrom.r) + (jrnd() - 0.5) * 0.4
+        if (k < 0) r = pathR(y) + LIP_OUT + 0.07 + (jrnd() - 0.5) * 0.4
+        if (angDiff(phi, riverPhi(y)) < 0.1) r -= 0.5
+        for (const c of CAVES) {
+          const e = (angDiff(phi, c.phi) / c.rp) ** 2 + ((y - c.y) / c.ry) ** 2
+          if (e < 1) r -= 0.9 * (1 - e)
+        }
+        if (y >= clampY - 0.02) r = RTOP
+        col.push({ y, r: Math.max(0.05, r) })
+      }
+    }
+    col.push({ y: inCorridor ? PLATEAU_Y - 0.42 : PLATEAU_Y, r: RTOP })
+    for (let i = 1; i < col.length; i++) {
+      if (col[i].y <= col[i - 1].y + 0.015) col[i].y = col[i - 1].y + 0.015
+    }
+    rows.push(col)
+  }
+
+  const RPT = ROWS_PER_TURN
+  const rowCount = rows[0].length
+  const positions = []
+  for (let j = 0; j < COLS; j++) {
+    const seam = j === COLS - 1
+    const phiA = THETA0 + (j / COLS) * Math.PI * 2
+    const phiB = THETA0 + ((j + 1) / COLS) * Math.PI * 2
+    const colA = rows[j]
+    const colB = rows[(j + 1) % COLS]
+    const shift = seam ? RPT : 0
+    for (let i = 0; i < rowCount - 1; i++) {
+      const a0 = colA[i], a1 = colA[i + 1]
+      const b0 = colB[Math.min(i + shift, rowCount - 1)]
+      const b1 = colB[Math.min(i + 1 + shift, rowCount - 1)]
+      const pA0 = [Math.cos(phiA) * a0.r, a0.y, Math.sin(phiA) * a0.r]
+      const pA1 = [Math.cos(phiA) * a1.r, a1.y, Math.sin(phiA) * a1.r]
+      const pB0 = [Math.cos(phiB) * b0.r, b0.y, Math.sin(phiB) * b0.r]
+      const pB1 = [Math.cos(phiB) * b1.r, b1.y, Math.sin(phiB) * b1.r]
+      positions.push(...pA0, ...pA1, ...pB0, ...pB0, ...pA1, ...pB1)
+    }
+    if (seam) {
+      const a0 = colA[0]
+      const pA0 = [Math.cos(phiA) * a0.r, a0.y, Math.sin(phiA) * a0.r]
+      for (let i = 0; i < RPT; i++) {
+        const b0 = colB[i], b1 = colB[i + 1]
+        const pB0 = [Math.cos(phiB) * b0.r, b0.y, Math.sin(phiB) * b0.r]
+        const pB1 = [Math.cos(phiB) * b1.r, b1.y, Math.sin(phiB) * b1.r]
+        positions.push(...pA0, ...pB1, ...pB0)
+      }
+    }
+  }
+
+  const grass = new THREE.Color(PAL.olive)
+  const grassLight = grass.clone().lerp(new THREE.Color('#ffffff'), 0.12)
+  const rock = new THREE.Color(PAL.cloud).lerp(new THREE.Color(PAL.ink), 0.42)
+  const rockDark = new THREE.Color(PAL.cloud).lerp(new THREE.Color(PAL.ink), 0.42)
+  const snow = new THREE.Color('#f3f6f5')
+  const dirt = new THREE.Color(PAL.kraft).lerp(new THREE.Color(PAL.cloud), 0.08)
+  const water = new THREE.Color(PAL.liquid)
+  const caveInk = new THREE.Color(PAL.ink).lerp(new THREE.Color('#000000'), 0.35)
+
+  const cRnd = mulberry(99)
+  const colours = []
+  // float32-rounded reads, matching what Michi's paint pass sees
+  const pos = new Float32Array(positions)
+  const tmp = new THREE.Color()
+  for (let f = 0; f < pos.length / 3; f += 3) {
+    const cx = (pos[f * 3] + pos[(f + 1) * 3] + pos[(f + 2) * 3]) / 3
+    const cy = (pos[f * 3 + 1] + pos[(f + 1) * 3 + 1] + pos[(f + 2) * 3 + 1]) / 3
+    const cz = (pos[f * 3 + 2] + pos[(f + 1) * 3 + 2] + pos[(f + 2) * 3 + 2]) / 3
+    const phi = Math.atan2(cz, cx)
+    const dy = nearestTurnDy(phi, cy)
+    const snowline = 16.4 + 1.5 * Math.sin(2.3 * phi + 0.8) + cRnd() * 1.1
+
+    let inCave = false
+    for (const c of CAVES) {
+      if ((angDiff(phi, c.phi) / c.rp) ** 2 + ((cy - c.y) / c.ry) ** 2 < 0.8) inCave = true
+    }
+    const onShelf = dy !== null && dy > -0.22 && dy < 0.11 && cy < PLATEAU_Y - 0.35
+    const onWall = dy !== null && dy >= 0.11 && dy < 1.3 && cy < PLATEAU_Y - 0.3
+    const onRiver = angDiff(phi, riverPhi(cy)) < 0.11 && !(dy !== null && dy > -0.5 && dy < 1.3)
+
+    if (inCave && !onShelf) tmp.copy(caveInk)
+    else if (onShelf) tmp.copy(dirt)
+    else if (onRiver) tmp.copy(water).lerp(new THREE.Color('#ffffff'), cy > snowline ? 0.45 : 0.08)
+    else if (onWall) tmp.copy(rockDark)
+    else if (cy > snowline || (cy > snowline - 2 && cRnd() < 0.3)) tmp.copy(snow)
+    else if (cy < 8.5) tmp.copy(cRnd() < 0.5 ? grass : grassLight).lerp(rock, Math.max(0, (cy - 4) / 10))
+    else tmp.copy(rock).lerp(grass, Math.max(0, (12 - cy) / 8) * 0.5)
+
+    tmp.multiplyScalar(0.93 + cRnd() * 0.14)
+    for (let v = 0; v < 3; v++) colours.push(tmp.r, tmp.g, tmp.b)
+  }
+  return { positions, colours }
+}
+
+/** Reference-only plateau cap, same as Michi's buildPlateauCap. */
+function buildPlateauCap() {
+  const RINGS = [
+    { r: RTOP + 0.06, n: 44, y: PLATEAU_Y - 0.005 },
+    { r: RTOP * 0.72, n: 28, y: PLATEAU_Y + 0.05 },
+    { r: RTOP * 0.44, n: 16, y: PLATEAU_Y + 0.08 },
+    { r: RTOP * 0.2, n: 8, y: PLATEAU_Y + 0.1 },
+  ]
+  const rnd = mulberry(4831)
+  const rings = RINGS.map(({ r, n, y }, ri) =>
+    Array.from({ length: n }, (_, i) => {
+      const a = (i / n) * Math.PI * 2
+      const wob = ri === 0 ? 0 : 1 + (rnd() - 0.5) * 0.14
+      const vy = y + (ri === 0 ? 0 : (rnd() - 0.5) * 0.045)
+      const rr = r * (wob || 1)
+      return new THREE.Vector3(Math.cos(a) * rr, vy, Math.sin(a) * rr)
+    }),
+  )
+  const centre = new THREE.Vector3(0, PLATEAU_Y + 0.11, 0)
+  const positions = []
+  const tri = (a, b, c) => {
+    const crossY = (b.z - a.z) * (c.x - a.x) - (b.x - a.x) * (c.z - a.z)
+    if (crossY >= 0) positions.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z)
+    else positions.push(a.x, a.y, a.z, c.x, c.y, c.z, b.x, b.y, b.z)
+  }
+  for (let ri = 0; ri < rings.length - 1; ri++) {
+    const outer = rings[ri]
+    const inner = rings[ri + 1]
+    let i = 0, j = 0
+    while (i < outer.length || j < inner.length) {
+      if (j >= inner.length || (i < outer.length && (i + 1) / outer.length <= (j + 1) / inner.length)) {
+        tri(outer[i % outer.length], outer[(i + 1) % outer.length], inner[j % inner.length])
+        i++
+      } else {
+        tri(inner[j % inner.length], inner[(j + 1) % inner.length], outer[i % outer.length])
+        j++
+      }
+    }
+  }
+  const last = rings[rings.length - 1]
+  for (let i = 0; i < last.length; i++) tri(last[i], last[(i + 1) % last.length], centre)
+
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  const snow = new THREE.Color('#f3f6f5')
+  const rock = new THREE.Color(PAL.cloud).lerp(new THREE.Color(PAL.ink), 0.35)
+  const colours = []
+  const cRnd = mulberry(271)
+  const tmp = new THREE.Color()
+  const pos = geo.getAttribute('position')
+  for (let f = 0; f < pos.count; f += 3) {
+    tmp.copy(cRnd() < 0.15 ? rock : snow).multiplyScalar(0.94 + cRnd() * 0.12)
+    for (let v = 0; v < 3; v++) colours.push(tmp.r, tmp.g, tmp.b)
+  }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(colours, 3))
+  geo.computeVertexNormals()
+  return geo
+}
+
+/* =====================================================================
+   PART 2 — editable mesh model. The generated triangle soup is welded
+   into shared vertices; edits happen on {verts, faces}; the patch is a
+   diff back against the base soup, by face index.
+   ===================================================================== */
+
+const base = buildMountainArrays()
+const BASE_FACE_COUNT = base.positions.length / 9
+
+// verts: { p:[x,y,z], base: welded-base-vertex-id | -1 (created by edits) }
+// faces: { v:[a,b,c], col:[[r,g,b]×3], recol:[bool×3], base: base-face-index | -1 }
+let verts = []
+let faces = []
+const basePos = [] // pristine position per welded base vertex id
+
+const vkey = (x, y, z) => `${x},${y},${z}` // generator reuses exact floats, so exact keys weld cleanly
+
+function resetToBase() {
+  verts = []
+  faces = []
+  basePos.length = 0
+  const map = new Map()
+  const vid = (x, y, z) => {
+    const k = vkey(x, y, z)
+    let id = map.get(k)
+    if (id === undefined) {
+      id = verts.length
+      map.set(k, id)
+      verts.push({ p: [x, y, z], base: id })
+      basePos.push([x, y, z])
+    }
+    return id
+  }
+  for (let f = 0; f < BASE_FACE_COUNT; f++) {
+    const v = [], col = []
+    for (let k = 0; k < 3; k++) {
+      const o = f * 9 + k * 3
+      v.push(vid(base.positions[o], base.positions[o + 1], base.positions[o + 2]))
+      col.push([base.colours[o], base.colours[o + 1], base.colours[o + 2]])
+    }
+    faces.push({ v, col, recol: [false, false, false], base: f })
+  }
+}
+resetToBase()
+
+/** Find (or create) a current vertex at a position — used replaying patches. */
+function vertAt(x, y, z, lookup) {
+  const k = vkey(x, y, z)
+  let id = lookup.get(k)
+  if (id === undefined) {
+    id = verts.length
+    lookup.set(k, id)
+    verts.push({ p: [x, y, z], base: -1 })
+  }
+  return id
+}
+
+function vertMoved(v) {
+  if (v.base < 0) return false
+  const b = basePos[v.base]
+  return v.p[0] !== b[0] || v.p[1] !== b[1] || v.p[2] !== b[2]
+}
+
+function buildPatch() {
+  const moved = new Map()
+  const recoloured = []
+  const deleted = new Set(Array.from({ length: BASE_FACE_COUNT }, (_, i) => i))
+  const added = []
+  const absFace = (face) => ({
+    positions: face.v.flatMap((vi) => verts[vi].p.map((n) => round(n))),
+    colors: face.col.flat().map((n) => round(n)),
+  })
+  const round = (n) => Math.round(n * 1e6) / 1e6
+  for (const face of faces) {
+    if (face.base >= 0 && face.v.every((vi) => verts[vi].base >= 0)) {
+      deleted.delete(face.base)
+      for (let k = 0; k < 3; k++) {
+        const v = verts[face.v[k]]
+        const ci = face.base * 3 + k
+        if (vertMoved(v)) moved.set(ci, v.p.map(round))
+        if (face.recol[k]) recoloured.push([ci, ...face.col[k].map(round)])
+      }
+    } else {
+      // faces that gained a split-off vertex can't be expressed as base
+      // corner moves — they become a delete + an absolute re-add
+      added.push(absFace(face))
+    }
+  }
+  return {
+    version: 1,
+    baseFaceCount: BASE_FACE_COUNT,
+    movedCorners: [...moved.entries()].map(([ci, p]) => [ci, ...p]).sort((a, b) => a[0] - b[0]),
+    recoloredCorners: recoloured.sort((a, b) => a[0] - b[0]),
+    deletedFaces: [...deleted].sort((a, b) => a - b),
+    addedFaces: added,
+  }
+}
+
+function applyPatch(patch) {
+  if (patch.baseFaceCount != null && patch.baseFaceCount !== BASE_FACE_COUNT) {
+    setStatus('That patch was saved against a different mountain build — not loaded.')
+    return false
+  }
+  resetToBase()
+  const cornerVert = (ci) => faces[Math.floor(ci / 3)].v[ci % 3]
+  for (const [ci, x, y, z] of patch.movedCorners ?? []) {
+    verts[cornerVert(ci)].p = [x, y, z]
+  }
+  for (const [ci, r, g, b] of patch.recoloredCorners ?? []) {
+    const face = faces[Math.floor(ci / 3)]
+    face.col[ci % 3] = [r, g, b]
+    face.recol[ci % 3] = true
+  }
+  const drop = new Set(patch.deletedFaces ?? [])
+  faces = faces.filter((f) => !drop.has(f.base))
+  const lookup = new Map()
+  verts.forEach((v, i) => lookup.set(vkey(...v.p), i))
+  for (const af of patch.addedFaces ?? []) {
+    const v = [], col = []
+    for (let k = 0; k < 3; k++) {
+      v.push(vertAt(af.positions[k * 3], af.positions[k * 3 + 1], af.positions[k * 3 + 2], lookup))
+      col.push([af.colors[k * 3], af.colors[k * 3 + 1], af.colors[k * 3 + 2]])
+    }
+    faces.push({ v, col, recol: [true, true, true], base: -1 })
+  }
+  return true
+}
+
+/* --------------------------- undo ----------------------------------- */
+
+const undoStack = []
+function serialize() {
+  return JSON.stringify({ verts, faces })
+}
+function pushUndo() {
+  undoStack.push(serialize())
+  if (undoStack.length > 60) undoStack.shift()
+}
+function restore(snapshot) {
+  const s = JSON.parse(snapshot)
+  verts = s.verts
+  faces = s.faces
+}
+function undo() {
+  if (splitting) { cancelSplit(); return }
+  const s = undoStack.pop()
+  if (!s) { setStatus('Nothing to undo.'); return }
+  restore(s)
+  clearSelection()
+  rebuild()
+  setStatus('Undone.')
+}
+
+/* =====================================================================
+   PART 3 — scene, picking, tools, save/load
+   ===================================================================== */
+
+const viewport = document.getElementById('viewport')
+const statusEl = document.getElementById('status')
+function setStatus(html) { statusEl.innerHTML = html }
+
+const renderer = new THREE.WebGLRenderer({ antialias: true })
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+renderer.toneMapping = THREE.ACESFilmicToneMapping
+viewport.appendChild(renderer.domElement)
+
+const scene = new THREE.Scene()
+scene.background = new THREE.Color(PAL.paper)
+
+const camera = new THREE.PerspectiveCamera(48, 1, 0.3, 300)
+camera.position.set(30, 26, 30)
+const controls = new OrbitControls(camera, renderer.domElement)
+controls.target.set(0, 11, 0)
+controls.enableDamping = true
+
+scene.add(new THREE.HemisphereLight('#dff3f0', PAL.kraft, 0.55))
+scene.add(new THREE.AmbientLight('#ffffff', 0.5))
+const key = new THREE.DirectionalLight('#ffffff', 1.3)
+key.position.set(14, 26, 8)
+scene.add(key)
+const fill = new THREE.DirectionalLight('#ffffff', 0.5)
+fill.position.set(-14, 12, -8)
+scene.add(fill)
+
+const material = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true })
+const mountainMesh = new THREE.Mesh(new THREE.BufferGeometry(), material)
+scene.add(mountainMesh)
+const wire = new THREE.LineSegments(
+  new THREE.BufferGeometry(),
+  new THREE.LineBasicMaterial({ color: '#17293a', transparent: true, opacity: 0.35 }),
+)
+wire.visible = false
+scene.add(wire)
+
+const capMesh = new THREE.Mesh(buildPlateauCap(), material.clone())
+scene.add(capMesh)
+const ground = new THREE.Mesh(
+  new THREE.CylinderGeometry(R0 + 15, R0 + 16, 1, 36),
+  new THREE.MeshStandardMaterial({ color: PAL.olive, flatShading: true }),
+)
+ground.position.y = -0.5
+scene.add(ground)
+const trailLine = new THREE.Line(
+  new THREE.BufferGeometry().setFromPoints(
+    Array.from({ length: 241 }, (_, i) => {
+      const p = pathPoint(i / 240)
+      return new THREE.Vector3(p.x, p.y + 0.25, p.z)
+    }),
+  ),
+  new THREE.LineBasicMaterial({ color: '#e8b84b' }),
+)
+scene.add(trailLine)
+
+// selection markers
+const vertMarker = new THREE.Mesh(
+  new THREE.SphereGeometry(0.14, 12, 10),
+  new THREE.MeshBasicMaterial({ color: '#e8b84b', depthTest: false }),
+)
+vertMarker.renderOrder = 10
+vertMarker.visible = false
+scene.add(vertMarker)
+function edgeMarker(colour) {
+  const m = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.045, 0.045, 1, 6),
+    new THREE.MeshBasicMaterial({ color: colour, depthTest: false }),
+  )
+  m.renderOrder = 10
+  m.visible = false
+  scene.add(m)
+  return m
+}
+const edgeMarkerA = edgeMarker('#e8b84b')
+const edgeMarkerB = edgeMarker('#e05a72')
+const splitMarkers = new THREE.Group()
+scene.add(splitMarkers)
+
+function placeEdgeMarker(marker, a, b) {
+  const pa = new THREE.Vector3(...verts[a].p)
+  const pb = new THREE.Vector3(...verts[b].p)
+  marker.position.copy(pa).add(pb).multiplyScalar(0.5)
+  marker.scale.set(1, pa.distanceTo(pb), 1)
+  marker.quaternion.setFromUnitVectors(
+    new THREE.Vector3(0, 1, 0),
+    pb.clone().sub(pa).normalize(),
+  )
+  marker.visible = true
+}
+
+/* ------------------------ geometry rebuild --------------------------- */
+
+let vertAdj = new Map() // vid -> [[faceIdx, corner], ...]
+
+function rebuild() {
+  const n = faces.length
+  const pos = new Float32Array(n * 9)
+  const col = new Float32Array(n * 9)
+  vertAdj = new Map()
+  faces.forEach((face, fi) => {
+    for (let k = 0; k < 3; k++) {
+      const v = verts[face.v[k]]
+      const o = fi * 9 + k * 3
+      pos[o] = v.p[0]; pos[o + 1] = v.p[1]; pos[o + 2] = v.p[2]
+      const c = face.col[k]
+      col[o] = c[0]; col[o + 1] = c[1]; col[o + 2] = c[2]
+      let adj = vertAdj.get(face.v[k])
+      if (!adj) vertAdj.set(face.v[k], (adj = []))
+      adj.push([fi, k])
+    }
+  })
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3))
+  geo.computeVertexNormals()
+  mountainMesh.geometry.dispose()
+  mountainMesh.geometry = geo
+  wire.geometry.dispose()
+  wire.geometry = new THREE.WireframeGeometry(geo)
+  updateMarkers()
+  updateCounts()
+}
+
+/** Cheap position-only refresh while dragging a vertex. */
+function refreshVertex(vid) {
+  const attr = mountainMesh.geometry.getAttribute('position')
+  const p = verts[vid].p
+  for (const [fi, k] of vertAdj.get(vid) ?? []) {
+    attr.setXYZ(fi * 3 + k, p[0], p[1], p[2])
+  }
+  attr.needsUpdate = true
+  mountainMesh.geometry.computeVertexNormals()
+  updateMarkers()
+}
+
+function updateCounts() {
+  const p = buildPatch()
+  document.getElementById('counts').textContent =
+    `${faces.length} faces · edits: ${p.movedCorners.length} corner moves, ` +
+    `${p.recoloredCorners.length} recolours, ${p.deletedFaces.length} deleted, ${p.addedFaces.length} added`
+}
+
+/* --------------------------- selection ------------------------------- */
+
+let mode = 'vertex'
+let selVert = null
+let selEdge = null // [a, b]
+let selEdge2 = null
+let splitting = null // { vid, newVid, snapshot, count }
+let lastBridge = []
+
+function clearSelection() {
+  selVert = null
+  selEdge = null
+  selEdge2 = null
+  lastBridge = []
+  updateMarkers()
+}
+
+function updateMarkers() {
+  if (selVert != null && verts[selVert]) {
+    vertMarker.position.set(...verts[selVert].p)
+    vertMarker.visible = mode === 'vertex'
+    document.getElementById('vertLabel').textContent =
+      `#${selVert}${verts[selVert].base < 0 ? ' (new)' : ''}`
+    const p = verts[selVert].p
+    for (const [axis, i] of [['vx', 0], ['vy', 1], ['vz', 2]]) {
+      const el = document.getElementById(axis)
+      if (document.activeElement !== el) el.value = p[i].toFixed(3)
+    }
+    const adj = vertAdj.get(selVert)
+    if (adj?.length) {
+      const c = faces[adj[0][0]].col[adj[0][1]]
+      document.getElementById('vertColour').value =
+        '#' + new THREE.Color(c[0], c[1], c[2]).getHexString()
+    }
+  } else {
+    vertMarker.visible = false
+    document.getElementById('vertLabel').textContent = 'none'
+  }
+  if (selEdge) placeEdgeMarker(edgeMarkerA, selEdge[0], selEdge[1])
+  else edgeMarkerA.visible = false
+  if (selEdge2) placeEdgeMarker(edgeMarkerB, selEdge2[0], selEdge2[1])
+  else edgeMarkerB.visible = false
+  edgeMarkerA.visible = edgeMarkerA.visible && mode === 'edge'
+  edgeMarkerB.visible = edgeMarkerB.visible && mode === 'edge'
+  document.getElementById('edgeLabel').textContent = selEdge ? `${selEdge[0]}–${selEdge[1]}` : 'none'
+  document.getElementById('edge2Label').textContent = selEdge2 ? `${selEdge2[0]}–${selEdge2[1]}` : 'none'
+
+  splitMarkers.clear()
+  if (splitting) {
+    for (const [fi] of vertAdj.get(splitting.newVid) ?? []) {
+      const face = faces[fi]
+      const c = new THREE.Vector3()
+      for (const vi of face.v) c.add(new THREE.Vector3(...verts[vi].p))
+      c.multiplyScalar(1 / 3)
+      const dot = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 8, 6),
+        new THREE.MeshBasicMaterial({ color: '#e05a72', depthTest: false }),
+      )
+      dot.renderOrder = 10
+      dot.position.copy(c)
+      splitMarkers.add(dot)
+    }
+  }
+}
+
+const raycaster = new THREE.Raycaster()
+function pick(event) {
+  const rect = renderer.domElement.getBoundingClientRect()
+  const ndc = new THREE.Vector2(
+    ((event.clientX - rect.left) / rect.width) * 2 - 1,
+    -((event.clientY - rect.top) / rect.height) * 2 + 1,
+  )
+  raycaster.setFromCamera(ndc, camera)
+  const hit = raycaster.intersectObject(mountainMesh, false)[0]
+  if (!hit) return null
+  return { faceIdx: hit.faceIndex, point: hit.point }
+}
+
+function nearestCorner(faceIdx, point) {
+  const face = faces[faceIdx]
+  let best = 0, bestD = Infinity
+  face.v.forEach((vi, k) => {
+    const d = point.distanceToSquared(new THREE.Vector3(...verts[vi].p))
+    if (d < bestD) { bestD = d; best = k }
+  })
+  return best
+}
+
+function nearestEdge(faceIdx, point) {
+  const face = faces[faceIdx]
+  let best = null, bestD = Infinity
+  const line = new THREE.Line3()
+  const tmp = new THREE.Vector3()
+  for (let k = 0; k < 3; k++) {
+    const a = face.v[k], b = face.v[(k + 1) % 3]
+    line.set(new THREE.Vector3(...verts[a].p), new THREE.Vector3(...verts[b].p))
+    line.closestPointToPoint(point, true, tmp)
+    const d = point.distanceToSquared(tmp)
+    if (d < bestD) { bestD = d; best = a < b ? [a, b] : [b, a] }
+  }
+  return best
+}
+
+/* ----------------------------- tools --------------------------------- */
+
+function facesOnEdge([a, b]) {
+  const out = []
+  faces.forEach((f, i) => {
+    if (f.v.includes(a) && f.v.includes(b)) out.push(i)
+  })
+  return out
+}
+
+function deleteSelectedEdge() {
+  if (mode !== 'edge' || !selEdge) { setStatus('Select an edge first.'); return }
+  const doomed = facesOnEdge(selEdge)
+  if (!doomed.length) { setStatus('No faces share that edge.'); return }
+  pushUndo()
+  const drop = new Set(doomed)
+  faces = faces.filter((_, i) => !drop.has(i))
+  setStatus(`Deleted edge ${selEdge[0]}–${selEdge[1]} (${doomed.length} face${doomed.length === 1 ? '' : 's'}).`)
+  selEdge = null
+  selEdge2 = null
+  lastBridge = []
+  rebuild()
+}
+
+function bridgeEdges() {
+  if (mode !== 'edge' || !selEdge || !selEdge2) {
+    setStatus('Select one edge, then shift-click a second, then bridge.')
+    return
+  }
+  pushUndo()
+  const [a0, a1] = selEdge
+  let [b0, b1] = selEdge2
+  const P = (i) => new THREE.Vector3(...verts[i].p)
+  const straight = P(a0).distanceTo(P(b0)) + P(a1).distanceTo(P(b1))
+  const crossed = P(a0).distanceTo(P(b1)) + P(a1).distanceTo(P(b0))
+  if (crossed < straight) [b0, b1] = [b1, b0]
+  // colour the new quad like a face beside edge A, or mid-grey rock
+  const src = facesOnEdge(selEdge)[0]
+  const col = src != null ? [...faces[src].col[0]] : [0.35, 0.4, 0.42]
+  const mk = (v) => ({
+    v,
+    col: [[...col], [...col], [...col]],
+    recol: [true, true, true],
+    base: -1,
+  })
+  lastBridge = [faces.length, faces.length + 1]
+  faces.push(mk([a0, a1, b1]), mk([a0, b1, b0]))
+  document.getElementById('flipBridge').disabled = false
+  setStatus('Bridged. If the new faces look dark or invisible, use <strong>Flip bridge</strong> — winding matters in Michi.')
+  rebuild()
+}
+
+function flipBridge() {
+  if (!lastBridge.length) return
+  pushUndo()
+  for (const fi of lastBridge) {
+    const f = faces[fi]
+    if (!f || f.base >= 0) continue
+    f.v = [f.v[0], f.v[2], f.v[1]]
+    f.col = [f.col[0], f.col[2], f.col[1]]
+    f.recol = [f.recol[0], f.recol[2], f.recol[1]]
+  }
+  setStatus('Flipped the bridge faces.')
+  rebuild()
+}
+
+function paint(vertexOnly) {
+  if (mode !== 'vertex' || selVert == null) { setStatus('Select a vertex first.'); return }
+  const adj = vertAdj.get(selVert)
+  if (!adj?.length) { setStatus('That vertex has no faces left.'); return }
+  pushUndo()
+  const c = new THREE.Color().setStyle(document.getElementById('vertColour').value)
+  const rgb = [c.r, c.g, c.b]
+  for (const [fi, k] of adj) {
+    const face = faces[fi]
+    if (vertexOnly) {
+      face.col[k] = [...rgb]
+      face.recol[k] = true
+    } else {
+      for (let kk = 0; kk < 3; kk++) {
+        face.col[kk] = [...rgb]
+        face.recol[kk] = true
+      }
+    }
+  }
+  setStatus(vertexOnly
+    ? 'Painted the vertex — colour blends across its faces (flat-lit faces stay faceted).'
+    : 'Painted every face touching the vertex.')
+  rebuild()
+}
+
+function startSplit() {
+  if (mode !== 'vertex' || selVert == null) { setStatus('Select the vertex to split first.'); return }
+  if (splitting) { setStatus('Already splitting — click faces, then Finish.'); return }
+  const snapshot = serialize()
+  const src = verts[selVert]
+  const newVid = verts.length
+  verts.push({ p: [...src.p], base: -1 })
+  splitting = { vid: selVert, newVid, snapshot, count: 0 }
+  document.getElementById('splitDone').disabled = false
+  document.getElementById('splitBtn').classList.add('on')
+  setStatus(`Splitting vertex #${selVert}: click the corner faces to peel onto the new vertex (click again to put back), then <strong>Finish</strong>. <kbd>esc</kbd> cancels.`)
+  rebuild()
+}
+
+function splitToggleFace(faceIdx) {
+  const face = faces[faceIdx]
+  const { vid, newVid } = splitting
+  const kOld = face.v.indexOf(vid)
+  const kNew = face.v.indexOf(newVid)
+  if (kNew >= 0) {
+    face.v[kNew] = vid
+    splitting.count--
+  } else if (kOld >= 0) {
+    face.v[kOld] = newVid
+    splitting.count++
+  } else {
+    setStatus('That face does not touch the vertex being split.')
+    return
+  }
+  rebuild()
+}
+
+function finishSplit() {
+  if (!splitting) return
+  const { snapshot, newVid, count } = splitting
+  if (count === 0) {
+    restore(snapshot)
+    splitting = null
+    setStatus('Split abandoned — no faces were peeled off.')
+  } else {
+    undoStack.push(snapshot)
+    if (undoStack.length > 60) undoStack.shift()
+    selVert = newVid
+    splitting = null
+    setStatus(`Split done — vertex #${newVid} is selected; drag it apart or type coordinates.`)
+  }
+  document.getElementById('splitDone').disabled = true
+  document.getElementById('splitBtn').classList.remove('on')
+  rebuild()
+}
+
+function cancelSplit() {
+  if (!splitting) return
+  restore(splitting.snapshot)
+  splitting = null
+  document.getElementById('splitDone').disabled = true
+  document.getElementById('splitBtn').classList.remove('on')
+  clearSelection()
+  rebuild()
+  setStatus('Split cancelled.')
+}
+
+/* --------------------------- pointer flow ---------------------------- */
+
+let down = null
+let dragging = false
+const dragPlane = new THREE.Plane()
+
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  down = { x: e.clientX, y: e.clientY }
+  if (mode === 'vertex' && selVert != null && !splitting) {
+    // start a move-drag when the press lands on the marker
+    const p = new THREE.Vector3(...verts[selVert].p).project(camera)
+    const rect = renderer.domElement.getBoundingClientRect()
+    const sx = (p.x * 0.5 + 0.5) * rect.width + rect.left
+    const sy = (-p.y * 0.5 + 0.5) * rect.height + rect.top
+    if (Math.hypot(sx - e.clientX, sy - e.clientY) < 14) {
+      pushUndo()
+      dragging = true
+      controls.enabled = false
+      camera.getWorldDirection(dragPlane.normal)
+      dragPlane.setFromNormalAndCoplanarPoint(dragPlane.normal, new THREE.Vector3(...verts[selVert].p))
+      setStatus('Moving vertex — release to drop it.')
+    }
+  }
+})
+
+renderer.domElement.addEventListener('pointermove', (e) => {
+  if (!dragging || selVert == null) return
+  const rect = renderer.domElement.getBoundingClientRect()
+  const ndc = new THREE.Vector2(
+    ((e.clientX - rect.left) / rect.width) * 2 - 1,
+    -((e.clientY - rect.top) / rect.height) * 2 + 1,
+  )
+  raycaster.setFromCamera(ndc, camera)
+  const hit = new THREE.Vector3()
+  if (raycaster.ray.intersectPlane(dragPlane, hit)) {
+    verts[selVert].p = [hit.x, hit.y, hit.z]
+    refreshVertex(selVert)
+  }
+})
+
+addEventListener('pointerup', (e) => {
+  if (dragging) {
+    dragging = false
+    controls.enabled = true
+    rebuild()
+    setStatus(`Vertex #${selVert} moved.`)
+    down = null
+    return
+  }
+  if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) { down = null; return }
+  down = null
+  if (e.target !== renderer.domElement) return
+  const hit = pick(e)
+  if (!hit) return
+  if (splitting) {
+    splitToggleFace(hit.faceIdx)
+    return
+  }
+  if (mode === 'vertex') {
+    selVert = faces[hit.faceIdx].v[nearestCorner(hit.faceIdx, hit.point)]
+    setStatus(`Vertex #${selVert} selected — drag the gold marker to move it.`)
+  } else {
+    const edge = nearestEdge(hit.faceIdx, hit.point)
+    if (e.shiftKey && selEdge) {
+      selEdge2 = edge
+      setStatus(`Second edge ${edge[0]}–${edge[1]} selected — ready to bridge.`)
+    } else {
+      selEdge = edge
+      selEdge2 = null
+      setStatus(`Edge ${edge[0]}–${edge[1]} selected (${facesOnEdge(edge).length} faces). Shift-click another to bridge, or delete it.`)
+    }
+  }
+  updateMarkers()
+})
+
+/* ----------------------------- panel wiring -------------------------- */
+
+function setMode(m) {
+  mode = m
+  document.getElementById('modeVertex').classList.toggle('on', m === 'vertex')
+  document.getElementById('modeEdge').classList.toggle('on', m === 'edge')
+  if (splitting) cancelSplit()
+  updateMarkers()
+  setStatus(m === 'vertex'
+    ? 'Vertex mode — click the mesh to pick the nearest vertex.'
+    : 'Edge mode — click near an edge to pick it; shift-click picks the second edge for bridging.')
+}
+document.getElementById('modeVertex').onclick = () => setMode('vertex')
+document.getElementById('modeEdge').onclick = () => setMode('edge')
+
+for (const [axis, i] of [['vx', 0], ['vy', 1], ['vz', 2]]) {
+  document.getElementById(axis).addEventListener('change', (e) => {
+    if (selVert == null) return
+    const n = parseFloat(e.target.value)
+    if (!Number.isFinite(n)) return
+    pushUndo()
+    verts[selVert].p[i] = n
+    rebuild()
+  })
+}
+document.getElementById('paintVertex').onclick = () => paint(true)
+document.getElementById('paintFaces').onclick = () => paint(false)
+document.getElementById('splitBtn').onclick = startSplit
+document.getElementById('splitDone').onclick = finishSplit
+document.getElementById('deleteEdge').onclick = deleteSelectedEdge
+document.getElementById('bridgeEdges').onclick = bridgeEdges
+document.getElementById('flipBridge').onclick = flipBridge
+document.getElementById('undoBtn').onclick = undo
+
+document.getElementById('showWire').onchange = (e) => { wire.visible = e.target.checked }
+document.getElementById('showBack').onchange = (e) => {
+  material.side = e.target.checked ? THREE.DoubleSide : THREE.FrontSide
+  material.needsUpdate = true
+}
+document.getElementById('showCap').onchange = (e) => { capMesh.visible = e.target.checked }
+document.getElementById('showTrail').onchange = (e) => { trailLine.visible = e.target.checked }
+
+document.getElementById('saveBtn').onclick = () => {
+  const patch = buildPatch()
+  const blob = new Blob([JSON.stringify(patch)], { type: 'application/json' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = 'mountainPatch.json'
+  a.click()
+  URL.revokeObjectURL(a.href)
+  setStatus('Saved. Drop the file over <strong>apps/web/src/mountainPatch.json</strong> and rebuild Michi.')
+}
+document.getElementById('loadBtn').onclick = () => document.getElementById('loadInput').click()
+document.getElementById('loadInput').addEventListener('change', async (e) => {
+  const file = e.target.files?.[0]
+  e.target.value = ''
+  if (!file) return
+  try {
+    const patch = JSON.parse(await file.text())
+    pushUndo()
+    if (applyPatch(patch)) {
+      clearSelection()
+      rebuild()
+      setStatus(`Loaded ${file.name}.`)
+    } else {
+      undoStack.pop()
+    }
+  } catch {
+    setStatus('Could not read that file as a patch.')
+  }
+})
+document.getElementById('resetBtn').onclick = () => {
+  if (!confirm('Throw away every edit and return to the generated mountain?')) return
+  pushUndo()
+  resetToBase()
+  clearSelection()
+  rebuild()
+  setStatus('Back to the pristine generated mountain.')
+}
+
+addEventListener('keydown', (e) => {
+  const typing = /^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName ?? '')
+  if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); undo(); return }
+  if (typing) return
+  if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); deleteSelectedEdge() }
+  if (e.key === 'Enter' && splitting) finishSplit()
+  if (e.key === 'Escape') {
+    if (splitting) cancelSplit()
+    else { clearSelection(); setStatus('Selection cleared.') }
+  }
+})
+
+/* ------------------------------- loop -------------------------------- */
+
+function resize() {
+  const w = viewport.clientWidth, h = viewport.clientHeight
+  renderer.setSize(w, h)
+  camera.aspect = w / h
+  camera.updateProjectionMatrix()
+}
+addEventListener('resize', resize)
+resize()
+
+renderer.setAnimationLoop(() => {
+  controls.update()
+  renderer.render(scene, camera)
+})
+
+rebuild()
+setStatus(`Mountain rebuilt: <strong>${faces.length}</strong> faces, ${verts.length} welded vertices. Vertex mode — click the mesh to begin.`)
+</script>
+</body>
+</html>

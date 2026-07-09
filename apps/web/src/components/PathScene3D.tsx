@@ -28,6 +28,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import type { PathManifest } from '../pathData'
 import { useSettings } from '../settings'
 import { PALETTE, type KitsuneTone } from './AnimatedKitsune'
+import mountainPatchJson from '../mountainPatch.json'
 
 /* ------------------------------ geometry -------------------------------- */
 
@@ -229,6 +230,25 @@ function usePalette(): ScenePalette {
 // Row offsets relative to each loop of the terrace staircase: a hair below
 // the lip (the outline), the lip itself, the shelf's inner edge (the sharp
 // radius drop between −0.06 and 0 IS the flat step), then two riser rows.
+/** Hand edits to the generated mountain, made in tools/mountain-editor and
+ * saved over src/mountainPatch.json. A patch is a diff against the generator's
+ * output, keyed by face index: vertex moves land BEFORE the paint pass (so
+ * moved faces re-band by their new altitude and stay theme-aware), while
+ * recolours are absolute overrides and deletions/additions come last. Face
+ * indices only mean something for the build they were saved against, hence
+ * the baseFaceCount guard — if buildMountain changes shape, re-export the
+ * patch from the editor after re-porting it there. */
+interface MountainPatch {
+  version: number
+  baseFaceCount: number | null
+  movedCorners: [number, number, number, number][]
+  recoloredCorners: [number, number, number, number][]
+  deletedFaces: number[]
+  addedFaces: { positions: number[]; colors: number[] }[]
+}
+
+const mountainPatch = mountainPatchJson as unknown as MountainPatch
+
 const ROW_OFFS = [-0.5, -0.06, 0, 0.9, 1.6]
 // sloped-face rows running from the riser's top to the next loop's lip
 const GAP_FRACS = [0.2, 0.4, 0.6, 0.8]
@@ -250,7 +270,12 @@ function terraceRadius(rp: number, offIdx: number, ds: number): number {
   return face + (step - face) * ds
 }
 
-function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
+/** Exported for the patch-application test — the app always calls this with
+ * the committed src/mountainPatch.json. */
+export function buildMountain(
+  pal: ScenePalette,
+  patch: MountainPatch = mountainPatch,
+): THREE.BufferGeometry {
   const COLS = 112
 
   // per-column vertex rows, bottom→top, all columns sharing the same count
@@ -384,8 +409,18 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
     }
   }
 
-  const geo = new THREE.BufferGeometry()
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  const patchOk =
+    patch.baseFaceCount === null || patch.baseFaceCount * 9 === positions.length
+  if (!patchOk) {
+    console.warn('michi: mountainPatch.json was saved against a different mountain build — ignoring it')
+  }
+  if (patchOk) {
+    for (const [ci, x, y, z] of patch.movedCorners) {
+      positions[ci * 3] = x
+      positions[ci * 3 + 1] = y
+      positions[ci * 3 + 2] = z
+    }
+  }
 
   // per-face painting: altitude bands + carve/river/cave overrides
   const grass = new THREE.Color(pal.olive)
@@ -399,12 +434,14 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
 
   const cRnd = mulberry(99)
   const colours: number[] = []
-  const pos = geo.getAttribute('position')
+  // float32-rounded reads, exactly as the old read-back-from-the-attribute
+  // gave — some band comparisons sit right on their thresholds
+  const pos = new Float32Array(positions)
   const tmp = new THREE.Color()
-  for (let f = 0; f < pos.count; f += 3) {
-    const cx = (pos.getX(f) + pos.getX(f + 1) + pos.getX(f + 2)) / 3
-    const cy = (pos.getY(f) + pos.getY(f + 1) + pos.getY(f + 2)) / 3
-    const cz = (pos.getZ(f) + pos.getZ(f + 1) + pos.getZ(f + 2)) / 3
+  for (let f = 0; f < pos.length / 3; f += 3) {
+    const cx = (pos[f * 3] + pos[(f + 1) * 3] + pos[(f + 2) * 3]) / 3
+    const cy = (pos[f * 3 + 1] + pos[(f + 1) * 3 + 1] + pos[(f + 2) * 3 + 1]) / 3
+    const cz = (pos[f * 3 + 2] + pos[(f + 1) * 3 + 2] + pos[(f + 2) * 3 + 2]) / 3
     const phi = Math.atan2(cz, cx)
     const dy = nearestTurnDy(phi, cy)
     const snowline = 16.4 + 1.5 * Math.sin(2.3 * phi + 0.8) + cRnd() * 1.1
@@ -428,7 +465,36 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
     tmp.multiplyScalar(0.93 + cRnd() * 0.14)
     for (let v = 0; v < 3; v++) colours.push(tmp.r, tmp.g, tmp.b)
   }
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(colours, 3))
+
+  let finalPos: number[] = positions
+  let finalCol: number[] = colours
+  if (patchOk) {
+    for (const [ci, r, g, b] of patch.recoloredCorners) {
+      colours[ci * 3] = r
+      colours[ci * 3 + 1] = g
+      colours[ci * 3 + 2] = b
+    }
+    if (patch.deletedFaces.length > 0 || patch.addedFaces.length > 0) {
+      const drop = new Set(patch.deletedFaces)
+      finalPos = []
+      finalCol = []
+      for (let f = 0; f * 9 < positions.length; f++) {
+        if (drop.has(f)) continue
+        for (let i = 0; i < 9; i++) {
+          finalPos.push(positions[f * 9 + i])
+          finalCol.push(colours[f * 9 + i])
+        }
+      }
+      for (const af of patch.addedFaces) {
+        finalPos.push(...af.positions)
+        finalCol.push(...af.colors)
+      }
+    }
+  }
+
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(finalPos, 3))
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(finalCol, 3))
   geo.computeVertexNormals()
   return geo
 }
