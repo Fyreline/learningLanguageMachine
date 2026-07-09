@@ -121,3 +121,17 @@ migration ever did real damage. Both closed:
   the household's own (slot + instructions left in `.env`/`.env.example`, restart the
   LaunchAgent after pasting it). Mocked-transport tests in `tests/test_converse.py`.
   No grading, no saving, ends naturally after ~8 exchanges (CURRICULUM §8).
+- **3D path experiment.** `PathScene3D.tsx` behind the "3D · EXPERIMENTAL" chip on the
+  Path page (localStorage `michi-path-3d`), lazy-loaded (`three` + `@react-three/fiber`,
+  own 238KB-gz chunk — free unless toggled on). Celeste-hub framing: helix of tappable
+  lesson stones round a low-poly cone, torii checkpoints, primitives-built kitsune +
+  ghost partner, day→night fade with altitude (DOM gradient behind a transparent
+  canvas), shinkansen loop + tunnel at the base. Colours are read from the live Aizome
+  CSS tokens at mount and re-read on `.dark` flips — nothing hardcoded. Same
+  `{manifest, onSelectLesson}` contract as PathScene; the 2D scene remains the default
+  and is untouched. Verify-gotcha: the preview harness runs its tab hidden, which
+  starves requestAnimationFrame — R3F never paints a frame. `DevHook` (dev-only)
+  exposes the store as `window.__michi3d` so tests can call `state.advance()` to force
+  frames before screenshots. Known rough edges: no reduced-motion pause yet, node taps
+  unverified in-harness (stock r3f raycast; try on a real device), summit torii cluster
+  slightly crowded on the last helix rows.
