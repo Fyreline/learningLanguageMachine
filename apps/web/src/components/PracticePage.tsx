@@ -3,6 +3,7 @@
  * this page is just the menu: what's due, the two free drills, and the
  * clearly-labelled timed lightning round. */
 import { useCallback, useEffect, useState } from 'react'
+import { fetchScenes } from '../converse'
 import { fetchReviewsDue } from '../curriculum/loader'
 import type { ReviewsDue } from '../curriculum/types'
 import { ConverseScene } from './ConverseScene'
@@ -14,6 +15,17 @@ export function PracticePage() {
   const [error, setError] = useState<string | null>(null)
   const [activeMode, setActiveMode] = useState<ReviewMode | null>(null)
   const [conversing, setConversing] = useState(false)
+  // The speaking corner is paused until the household adds an API key
+  // (2026-07-09: subscription costs can't fund API usage, so no key for
+  // now) — the card only appears once the server reports it's configured,
+  // so un-pausing is just pasting the key into .env. Code stays in place.
+  const [converseReady, setConverseReady] = useState(false)
+  useEffect(() => {
+    fetchScenes().then(
+      (s) => setConverseReady(s.configured),
+      () => setConverseReady(false),
+    )
+  }, [])
 
   const refresh = useCallback(() => {
     fetchReviewsDue().then(setDue, (e) => setError(e.message))
@@ -104,7 +116,9 @@ export function PracticePage() {
         </button>
       </div>
 
-      {/* the speaking corner — freeform, mic-only, ungraded */}
+      {/* the speaking corner — freeform, mic-only, ungraded; hidden until
+          the server has an API key (paused by the household, 2026-07-09) */}
+      {converseReady && (
       <div className="mt-4 rounded-lg border border-line bg-paper-mid p-6">
         <div className="flex items-center gap-2">
           <h2 className="font-display text-base font-medium text-ink">The speaking corner</h2>
@@ -124,6 +138,7 @@ export function PracticePage() {
           Step in and say hello
         </button>
       </div>
+      )}
 
       {/* kana side trail */}
       <div className="mt-4">
