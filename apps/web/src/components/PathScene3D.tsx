@@ -31,8 +31,9 @@ import { PALETTE, type KitsuneTone } from './AnimatedKitsune'
 
 /* ------------------------------ geometry -------------------------------- */
 
-const H = 26 // apex height
+const H = 27 // silhouette apex (never reached — the top is a plateau)
 const HPATH = 22 // trail summit height
+const PLATEAU_Y = 22.9 // the flat summit
 const R0 = 17 // base radius
 const TURNS = 4 // helix revolutions (integral — keeps the carve grid clean)
 const DEPTH = 1.6 // how deep the trail terrace cuts in
@@ -177,8 +178,7 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
     for (let k = 0; k < TURNS; k++) {
       const h = ((thetaNorm + k) / TURNS) * HPATH
       for (let oi = 0; oi < ROW_OFFS.length; oi++) {
-        let y = h + ROW_OFFS[oi]
-        y = Math.max(0.02, y)
+        let y = Math.min(PLATEAU_Y, Math.max(0.02, h + ROW_OFFS[oi]))
         let r = cutRadius(mountainR(y), oi)
         // Facet jitter — never on the carve band (the shelf stays true),
         // and seeded from (column, row) rather than drawn from a running
@@ -200,10 +200,14 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
         col.push({ y, r: Math.max(0.05, r) })
       }
     }
-    // shoulder + apex, following the last turn so rows never fold
-    const hTop = ((thetaNorm + TURNS - 1) / TURNS) * HPATH
-    col.push({ y: Math.min(H - 0.7, hTop + 4.4), r: Math.max(0.3, mountainR(Math.min(H - 0.7, hTop + 4.4))) })
-    col.push({ y: H + 0.35, r: 0.05 }) // apex tip
+    // the flat summit plateau: rim ring at the silhouette radius, then
+    // shrinking rings to a centre point — near-equal heights, so the top
+    // reads as a level ground you could stand on rather than a peak
+    const rimR = mountainR(PLATEAU_Y)
+    col.push({ y: PLATEAU_Y, r: rimR })
+    col.push({ y: PLATEAU_Y + 0.02, r: rimR * 0.55 })
+    col.push({ y: PLATEAU_Y + 0.04, r: rimR * 0.22 })
+    col.push({ y: PLATEAU_Y + 0.06, r: 0.03 })
     // enforce strictly climbing rows (clamps near the ground can stack)
     for (let i = 1; i < col.length; i++) {
       if (col[i].y <= col[i - 1].y + 0.015) col[i].y = col[i - 1].y + 0.015
@@ -235,7 +239,11 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
       const pA1 = [Math.cos(phiA) * a1.r, a1.y, Math.sin(phiA) * a1.r]
       const pB0 = [Math.cos(phiB) * b0.r, b0.y, Math.sin(phiB) * b0.r]
       const pB1 = [Math.cos(phiB) * b1.r, b1.y, Math.sin(phiB) * b1.r]
-      positions.push(...pA0, ...pB0, ...pA1, ...pB0, ...pB1, ...pA1)
+      // counter-clockwise seen from OUTSIDE — the first cut of this mesh
+      // wound the triangles inward, so with backface culling the renderer
+      // drew the mountain's interior and culled the slope you were actually
+      // looking at (the household spotted it: "renders the inside faces")
+      positions.push(...pA0, ...pA1, ...pB0, ...pB0, ...pA1, ...pB1)
     }
     if (seam) {
       // bottom wedge: fan column 0's below-first-turn rows against the
@@ -246,7 +254,7 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
         const b0 = colB[i], b1 = colB[i + 1]
         const pB0 = [Math.cos(phiB) * b0.r, b0.y, Math.sin(phiB) * b0.r]
         const pB1 = [Math.cos(phiB) * b1.r, b1.y, Math.sin(phiB) * b1.r]
-        positions.push(...pA0, ...pB0, ...pB1)
+        positions.push(...pA0, ...pB1, ...pB0)
       }
     }
   }
@@ -644,6 +652,49 @@ function CameraRig({ nav }: { nav: React.MutableRefObject<Nav> }) {
   return null
 }
 
+// the summit gate: on the plateau, a stride inward from where the trail
+// tops out, facing the arriving walker
+const GATE_A = trailAngle(1)
+const GATE_POS = new THREE.Vector3(
+  Math.cos(GATE_A) * (R0 * Math.pow(1 - PLATEAU_Y / H, 0.85) * 0.45),
+  PLATEAU_Y + 0.05,
+  Math.sin(GATE_A) * (R0 * Math.pow(1 - PLATEAU_Y / H, 0.85) * 0.45),
+)
+
+/** The reward for the last lesson: a hinomaru sun rising behind the summit
+ * gate. It lives on the eye→gate ray, so it is centred in the gate's frame
+ * from wherever the camera stands, and it climbs into place over the final
+ * stretch of the scroll — below the plateau rim until you're nearly there,
+ * then up behind the torii. Only rendered once the final lesson is done. */
+function SummitSun({ nav, show, clay }: { nav: React.MutableRefObject<Nav>; show: boolean; clay: string }) {
+  const group = useRef<THREE.Group>(null)
+  useFrame(({ camera }) => {
+    const g = group.current
+    if (!g) return
+    const rise = Math.min(1, Math.max(0, (nav.current.focusT - 0.88) / 0.12))
+    g.visible = show && rise > 0.02
+    if (!g.visible) return
+    const gateCentre = GATE_POS.clone().setY(PLATEAU_Y + 1.45)
+    const dir = gateCentre.clone().sub(camera.position).normalize()
+    const p = camera.position.clone().add(dir.multiplyScalar(camera.position.distanceTo(gateCentre) + 26))
+    p.y -= (1 - rise) * 7 // dawn: starts sunk behind the plateau, rises into the gate
+    g.position.copy(p)
+    g.quaternion.copy(camera.quaternion) // billboard
+  })
+  return (
+    <group ref={group} visible={false}>
+      <mesh>
+        <circleGeometry args={[4.6, 40]} />
+        <meshStandardMaterial color={clay} emissive={clay} emissiveIntensity={1.1} fog={false} />
+      </mesh>
+      <mesh position={[0, 0, -0.1]}>
+        <circleGeometry args={[7.2, 40]} />
+        <meshStandardMaterial color="#e8b84b" emissive="#e8b84b" emissiveIntensity={0.5} transparent opacity={0.28} fog={false} depthWrite={false} />
+      </mesh>
+    </group>
+  )
+}
+
 /** The sun follows the camera round the mountain — with a fixed key light
  * half the orbit would sit in its own shadow, and the close-up camera lives
  * at every azimuth. Slightly offset so facets still shade directionally. */
@@ -782,6 +833,16 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
       const r = y < 0.5 ? R0 + 3.5 + rnd() * 4.5 : mountainR(y) + 0.1
       rocks.push({ pos: new THREE.Vector3(Math.cos(phi) * r, Math.max(0.1, y - 0.15), Math.sin(phi) * r), scale: 0.3 + rnd() * 0.55 })
     }
+    // rubble scattered across the summit plateau (kept clear of the gate)
+    const plateauRocks: { pos: THREE.Vector3; scale: number }[] = []
+    const rimR = R0 * Math.pow(1 - PLATEAU_Y / H, 0.85)
+    for (let i = 0; i < 12; i++) {
+      const a = rnd() * Math.PI * 2
+      const d = rnd() * rimR * 0.82
+      const p = new THREE.Vector3(Math.cos(a) * d, PLATEAU_Y + 0.07, Math.sin(a) * d)
+      if (p.distanceTo(GATE_POS) < 1.1) continue
+      plateauRocks.push({ pos: p, scale: 0.1 + rnd() * 0.32 })
+    }
     // lanterns line the trail's top third + greet you at the trailhead
     for (let i = 0; i < 11; i++) {
       const t = 0.68 + (i / 11) * 0.3
@@ -794,7 +855,7 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
       const outward = new THREE.Vector3(p.x, 0, p.z).normalize().multiplyScalar(0.8)
       lanterns.push(p.clone().add(outward))
     }
-    return { pines, sakuras, rocks, lanterns }
+    return { pines, sakuras, rocks, lanterns, plateauRocks }
   }, [])
 
   const stars = useMemo(() => {
@@ -947,8 +1008,17 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
           />
         )}
 
-        {/* summit torii where the trail tops out */}
-        <Torii position={pathPoint(1)} angle={trailAngle(1)} scale={1.5} colour={pal.clay} />
+        {/* the summit gate on the plateau + the earned sunrise behind it */}
+        <Torii position={GATE_POS} angle={GATE_A} scale={2} colour={pal.clay} />
+        <SummitSun
+          nav={nav}
+          show={
+            (nodes.length > 0 && nodes[nodes.length - 1].state === 'done') ||
+            // ?sunrise: preview the earned moment without earning it
+            new URLSearchParams(window.location.search).has('sunrise')
+          }
+          clay={pal.clay}
+        />
 
         {/* bridges where the river passes under the trail */}
         {bridges.map((b, i) => (
@@ -967,6 +1037,12 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
         ))}
         {scenery.rocks.map((r, i) => (
           <mesh key={`r${i}`} position={r.pos} scale={r.scale}>
+            <icosahedronGeometry args={[1, 0]} />
+            <meshStandardMaterial color={pal.cloud} flatShading />
+          </mesh>
+        ))}
+        {scenery.plateauRocks.map((r, i) => (
+          <mesh key={`pr${i}`} position={r.pos} scale={r.scale} rotation={[0, i * 1.3, 0]}>
             <icosahedronGeometry args={[1, 0]} />
             <meshStandardMaterial color={pal.cloud} flatShading />
           </mesh>

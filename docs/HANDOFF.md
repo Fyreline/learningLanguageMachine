@@ -148,3 +148,12 @@ migration ever did real damage. Both closed:
   the camera's orbit shell (path radius + dist clamp) and treetops under eye height, or
   they end up edge-on across the lens. The speaking corner card is configured-gated
   (hidden until an API key lands in .env) — paused by the household 2026-07-09.
+- **3D round three.** The household caught the biggest bug of all: the mountain's
+  triangles wound INWARD, so backface culling drew the interior and culled the slope you
+  were looking at — every prior "verified" screenshot was inside-out (concave reads
+  eerily like convex in stills; only device parallax exposed it). Winding now CCW from
+  outside; if terrain ever looks hollow/washed again, check winding FIRST. Also: summit
+  is now a flat plateau (rim ring + shrinking rings, rubble rocks, gate at GATE_POS
+  scale 2) and SummitSun renders a hinomaru sunrise on the eye→gate ray (always centred
+  in the gate's frame, rises over the last 12% of the scroll) once the final lesson is
+  done — previewable via `?sunrise`.
