@@ -4,10 +4,16 @@
  * completing one refreshes the path. `?mock` shows a dressed preview and
  * `?lesson=u01.l1` force-opens a lesson (dev route). */
 
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { fetchManifest, isMockMode, type PathManifest } from '../pathData'
 import { LessonPlayer } from './LessonPlayer'
 import { PathScene } from './PathScene'
+
+// The experimental 3D mountain (household ask, 2026-07-09) — lazy so the
+// three.js chunk (~150KB gz) downloads only if the toggle is ever switched on.
+const PathScene3D = lazy(() =>
+  import('./PathScene3D').then((m) => ({ default: m.PathScene3D })),
+)
 
 export function PathPage() {
   const [manifest, setManifest] = useState<PathManifest | null>(null)
@@ -15,6 +21,7 @@ export function PathPage() {
   const [activeLesson, setActiveLesson] = useState<string | null>(
     () => new URLSearchParams(window.location.search).get('lesson'),
   )
+  const [threeD, setThreeD] = useState(() => localStorage.getItem('michi-path-3d') === '1')
 
   const refresh = useCallback(() => {
     fetchManifest().then(setManifest, (e) => setError(e.message))
@@ -53,13 +60,50 @@ export function PathPage() {
         </p>
       )}
 
-      <PathScene
-        manifest={manifest}
-        onSelectLesson={(id, state) => {
-          if (state === 'locked') return
-          setActiveLesson(id)
-        }}
-      />
+      <div className="mb-3 flex justify-center">
+        <button
+          type="button"
+          aria-pressed={threeD}
+          onClick={() => {
+            const next = !threeD
+            setThreeD(next)
+            localStorage.setItem('michi-path-3d', next ? '1' : '0')
+          }}
+          className={`rounded-full border px-3 py-1 font-mono text-[11px] tracking-[0.08em] transition ${
+            threeD
+              ? 'border-clay bg-clay/15 text-clay'
+              : 'border-line-strong text-ink-soft hover:bg-oat'
+          }`}
+        >
+          3D · EXPERIMENTAL
+        </button>
+      </div>
+
+      {threeD ? (
+        <Suspense
+          fallback={
+            <div className="py-24 text-center font-mono text-xs tracking-[0.08em] text-ink-soft">
+              RAISING THE MOUNTAIN…
+            </div>
+          }
+        >
+          <PathScene3D
+            manifest={manifest}
+            onSelectLesson={(id, state) => {
+              if (state === 'locked') return
+              setActiveLesson(id)
+            }}
+          />
+        </Suspense>
+      ) : (
+        <PathScene
+          manifest={manifest}
+          onSelectLesson={(id, state) => {
+            if (state === 'locked') return
+            setActiveLesson(id)
+          }}
+        />
+      )}
 
       {/* kana side-trail — a spur by the front door (CURRICULUM §1) */}
       <div className="mx-auto mt-6 max-w-md rounded-lg border border-line bg-paper-mid p-5">
