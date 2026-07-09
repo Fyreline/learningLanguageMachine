@@ -47,13 +47,24 @@ function mountainR(y: number): number {
   return R0 - ((R0 - RTOP) / PLATEAU_Y) * Math.min(Math.max(y, 0), PLATEAU_Y)
 }
 
+// The lower slopes bulge out below the trail (a frustum widens downward),
+// hiding stones and torii behind the foreground hillside. Compensate by
+// pushing the whole cut outward the further DOWN the spiral you are — at
+// the base the shelf juts out as a balcony terrace; by the summit it's a
+// pure carved notch (household note, round five).
+const OUT0 = 1.1
+function terraceOut(y: number): number {
+  return OUT0 * Math.max(0, 1 - y / HPATH)
+}
+
 // The trail is a CONSTANT-ARC spiral, not a linear helix: with dθ/dt fixed,
 // arc-per-lesson shrinks with radius and the summit lessons bunched into a
 // crowd (household note). Solve dθ/dt = C / r(t) with r(t) = A − B·t linear
+// (the terrace-out shift is linear in t too, so it folds into A and B)
 // → θ(t) = θ0 + (C/B)·ln(A / (A − B·t)), and every lesson is the same
 // stride apart from base to summit.
-const SPIRAL_A = R0 - DEPTH + PATH_IN
-const SPIRAL_B = ((R0 - RTOP) / PLATEAU_Y) * HPATH
+const SPIRAL_A = R0 - DEPTH + PATH_IN + OUT0
+const SPIRAL_B = ((R0 - RTOP) / PLATEAU_Y) * HPATH + OUT0
 const SPIRAL_C =
   (TURNS * 2 * Math.PI * SPIRAL_B) / Math.log(SPIRAL_A / (SPIRAL_A - SPIRAL_B))
 
@@ -66,7 +77,8 @@ function tAtAngle(thetaTotal: number): number {
   return (SPIRAL_A / SPIRAL_B) * (1 - Math.exp((-(thetaTotal - THETA0) * SPIRAL_B) / SPIRAL_C))
 }
 
-const SUMMIT_CENTRE = new THREE.Vector3(0, PLATEAU_Y + 0.04, 0)
+// slightly above the plateau's gently domed centre (the rings stack ~0.1)
+const SUMMIT_CENTRE = new THREE.Vector3(0, PLATEAU_Y + 0.14, 0)
 // after the second-to-last lesson the trail leaves the rim and bends to the
 // centre of the plateau, where the gate stands (household note)
 const BLEND0 = 82 / 83 - 0.0002
@@ -75,12 +87,19 @@ const BLEND0 = 82 / 83 - 0.0002
 function pathPoint(t: number): THREE.Vector3 {
   const h = t * HPATH
   const a = trailAngle(t)
-  const r = mountainR(h) - DEPTH + PATH_IN
+  const r = mountainR(h) - DEPTH + PATH_IN + terraceOut(h)
   const p = new THREE.Vector3(Math.cos(a) * r, h + 0.02, Math.sin(a) * r)
   if (t > BLEND0) {
     const f = Math.min(1, (t - BLEND0) / (1 - BLEND0))
     const s = f * f * (3 - 2 * f)
-    p.lerp(SUMMIT_CENTRE, s)
+    // height rises FASTER than the ground track: the bend climbs up over
+    // the plateau rim and crosses ON TOP of it — lerping y at the same
+    // rate dived the stepping stones underneath the summit's flat cap
+    const sUp = Math.min(1, s * 2.6)
+    const targetY = SUMMIT_CENTRE.y
+    p.x += (SUMMIT_CENTRE.x - p.x) * s
+    p.z += (SUMMIT_CENTRE.z - p.z) * s
+    p.y += (targetY - p.y) * sUp
   }
   return p
 }
@@ -178,16 +197,22 @@ function usePalette(): ScenePalette {
 // the turn above.
 const ROW_OFFS = [-0.65, -0.28, -0.1, 0, 0.1, 0.3, 0.65, 1.1, 1.7, 2.35]
 
-function cutRadius(base: number, offIdx: number): number {
+// extra plain rows filling the stretch between one turn's cut band and the
+// next — without them a single band of very tall stretched quads spanned
+// the whole gap (household note, round five)
+const GAP_FRACS = [0.3, 0.55, 0.8]
+const ROWS_PER_TURN = ROW_OFFS.length + GAP_FRACS.length
+
+function cutRadius(base: number, offIdx: number, out: number): number {
   switch (offIdx) {
     case 0: return base // untouched slope below
-    case 1: return base + 0.12 // slight underhang bulge
-    case 2: return base + 0.25 // the lip
-    case 3: return base - DEPTH // shelf inner edge / wall base
-    case 4: return base - DEPTH + 0.05 // wall, near vertical
-    case 5: return base - DEPTH * 0.8
-    case 6: return base - DEPTH * 0.5
-    case 7: return base - DEPTH * 0.25
+    case 1: return base + 0.12 + out * 0.8
+    case 2: return base + 0.25 + out // the lip
+    case 3: return base - DEPTH + out // shelf inner edge / wall base
+    case 4: return base - DEPTH + 0.05 + out // wall, near vertical
+    case 5: return base - DEPTH * 0.8 + out * 0.7
+    case 6: return base - DEPTH * 0.5 + out * 0.4
+    case 7: return base - DEPTH * 0.25 + out * 0.15
     case 8: return base - DEPTH * 0.08
     default: return base
   }
@@ -208,6 +233,10 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
     col.push({ y: 0, r: R0 + 0.8 })
     for (let k = 0; k < TURNS; k++) {
       const h = tAtAngle(THETA0 + (thetaNorm + k) * Math.PI * 2) * HPATH
+      const hNext =
+        k < TURNS - 1
+          ? tAtAngle(THETA0 + (thetaNorm + k + 1) * Math.PI * 2) * HPATH
+          : PLATEAU_Y + 0.4
       for (let oi = 0; oi < ROW_OFFS.length; oi++) {
         let y = h + ROW_OFFS[oi]
         // Facet jitter — never on the carve band (the shelf stays true),
@@ -218,7 +247,7 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
         // clamp BEFORE computing the radius: rows squashed onto the plateau
         // must not keep their mid-slope radius or the rim grows overhangs
         y = Math.min(PLATEAU_Y - 0.012, Math.max(0.02, y))
-        let r = cutRadius(mountainR(y), oi)
+        let r = cutRadius(mountainR(y), oi, terraceOut(y))
         if (oi === 0 || oi === 9) r += (jrnd() - 0.5) * 0.55
         // the river carves its own groove where the trail hasn't
         if (angDiff(phi, riverPhi(y)) < 0.1 && (oi <= 1 || oi >= 8)) r -= 0.5
@@ -231,13 +260,39 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
         if (y >= PLATEAU_Y - 0.03) r = Math.min(r, RTOP)
         col.push({ y, r: Math.max(0.05, r) })
       }
+      // filler rows across the open slope to the next turn — one stretched
+      // band here read as a wall of skyscraper quads (household note)
+      for (let gi = 0; gi < GAP_FRACS.length; gi++) {
+        const jrnd = mulberry(jj * 6577 + k * 149 + gi)
+        let y =
+          h + ROW_OFFS[ROW_OFFS.length - 1] +
+          GAP_FRACS[gi] * (hNext + ROW_OFFS[0] - (h + ROW_OFFS[ROW_OFFS.length - 1])) +
+          (jrnd() - 0.5) * 0.3
+        y = Math.min(PLATEAU_Y - 0.012, Math.max(0.02, y))
+        let r = mountainR(y) + (jrnd() - 0.5) * 0.5
+        if (angDiff(phi, riverPhi(y)) < 0.1) r -= 0.5
+        for (const c of CAVES) {
+          const e = (angDiff(phi, c.phi) / c.rp) ** 2 + ((y - c.y) / c.ry) ** 2
+          if (e < 1) r -= 0.9 * (1 - e)
+        }
+        if (y >= PLATEAU_Y - 0.03) r = Math.min(r, RTOP)
+        col.push({ y, r: Math.max(0.05, r) })
+      }
     }
-    // the flat summit plateau: rim ring, then shrinking rings to a centre
-    // point — a level ground you can stand on rather than a peak
-    col.push({ y: PLATEAU_Y, r: RTOP })
-    col.push({ y: PLATEAU_Y + 0.02, r: RTOP * 0.55 })
-    col.push({ y: PLATEAU_Y + 0.04, r: RTOP * 0.22 })
-    col.push({ y: PLATEAU_Y + 0.06, r: 0.03 })
+    // The flat summit plateau: rim ring then progressively smaller rings to
+    // a centre point. Radius + height jitter per column breaks the pure
+    // radial fan that read as "every triangle has a corner at the centre".
+    const PLATEAU_RINGS = [1, 0.76, 0.52, 0.3, 0.14]
+    for (let pi = 0; pi < PLATEAU_RINGS.length; pi++) {
+      const jrnd = mulberry(jj * 4831 + pi * 97)
+      const frac = PLATEAU_RINGS[pi]
+      const wob = pi === 0 ? 0 : (jrnd() - 0.5) * 0.16 * RTOP * frac
+      col.push({
+        y: PLATEAU_Y + pi * 0.018 + (pi === 0 ? 0 : (jrnd() - 0.5) * 0.05),
+        r: Math.max(0.05, RTOP * frac + wob),
+      })
+    }
+    col.push({ y: PLATEAU_Y + PLATEAU_RINGS.length * 0.018 + 0.015, r: 0.03 })
     // enforce strictly climbing rows (clamps near the ground can stack)
     for (let i = 1; i < col.length; i++) {
       if (col[i].y <= col[i - 1].y + 0.015) col[i].y = col[i - 1].y + 0.015
@@ -251,7 +306,7 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
   // the seam pairs indices offset by one turn's worth of rows; pairing by
   // raw index there stretched every quad a full turn tall and tore a
   // ragged dark crack straight down the trailhead azimuth.
-  const RPT = ROW_OFFS.length
+  const RPT = ROWS_PER_TURN
   const rowCount = rows[0].length
   const positions: number[] = []
   for (let j = 0; j < COLS; j++) {
@@ -671,10 +726,15 @@ function CameraRig({ nav }: { nav: React.MutableRefObject<Nav> }) {
     // ceiling of 12: keeps the low camera orbit OUTSIDE the base forest
     // ring, whose trees otherwise end up edge-on across the lens.
     const dist = Math.min(12, Math.max(9, halfWidth / (Math.tan((wantFov * Math.PI) / 360) * aspect)))
-    // bias the azimuth a touch toward what's ahead. Derived from the
-    // spiral, NOT atan2 of the focus point — at the summit the focus is the
-    // plateau centre, where atan2(0, 0) has no meaningful answer.
-    const a = trailAngle(Math.min(1, Math.max(0, s.t))) + 0.12
+    // bias the azimuth a touch toward what's ahead — fading to zero over
+    // the final stretch so the camera comes to rest EXACTLY square to the
+    // summit gate and the climbing bend, not drifted past it (household
+    // note). Derived from the spiral, NOT atan2 of the focus point — at
+    // the summit the focus is the plateau centre, where atan2(0, 0) has no
+    // meaningful answer.
+    const tc = Math.min(1, Math.max(0, s.t))
+    const biasFade = 1 - Math.min(1, Math.max(0, (tc - 0.9) / 0.08))
+    const a = trailAngle(tc) + 0.12 * biasFade
     // never orbit inside the terrain's local bulge below the eye — the
     // lower mountain widens toward the foot, and an orbit radius chosen
     // only from the path's radius clips through that flank
@@ -705,13 +765,16 @@ function SummitSun({ nav, show, clay }: { nav: React.MutableRefObject<Nav>; show
   useFrame(({ camera }) => {
     const g = group.current
     if (!g) return
-    const rise = Math.min(1, Math.max(0, (nav.current.focusT - 0.88) / 0.12))
-    g.visible = show && rise > 0.02
+    // start early and deep: the sun spends its first stretch fully hidden
+    // behind the mountain, so its entrance is a gradual dawn over the rim
+    // rather than popping into an already-visible sky (household note)
+    const rise = Math.min(1, Math.max(0, (nav.current.focusT - 0.72) / 0.28))
+    g.visible = show && rise > 0
     if (!g.visible) return
     const gateCentre = GATE_POS.clone().setY(PLATEAU_Y + 1.3)
     const dir = gateCentre.clone().sub(camera.position).normalize()
     const p = camera.position.clone().add(dir.multiplyScalar(camera.position.distanceTo(gateCentre) + 26))
-    p.y -= (1 - rise) * 7 // dawn: starts sunk behind the plateau, rises into the gate
+    p.y -= (1 - rise) * 13 // deep dawn: fully behind the mountain at first
     g.position.copy(p)
     g.quaternion.copy(camera.quaternion) // billboard
   })
@@ -939,6 +1002,9 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
 
   useEffect(() => {
     nav.current.focusT = currentNode?.t ?? 0
+    if (import.meta.env.DEV) {
+      ;(window as unknown as { __michiNav?: unknown }).__michiNav = nav.current
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentNode?.id])
 
