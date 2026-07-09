@@ -38,7 +38,11 @@ const PLATEAU_Y = 22.9 // the flat summit
 // trail beneath (household note, round seven).
 const R0 = 19 // base radius
 const RTOP = 7.5 // radius where the plateau rim sits — a fat, standable top
-const TURNS = 4 // helix revolutions (integral — keeps the carve grid clean)
+// 3 revolutions, down from 4 (household, round eight): a looser spiral
+// climbs more per wrap, so each terrace sits well above AND well back from
+// the one below — the last trace of overhang goes with it. Integral, to
+// keep the carve grid's seam stitching clean.
+const TURNS = 3
 const DEPTH = 2.4 // deep enough that a torii's inner pillar clears the cut wall
 const PATH_IN = 0.95 // path centreline, measured out from the cut wall's base
 const THETA0 = -Math.PI / 2
@@ -226,8 +230,9 @@ const ROW_OFFS = [-0.65, -0.28, -0.1, 0, 0.1, 0.3, 0.65, 1.1, 1.7, 2.35]
 
 // extra plain rows filling the stretch between one turn's cut band and the
 // next — without them a single band of very tall stretched quads spanned
-// the whole gap (household note, round five)
-const GAP_FRACS = [0.3, 0.55, 0.8]
+// the whole gap (household note, round five). Four rows now: the 3-turn
+// spiral opens the bottom gap to ~12 units.
+const GAP_FRACS = [0.22, 0.42, 0.62, 0.82]
 const ROWS_PER_TURN = ROW_OFFS.length + GAP_FRACS.length
 
 // `ds` scales the cut depth (0 = plain slope). The wall stays near-full
@@ -444,24 +449,27 @@ function buildPlateauCap(pal: ScenePalette): THREE.BufferGeometry {
     { r: RTOP * 0.2, n: 8, y: PLATEAU_Y + 0.1 },
   ]
   const rnd = mulberry(4831)
+  // the walkway's height at a given planar radius — the cap's corridor
+  // vertices must sit BELOW this, or the floor pokes up through the
+  // climbing stairs (household notes, rounds seven AND eight: a fixed dip
+  // wasn't deep enough where the ribbon is still low near the rim)
+  const anchorR = Math.hypot(ANCHOR.x, ANCHOR.z)
+  const walkYAt = (rr: number) => {
+    const s = Math.min(1, Math.max(0, 1 - rr / anchorR))
+    const sUp = Math.min(1, s * 2.2)
+    return ANCHOR.y + (SUMMIT_CENTRE.y - ANCHOR.y) * sUp + 0.06
+  }
   const rings: THREE.Vector3[][] = RINGS.map(({ r, n, y }, ri) =>
     Array.from({ length: n }, (_, i) => {
       const a = (i / n) * Math.PI * 2
       const wob = ri === 0 ? 0 : 1 + (rnd() - 0.5) * 0.14
       let vy = y + (rnd() - 0.5) * 0.045
-      // the walkway's cutout: cap vertices in the approach corridor sink
-      // below the climbing ribbon, so the stairs pass THROUGH a notch in
-      // the top face instead of popping up through it (household note,
-      // round seven). Widest at the rim, gone by the third ring.
-      const corridor = ri === 0 ? 0.26 : ri === 1 ? 0.16 : 0
+      const rr = r * (wob || 1)
+      const corridor = ri === 0 ? 0.3 : ri === 1 ? 0.2 : 0
       if (corridor > 0 && angDiff(a, APPROACH_A) < corridor) {
-        vy -= ri === 0 ? 0.6 : 0.22
+        vy = Math.min(vy, walkYAt(rr) - 0.12)
       }
-      return new THREE.Vector3(
-        Math.cos(a) * r * (wob || 1),
-        vy,
-        Math.sin(a) * r * (wob || 1),
-      )
+      return new THREE.Vector3(Math.cos(a) * rr, vy, Math.sin(a) * rr)
     }),
   )
   const centre = new THREE.Vector3(0, PLATEAU_Y + 0.11, 0)
@@ -835,7 +843,7 @@ function CameraRig({ nav }: { nav: React.MutableRefObject<Nav> }) {
     // a tangent-following camera can't work here, the convex mountainside
     // always swings round to block the view ahead.
     const focus = pathPoint(s.t)
-    const halfWidth = 3.6 // ~1.2 node spacings each side
+    const halfWidth = 3.2 // ~1.3 node spacings each side (3-turn spiral packs nodes tighter)
     const aspect = size.width / size.height
     // floor of 9: any closer and the slope at eye height grazes the frame
     // edges on wide viewports (reads as clipping into the mountain).
