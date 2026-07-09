@@ -55,6 +55,10 @@
     border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px;
   }
   input[type="color"] { width: 40px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 5px; background: none; }
+  select {
+    font: inherit; color: var(--ink); background: #0f1d2b;
+    border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px;
+  }
   .sel { color: var(--gold); }
   .counts { color: var(--soft); margin-top: 4px; }
   #hint { color: var(--soft); margin: 8px 0 0; }
@@ -82,6 +86,23 @@
     <legend>Mode</legend>
     <button id="modeVertex" class="on">Vertex</button>
     <button id="modeEdge">Edge</button>
+    <button id="modeScenery">Scenery</button>
+  </fieldset>
+
+  <fieldset id="sceneryBox">
+    <legend>Scenery</legend>
+    <div>selected: <span id="scLabel" class="sel">none</span></div>
+    <label class="row">x <input type="number" id="scX" step="0.1"> y <input type="number" id="scY" step="0.1"> z <input type="number" id="scZ" step="0.1"></label>
+    <label class="row">rotation° <input type="number" id="scAngle" step="5"> scale <input type="number" id="scScale" step="0.1"></label>
+    <label class="row"><button id="scDelete" class="danger">Remove object</button></label>
+    <label class="row">
+      <select id="scKind">
+        <option>torii</option><option>pine</option><option>sakura</option>
+        <option>lantern</option><option>rock</option><option>bridge</option>
+        <option>house</option><option>onsen</option><option>hill</option><option>pond</option>
+      </select>
+      <button id="scAdd">Add object</button>
+    </label>
   </fieldset>
 
   <fieldset id="vertexBox">
@@ -119,7 +140,8 @@
     <label class="row"><input type="checkbox" id="showWire"> wireframe</label>
     <label class="row"><input type="checkbox" id="showBack"> double-sided (hides holes)</label>
     <label class="row"><input type="checkbox" id="showCap" checked> plateau cap (reference)</label>
-    <label class="row"><input type="checkbox" id="showTrail" checked> trail line (reference)</label>
+    <label class="row"><input type="checkbox" id="showTrail" checked> trail + summit gate (reference)</label>
+    <label class="row"><input type="checkbox" id="showScenery" checked> scenery objects</label>
   </fieldset>
 
   <fieldset>
@@ -154,10 +176,12 @@
   </fieldset>
 
   <p id="hint">
-    Drag to orbit, scroll to zoom. Click picks the nearest vertex or edge.
-    With a vertex selected, drag its gold marker to move it (or type
-    coordinates). <kbd>⌫</kbd> deletes the selected edge, <kbd>⌘Z</kbd>
-    undoes, <kbd>esc</kbd> clears or cancels a split.
+    Drag to orbit, scroll to zoom. Click picks the nearest vertex, edge or
+    scenery object by mode. Drag a selection's gold marker to move it —
+    scenery sticks to the terrain under the pointer. <kbd>⌫</kbd> removes
+    the selected edge or object, <kbd>⌘Z</kbd> undoes, <kbd>esc</kbd>
+    clears or cancels a split. Lesson stones and checkpoint torii are
+    curriculum-owned and stay put; the summit gate shows as reference.
   </p>
 </aside>
 
@@ -505,6 +529,163 @@ function buildPlateauCap() {
   return geo
 }
 
+/* ------------------------- scenery: base placement ------------------- */
+
+/** Every decorative object Michi renders, placed exactly as PathScene3D's
+ * baseScenery() lays them out, as {id, kind, x, y, z, angle, scale, variant}.
+ * angle is plain rotation.y. Lesson stones, checkpoint torii, kitsune and
+ * the summit gate stay curriculum-owned and are NOT here. */
+function baseSceneryList() {
+  const items = []
+  const counters = new Map()
+  const put = (kind, p, angle = 0, scale = 1, variant) => {
+    const n = counters.get(kind) ?? 0
+    counters.set(kind, n + 1)
+    items.push({ id: `${kind}-${n}`, kind, x: p.x, y: p.y, z: p.z, angle, scale, variant })
+  }
+
+  const rnd = mulberry(20260709)
+  for (let i = 0; i < 95; i++) {
+    const y = Math.pow(rnd(), 1.9) * 12
+    const phi = rnd() * Math.PI * 2
+    const dy = nearestTurnDy(phi, y)
+    if (dy !== null && dy > -1.4 && dy < 2.6) continue
+    if (angDiff(phi, riverPhi(y)) < 0.22) continue
+    if (CAVES.some((c) => (angDiff(phi, c.phi) / (c.rp * 2)) ** 2 + ((y - c.y) / (c.ry * 2)) ** 2 < 1)) continue
+    const r = mountainR(y) + 0.15
+    put('pine', new THREE.Vector3(Math.cos(phi) * r, y - 0.1, Math.sin(phi) * r), 0, 0.9 + rnd() * 0.9)
+  }
+  for (let i = 0; i < 46; i++) {
+    const phi = rnd() * Math.PI * 2
+    const r = R0 + 3.5 + rnd() * 4.5
+    const p = new THREE.Vector3(Math.cos(phi) * r, 0, Math.sin(phi) * r)
+    if (rnd() < 0.32) put('sakura', p, 0, 0.9 + rnd() * 0.5)
+    else put('pine', p, 0, 0.9 + rnd() * 0.5)
+  }
+  for (let i = 0; i < 22; i++) {
+    const y = rnd() * 14
+    const phi = rnd() * Math.PI * 2
+    const dy = nearestTurnDy(phi, y)
+    if (dy !== null && dy > -1.2 && dy < 1.8) continue
+    const r = y < 0.5 ? R0 + 3.5 + rnd() * 4.5 : mountainR(y) + 0.1
+    put('rock', new THREE.Vector3(Math.cos(phi) * r, Math.max(0.1, y - 0.15), Math.sin(phi) * r), 0, 0.3 + rnd() * 0.55)
+  }
+  let pr = 0
+  for (let i = 0; i < 12; i++) {
+    const a = rnd() * Math.PI * 2
+    const d = rnd() * RTOP * 0.82
+    const p = new THREE.Vector3(Math.cos(a) * d, PLATEAU_Y + 0.07, Math.sin(a) * d)
+    if (p.distanceTo(SUMMIT_CENTRE) < 1.1) continue
+    put('rock', p, pr * 1.3, 0.1 + rnd() * 0.32)
+    pr++
+  }
+  for (let i = 0; i < 11; i++) {
+    const t = 0.68 + (i / 11) * 0.28
+    const p = pathPoint(t + 0.006)
+    const outward = new THREE.Vector3(p.x, 0, p.z).normalize().multiplyScalar(0.45)
+    put('lantern', p.clone().add(outward))
+  }
+  for (const t of [0.006, 0.018]) {
+    const p = pathPoint(t)
+    const outward = new THREE.Vector3(p.x, 0, p.z).normalize().multiplyScalar(0.8)
+    put('lantern', p.clone().add(outward))
+  }
+  const crossT = (phi, k) => {
+    const off = (((phi - THETA0) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
+    return tAtAngle(THETA0 + off + k * Math.PI * 2)
+  }
+  for (let k = 0; k < TURNS; k++) {
+    let h = ((k + 0.5) / TURNS) * HPATH
+    let t = 0
+    for (let it = 0; it < 4; it++) {
+      t = crossT(riverPhi(h), k)
+      h = t * HPATH
+    }
+    if (t > 0.02 && t < 0.97) {
+      const p = pathPoint(t)
+      put('bridge', new THREE.Vector3(p.x, p.y + 0.1, p.z), -trailAngle(t) - Math.PI / 2)
+    }
+  }
+  for (const i of [0, 1, 2]) {
+    const phi = 5.35 + i * 0.22
+    const r = R0 + 8 + (i % 2) * 1.6
+    put('house', new THREE.Vector3(Math.cos(phi) * r, 0, Math.sin(phi) * r), -phi + Math.PI / 2 + (i - 1) * 0.3, 1, i === 1 ? 1 : 0)
+  }
+  put('onsen', new THREE.Vector3(Math.cos(0.8) * (R0 + 8.5), 0, Math.sin(0.8) * (R0 + 8.5)))
+  put('hill', new THREE.Vector3(Math.cos(3.6) * (R0 + 5), 0, Math.sin(3.6) * (R0 + 5)), -3.6)
+  put('pond', new THREE.Vector3(Math.cos(riverPhi(0)) * (R0 + 3.2), 0.06, Math.sin(riverPhi(0)) * (R0 + 3.2)))
+  return items
+}
+
+/** Simplified stand-ins for Michi's scenery components — same primitives,
+ * same offsets, minus the animation (steam, lantern glow). */
+function sceneryModel(kind, variant) {
+  const g = new THREE.Group()
+  const M = (colour, extra = {}) => new THREE.MeshStandardMaterial({ color: colour, flatShading: true, ...extra })
+  const add = (geo, mat, x = 0, y = 0, z = 0, rot = null) => {
+    const m = new THREE.Mesh(geo, mat)
+    m.position.set(x, y, z)
+    if (rot) m.rotation.set(rot[0], rot[1], rot[2])
+    g.add(m)
+    return m
+  }
+  const SAKURA_PINK = '#e7a8b8'
+  switch (kind) {
+    case 'pine':
+      add(new THREE.CylinderGeometry(0.07, 0.1, 0.5, 5), M(PAL.kraft), 0, 0.25, 0)
+      add(new THREE.ConeGeometry(0.42, 0.85, 6), M(PAL.olive), 0, 0.75, 0)
+      add(new THREE.ConeGeometry(0.28, 0.6, 6), M(PAL.olive), 0, 1.25, 0)
+      break
+    case 'sakura':
+      add(new THREE.CylinderGeometry(0.06, 0.1, 0.64, 5), M(PAL.kraft), 0, 0.32, 0, [0, 0, 0.12])
+      add(new THREE.DodecahedronGeometry(0.42, 0), M(SAKURA_PINK), 0.1, 0.78, 0)
+      add(new THREE.DodecahedronGeometry(0.26, 0), M(SAKURA_PINK), -0.22, 0.62, 0.12)
+      break
+    case 'rock':
+      add(new THREE.IcosahedronGeometry(1, 0), M(PAL.cloud))
+      break
+    case 'lantern':
+      add(new THREE.CylinderGeometry(0.035, 0.05, 0.6, 5), M(PAL.ink), 0, 0.3, 0)
+      add(new THREE.BoxGeometry(0.22, 0.26, 0.22), M('#e8b84b'), 0, 0.68, 0)
+      add(new THREE.ConeGeometry(0.2, 0.14, 4), M(PAL.ink), 0, 0.86, 0)
+      break
+    case 'bridge':
+      add(new THREE.BoxGeometry(2.4, 0.14, 1.2), M(PAL.kraft))
+      break
+    case 'house':
+      add(new THREE.BoxGeometry(1.15, 0.76, 0.95), M('#efe7d6'), 0, 0.38, 0)
+      add(new THREE.ConeGeometry(0.95, 0.55, 4), M(variant === 1 ? PAL.clay : PAL.ink), 0, 0.98, 0, [0, Math.PI / 4, 0])
+      break
+    case 'onsen': {
+      add(new THREE.CylinderGeometry(1.7, 1.8, 0.2, 10), M(PAL.liquid), 0, 0.1, 0)
+      const rnd = mulberry(31)
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2
+        const s = 0.32 + rnd() * 0.25
+        const rock = add(new THREE.IcosahedronGeometry(1, 0), M(PAL.cloud), Math.cos(a) * 1.9, 0.18, Math.sin(a) * 1.9)
+        rock.scale.setScalar(s)
+      }
+      break
+    }
+    case 'torii': {
+      const mat = M(PAL.clay)
+      add(new THREE.CylinderGeometry(0.09, 0.11, 1.35, 6), mat, -0.62, 0.65, 0)
+      add(new THREE.CylinderGeometry(0.09, 0.11, 1.35, 6), mat, 0.62, 0.65, 0)
+      add(new THREE.BoxGeometry(1.85, 0.15, 0.22), mat, 0, 1.38, 0)
+      add(new THREE.BoxGeometry(1.46, 0.1, 0.15), mat, 0, 1.1, 0)
+      break
+    }
+    case 'hill':
+      add(new THREE.ConeGeometry(3, 2.8, 8), M(PAL.olive), 0, 0.6, 0)
+      add(new THREE.CylinderGeometry(0.75, 0.75, 4, 10, 1, true), M(PAL.ink, { side: THREE.DoubleSide }), 0, 0.45, 0, [0, 0, Math.PI / 2])
+      break
+    case 'pond':
+      add(new THREE.CylinderGeometry(2.5, 2.7, 0.14, 12), M(PAL.liquid))
+      break
+  }
+  return g
+}
+
 /* =====================================================================
    PART 2 — editable mesh model. The generated triangle soup is welded
    into shared vertices; edits happen on {verts, faces}; the patch is a
@@ -513,6 +694,42 @@ function buildPlateauCap() {
 
 let base = buildMountainArrays()
 const BASE_FACE_COUNT = base.positions.length / 9 // fixed grid — shape moves points, never topology
+
+// scenery: base list regenerates with the shape; edits overlay it.
+// removed: Set<baseId> · moved: Map<baseId, {x,y,z,angle,scale}> · added: [{kind,...}]
+let baseItems = baseSceneryList()
+let sceneryEdits = { removed: new Set(), moved: new Map(), added: [] }
+
+/** The scenery as currently edited — each item carries a `src` routing tag
+ * so transforms/deletions know whether to record an override or mutate an
+ * added entry. */
+function currentScenery() {
+  const out = []
+  for (const it of baseItems) {
+    if (sceneryEdits.removed.has(it.id)) continue
+    const m = sceneryEdits.moved.get(it.id)
+    out.push({ ...it, ...(m ?? {}), src: { type: 'base', id: it.id } })
+  }
+  sceneryEdits.added.forEach((a, i) =>
+    out.push({ id: `add-${i}`, angle: 0, scale: 1, ...a, src: { type: 'added', idx: i } }),
+  )
+  return out
+}
+
+function setItemTransform(item, t) {
+  const clean = { x: t.x, y: t.y, z: t.z, angle: t.angle, scale: t.scale }
+  if (item.src.type === 'base') sceneryEdits.moved.set(item.src.id, clean)
+  else Object.assign(sceneryEdits.added[item.src.idx], clean)
+}
+
+function removeItem(item) {
+  if (item.src.type === 'base') {
+    sceneryEdits.removed.add(item.src.id)
+    sceneryEdits.moved.delete(item.src.id)
+  } else {
+    sceneryEdits.added.splice(item.src.idx, 1)
+  }
+}
 
 // verts: { p:[x,y,z], base: welded-base-vertex-id | -1 (created by edits) }
 // faces: { v:[a,b,c], col:[[r,g,b]×3], recol:[bool×3], base: base-face-index | -1 }
@@ -593,6 +810,19 @@ function buildPatch() {
       added.push(absFace(face))
     }
   }
+  // scenery diff: drop overrides that ended up identical to the base
+  const baseById = new Map(baseItems.map((it) => [it.id, it]))
+  const sceneryMoved = []
+  for (const [id, m] of sceneryEdits.moved) {
+    const b = baseById.get(id)
+    if (!b || sceneryEdits.removed.has(id)) continue
+    if (['x', 'y', 'z', 'angle', 'scale'].every((k) => Math.abs(m[k] - b[k]) < 1e-9)) continue
+    sceneryMoved.push({ id, x: round(m.x), y: round(m.y), z: round(m.z), angle: round(m.angle), scale: round(m.scale) })
+  }
+  const sceneryAdded = sceneryEdits.added.map((a) => ({
+    ...a, x: round(a.x), y: round(a.y), z: round(a.z), angle: round(a.angle), scale: round(a.scale),
+  }))
+
   return {
     version: 2,
     baseFaceCount: BASE_FACE_COUNT,
@@ -602,6 +832,11 @@ function buildPatch() {
     recoloredCorners: recoloured.sort((a, b) => a[0] - b[0]),
     deletedFaces: [...deleted].sort((a, b) => a - b),
     addedFaces: added,
+    scenery: {
+      removed: [...sceneryEdits.removed].filter((id) => baseById.has(id)).sort(),
+      moved: sceneryMoved.sort((a, b) => (a.id < b.id ? -1 : 1)),
+      added: sceneryAdded,
+    },
   }
 }
 
@@ -643,6 +878,13 @@ function applyPatch(patch) {
   base = buildMountainArrays()
   resetToBase()
   applyEditRecord(patch)
+  baseItems = baseSceneryList()
+  const sc = patch.scenery ?? {}
+  sceneryEdits = {
+    removed: new Set(sc.removed ?? []),
+    moved: new Map((sc.moved ?? []).map((m) => [m.id, { x: m.x, y: m.y, z: m.z, angle: m.angle, scale: m.scale }])),
+    added: (sc.added ?? []).map((a) => ({ angle: 0, scale: 1, ...a })),
+  }
   return true
 }
 
@@ -668,6 +910,9 @@ function applyShape(rawShape) {
     base.positions[ci * 3 + 2] + dz,
   ])
   applyEditRecord(rec)
+  // scenery: the base list re-places itself for the new shape; overrides
+  // keep their ids (moved/added items stay at their absolute spots)
+  baseItems = baseSceneryList()
   return rec.addedFaces.length
 }
 
@@ -675,7 +920,15 @@ function applyShape(rawShape) {
 
 const undoStack = []
 function serialize() {
-  return JSON.stringify({ verts, faces })
+  return JSON.stringify({
+    verts,
+    faces,
+    scenery: {
+      removed: [...sceneryEdits.removed],
+      moved: [...sceneryEdits.moved.entries()],
+      added: sceneryEdits.added,
+    },
+  })
 }
 function pushUndo() {
   undoStack.push(serialize())
@@ -685,6 +938,11 @@ function restore(snapshot) {
   const s = JSON.parse(snapshot)
   verts = s.verts
   faces = s.faces
+  sceneryEdits = {
+    removed: new Set(s.scenery.removed),
+    moved: new Map(s.scenery.moved),
+    added: s.scenery.added,
+  }
 }
 function undo() {
   if (splitting) { cancelSplit(); return }
@@ -697,7 +955,9 @@ function undo() {
   if (!edgeOk(selEdge)) selEdge = null
   if (!edgeOk(selEdge2)) selEdge2 = null
   lastBridge = []
+  selScenery = null
   rebuild()
+  rebuildScenery()
   setStatus('Undone.')
 }
 
@@ -761,6 +1021,9 @@ const trailLine = new THREE.Line(
 )
 scene.add(trailLine)
 
+// the summit gate — curriculum-owned in Michi, shown here as reference only
+let gateRef = null
+
 /** Re-derive everything that depends on the shape but is not the mesh. */
 function updateReferences() {
   capMesh.geometry.dispose()
@@ -769,6 +1032,67 @@ function updateReferences() {
   trailLine.geometry = new THREE.BufferGeometry().setFromPoints(trailPoints())
   ground.geometry.dispose()
   ground.geometry = new THREE.CylinderGeometry(R0 + 15, R0 + 16, 1, 36)
+  if (gateRef) scene.remove(gateRef)
+  gateRef = sceneryModel('torii')
+  gateRef.position.copy(SUMMIT_CENTRE)
+  gateRef.rotation.y = -(APPROACH_A - Math.PI / 2)
+  gateRef.scale.setScalar(2.2)
+  gateRef.visible = trailLine.visible
+  scene.add(gateRef)
+}
+
+/* --------------------------- scenery layer --------------------------- */
+
+const sceneryGroup = new THREE.Group()
+scene.add(sceneryGroup)
+let sceneryList = [] // current items, index-aligned with sceneryGroup.children
+let selScenery = null
+let sceneryMarker = null
+
+function rebuildScenery() {
+  sceneryGroup.traverse((o) => {
+    if (o.isMesh) {
+      o.geometry.dispose()
+      o.material.dispose()
+    }
+  })
+  sceneryGroup.clear()
+  sceneryList = currentScenery()
+  sceneryList.forEach((it, idx) => {
+    const g = sceneryModel(it.kind, it.variant)
+    g.position.set(it.x, it.y, it.z)
+    g.rotation.y = it.angle
+    g.scale.setScalar(it.scale || 1)
+    g.userData.idx = idx
+    sceneryGroup.add(g)
+  })
+  if (selScenery != null && selScenery >= sceneryList.length) selScenery = null
+  updateSceneryMarker()
+  updateCounts()
+}
+
+function updateSceneryMarker() {
+  if (sceneryMarker) {
+    scene.remove(sceneryMarker)
+    sceneryMarker.geometry.dispose()
+    sceneryMarker.material.dispose()
+    sceneryMarker = null
+  }
+  const it = selScenery != null ? sceneryList[selScenery] : null
+  if (it && mode === 'scenery' && sceneryGroup.children[selScenery]) {
+    sceneryMarker = new THREE.BoxHelper(sceneryGroup.children[selScenery], '#e8b84b')
+    sceneryMarker.material.depthTest = false
+    sceneryMarker.renderOrder = 10
+    scene.add(sceneryMarker)
+  }
+  document.getElementById('scLabel').textContent = it ? `${it.id}${it.src.type === 'added' ? ' (new)' : ''}` : 'none'
+  if (it) {
+    const fields = { scX: it.x, scY: it.y, scZ: it.z, scAngle: (it.angle * 180) / Math.PI, scScale: it.scale }
+    for (const [id, v] of Object.entries(fields)) {
+      const el = document.getElementById(id)
+      if (document.activeElement !== el) el.value = (Math.round(v * 1000) / 1000).toString()
+    }
+  }
 }
 
 // selection markers
@@ -854,8 +1178,9 @@ function refreshVertex(vid) {
 function updateCounts() {
   const p = buildPatch()
   document.getElementById('counts').textContent =
-    `${faces.length} faces · edits: ${p.movedCorners.length} corner moves, ` +
-    `${p.recoloredCorners.length} recolours, ${p.deletedFaces.length} deleted, ${p.addedFaces.length} added`
+    `${faces.length} faces · mesh: ${p.movedCorners.length} corner moves, ` +
+    `${p.recoloredCorners.length} recolours, ${p.deletedFaces.length} deleted, ${p.addedFaces.length} added · ` +
+    `scenery: ${p.scenery.moved.length} moved, ${p.scenery.removed.length} removed, ${p.scenery.added.length} added`
 }
 
 /* --------------------------- selection ------------------------------- */
@@ -872,7 +1197,9 @@ function clearSelection() {
   selEdge = null
   selEdge2 = null
   lastBridge = []
+  selScenery = null
   updateMarkers()
+  updateSceneryMarker()
 }
 
 function updateMarkers() {
@@ -1149,10 +1476,34 @@ function cancelSplit() {
 
 let down = null
 let dragging = false
+let scDrag = false
 const dragPlane = new THREE.Plane()
+
+function pointerNdc(e) {
+  const rect = renderer.domElement.getBoundingClientRect()
+  return new THREE.Vector2(
+    ((e.clientX - rect.left) / rect.width) * 2 - 1,
+    -((e.clientY - rect.top) / rect.height) * 2 + 1,
+  )
+}
 
 renderer.domElement.addEventListener('pointerdown', (e) => {
   down = { x: e.clientX, y: e.clientY }
+  if (mode === 'scenery' && selScenery != null) {
+    const g = sceneryGroup.children[selScenery]
+    if (g) {
+      const p = g.position.clone().project(camera)
+      const rect = renderer.domElement.getBoundingClientRect()
+      const sx = (p.x * 0.5 + 0.5) * rect.width + rect.left
+      const sy = (-p.y * 0.5 + 0.5) * rect.height + rect.top
+      if (Math.hypot(sx - e.clientX, sy - e.clientY) < 22) {
+        pushUndo()
+        scDrag = true
+        controls.enabled = false
+        setStatus('Moving object — it follows the terrain under the pointer; release to drop it.')
+      }
+    }
+  }
   if (mode === 'vertex' && selVert != null && !splitting) {
     // start a move-drag when the press lands on the marker
     const p = new THREE.Vector3(...verts[selVert].p).project(camera)
@@ -1171,13 +1522,26 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
 })
 
 renderer.domElement.addEventListener('pointermove', (e) => {
+  if (scDrag && selScenery != null) {
+    const g = sceneryGroup.children[selScenery]
+    if (!g) return
+    raycaster.setFromCamera(pointerNdc(e), camera)
+    const targets = [mountainMesh, capMesh, ground].filter((o) => o.visible)
+    const hit = raycaster.intersectObjects(targets, false)[0]
+    if (hit) {
+      g.position.copy(hit.point)
+    } else {
+      // off the terrain: slide in the camera plane through the object
+      camera.getWorldDirection(dragPlane.normal)
+      dragPlane.setFromNormalAndCoplanarPoint(dragPlane.normal, g.position)
+      const p = new THREE.Vector3()
+      if (raycaster.ray.intersectPlane(dragPlane, p)) g.position.copy(p)
+    }
+    sceneryMarker?.update()
+    return
+  }
   if (!dragging || selVert == null) return
-  const rect = renderer.domElement.getBoundingClientRect()
-  const ndc = new THREE.Vector2(
-    ((e.clientX - rect.left) / rect.width) * 2 - 1,
-    -((e.clientY - rect.top) / rect.height) * 2 + 1,
-  )
-  raycaster.setFromCamera(ndc, camera)
+  raycaster.setFromCamera(pointerNdc(e), camera)
   const hit = new THREE.Vector3()
   if (raycaster.ray.intersectPlane(dragPlane, hit)) {
     verts[selVert].p = [hit.x, hit.y, hit.z]
@@ -1186,6 +1550,19 @@ renderer.domElement.addEventListener('pointermove', (e) => {
 })
 
 addEventListener('pointerup', (e) => {
+  if (scDrag) {
+    scDrag = false
+    controls.enabled = true
+    const it = selScenery != null ? sceneryList[selScenery] : null
+    const g = it ? sceneryGroup.children[selScenery] : null
+    if (it && g) {
+      setItemTransform(it, { x: g.position.x, y: g.position.y, z: g.position.z, angle: it.angle, scale: it.scale })
+      rebuildScenery()
+      setStatus(`${it.id} moved.`)
+    }
+    down = null
+    return
+  }
   if (dragging) {
     dragging = false
     controls.enabled = true
@@ -1197,6 +1574,25 @@ addEventListener('pointerup', (e) => {
   if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) { down = null; return }
   down = null
   if (e.target !== renderer.domElement) return
+  if (mode === 'scenery') {
+    if (!sceneryGroup.visible) {
+      setStatus('Scenery is hidden — re-tick "scenery objects" in View to edit it.')
+      return
+    }
+    raycaster.setFromCamera(pointerNdc(e), camera)
+    const first = raycaster.intersectObject(sceneryGroup, true)[0]
+    if (!first) {
+      selScenery = null
+      updateSceneryMarker()
+      return
+    }
+    let o = first.object
+    while (o.parent && o.parent !== sceneryGroup) o = o.parent
+    selScenery = o.userData.idx
+    updateSceneryMarker()
+    setStatus(`${sceneryList[selScenery].id} selected — drag it to move (it sticks to the terrain), or type values.`)
+    return
+  }
   const hit = pick(e)
   if (!hit) return
   if (splitting) {
@@ -1226,14 +1622,19 @@ function setMode(m) {
   mode = m
   document.getElementById('modeVertex').classList.toggle('on', m === 'vertex')
   document.getElementById('modeEdge').classList.toggle('on', m === 'edge')
+  document.getElementById('modeScenery').classList.toggle('on', m === 'scenery')
   if (splitting) cancelSplit()
   updateMarkers()
+  updateSceneryMarker()
   setStatus(m === 'vertex'
     ? 'Vertex mode — click the mesh to pick the nearest vertex.'
-    : 'Edge mode — click near an edge to pick it; shift-click picks the second edge for bridging.')
+    : m === 'edge'
+      ? 'Edge mode — click near an edge to pick it; shift-click picks the second edge for bridging.'
+      : 'Scenery mode — click an object to select it, drag to move it (it sticks to the terrain).')
 }
 document.getElementById('modeVertex').onclick = () => setMode('vertex')
 document.getElementById('modeEdge').onclick = () => setMode('edge')
+document.getElementById('modeScenery').onclick = () => setMode('scenery')
 
 for (const [axis, i] of [['vx', 0], ['vy', 1], ['vz', 2]]) {
   document.getElementById(axis).addEventListener('change', (e) => {
@@ -1254,6 +1655,48 @@ document.getElementById('deleteEdge').onclick = deleteSelectedEdge
 document.getElementById('bridgeEdges').onclick = bridgeEdges
 document.getElementById('flipBridge').onclick = flipBridge
 document.getElementById('undoBtn').onclick = undo
+
+/* scenery */
+for (const [id, key] of [['scX', 'x'], ['scY', 'y'], ['scZ', 'z'], ['scAngle', 'angle'], ['scScale', 'scale']]) {
+  document.getElementById(id).addEventListener('change', (e) => {
+    if (selScenery == null) return
+    const it = sceneryList[selScenery]
+    const n = parseFloat(e.target.value)
+    if (!it || !Number.isFinite(n)) return
+    pushUndo()
+    const t = { x: it.x, y: it.y, z: it.z, angle: it.angle, scale: it.scale }
+    t[key] = key === 'angle' ? (n * Math.PI) / 180 : n
+    setItemTransform(it, t)
+    rebuildScenery()
+  })
+}
+
+function deleteSelectedScenery() {
+  if (mode !== 'scenery' || selScenery == null) { setStatus('Select a scenery object first.'); return }
+  const it = sceneryList[selScenery]
+  pushUndo()
+  removeItem(it)
+  selScenery = null
+  rebuildScenery()
+  setStatus(`Removed ${it.id}. In Michi it stays gone until you clear the edit.`)
+}
+document.getElementById('scDelete').onclick = deleteSelectedScenery
+
+document.getElementById('scAdd').onclick = () => {
+  const kind = document.getElementById('scKind').value
+  pushUndo()
+  // spawn on the terrain under the camera's focus point
+  const target = controls.target.clone()
+  raycaster.set(new THREE.Vector3(target.x, PLATEAU_Y * 3, target.z), new THREE.Vector3(0, -1, 0))
+  const hit = raycaster.intersectObjects([mountainMesh, capMesh, ground], false)[0]
+  const p = hit ? hit.point : target
+  sceneryEdits.added.push({ kind, x: p.x, y: p.y, z: p.z, angle: 0, scale: 1 })
+  if (mode !== 'scenery') setMode('scenery')
+  rebuildScenery()
+  selScenery = sceneryList.length - 1
+  updateSceneryMarker()
+  setStatus(`Added a ${kind} at the camera's focus — drag it into place.`)
+}
 
 /* shape */
 const shapeInputs = { shBase: 'baseRadius', shTop: 'topRadius', shHeight: 'height' }
@@ -1288,6 +1731,7 @@ document.getElementById('shapeApply').onclick = () => {
   clearSelection()
   updateReferences()
   rebuild()
+  rebuildScenery()
   syncShapeCamInputs()
   if (camPreviewOn) applyMichiCamera()
   setStatus(
@@ -1348,7 +1792,14 @@ document.getElementById('showBack').onchange = (e) => {
   material.needsUpdate = true
 }
 document.getElementById('showCap').onchange = (e) => { capMesh.visible = e.target.checked }
-document.getElementById('showTrail').onchange = (e) => { trailLine.visible = e.target.checked }
+document.getElementById('showTrail').onchange = (e) => {
+  trailLine.visible = e.target.checked
+  if (gateRef) gateRef.visible = e.target.checked
+}
+document.getElementById('showScenery').onchange = (e) => {
+  sceneryGroup.visible = e.target.checked
+  if (sceneryMarker) sceneryMarker.visible = e.target.checked
+}
 
 document.getElementById('saveBtn').onclick = () => {
   const patch = buildPatch()
@@ -1372,6 +1823,7 @@ document.getElementById('loadInput').addEventListener('change', async (e) => {
       clearSelection()
       updateReferences()
       rebuild()
+      rebuildScenery()
       syncShapeCamInputs()
       if (camPreviewOn) applyMichiCamera()
       setStatus(`Loaded ${file.name}. Undo history cleared.`)
@@ -1387,10 +1839,13 @@ document.getElementById('resetBtn').onclick = () => {
   computeDerived()
   base = buildMountainArrays()
   resetToBase()
+  baseItems = baseSceneryList()
+  sceneryEdits = { removed: new Set(), moved: new Map(), added: [] }
   undoStack.length = 0
   clearSelection()
   updateReferences()
   rebuild()
+  rebuildScenery()
   syncShapeCamInputs()
   if (camPreviewOn) applyMichiCamera()
   setStatus('Back to the pristine generated mountain.')
@@ -1400,7 +1855,11 @@ addEventListener('keydown', (e) => {
   const typing = /^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName ?? '')
   if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); undo(); return }
   if (typing) return
-  if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); deleteSelectedEdge() }
+  if (e.key === 'Backspace' || e.key === 'Delete') {
+    e.preventDefault()
+    if (mode === 'scenery') deleteSelectedScenery()
+    else deleteSelectedEdge()
+  }
   if (e.key === 'Enter' && splitting) finishSplit()
   if (e.key === 'Escape') {
     if (splitting) cancelSplit()
@@ -1426,8 +1885,19 @@ renderer.setAnimationLoop(() => {
 })
 
 syncShapeCamInputs()
+updateReferences()
 rebuild()
-setStatus(`Mountain rebuilt: <strong>${faces.length}</strong> faces, ${verts.length} welded vertices. Vertex mode — click the mesh to begin.`)
+rebuildScenery()
+
+// test hook (mirrors Michi's own __michi3d escape hatch): lets headless
+// checks project object positions to screen space and drive real clicks
+window.__michiEditor = {
+  camera,
+  renderer,
+  get sceneryList() { return sceneryList },
+  get sceneryGroup() { return sceneryGroup },
+}
+setStatus(`Mountain rebuilt: <strong>${faces.length}</strong> faces, ${verts.length} welded vertices, ${sceneryList.length} scenery objects. Vertex mode — click the mesh to begin.`)
 </script>
 </body>
 </html>

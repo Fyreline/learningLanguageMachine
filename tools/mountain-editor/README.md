@@ -58,6 +58,19 @@ take 5173/8000 (Mishka Hub) or 8100 (production Michi API).
   slider to ride the trail as the app frames it, with whatever shape you
   have applied. The five tuning values export in the patch and Michi's
   camera reads them at load.
+- **Place the scenery** — scenery mode. Every decorative object Michi
+  renders (pines, sakuras, rocks, lanterns, bridges, houses, the onsen, the
+  train's tunnel foothill, the pond) is here with a stable id: click to
+  select, drag to move (the object follows the terrain under the pointer),
+  type exact x/y/z, rotation in degrees, and scale, ⌫ removes. "Add object"
+  drops any kind — including extra torii — at the camera's focus. The
+  "scenery objects" View tick hides or shows the whole layer while you work
+  on the mesh. Not placeable: lesson stones, checkpoint torii and the
+  kitsune (the curriculum owns their spots — checkpoint gates mark specific
+  lessons), and the summit gate, which shows as a reference. Scenery edits
+  export as remove/move/add by id in the patch's scenery section; base ids
+  re-place themselves when the shape changes, while moved/added items keep
+  their absolute spots.
 - Undo (⌘Z), wireframe/double-sided/reference toggles, save/load.
 
 ## Getting edits into Michi

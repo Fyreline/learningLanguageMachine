@@ -51,6 +51,33 @@ interface CameraTuning {
   lookAtHeight: number
 }
 
+/** The decorative dressing — every placeable object except the ones the
+ * curriculum owns (lesson stones, checkpoint torii, kitsune, summit gate),
+ * which keep deriving from the manifest. `angle` is plain rotation.y. */
+type SceneryKind =
+  | 'pine' | 'sakura' | 'rock' | 'lantern' | 'bridge'
+  | 'house' | 'onsen' | 'torii' | 'hill' | 'pond'
+
+interface SceneryItem {
+  id: string
+  kind: SceneryKind
+  x: number
+  y: number
+  z: number
+  angle: number
+  scale: number
+  variant?: number
+}
+
+/** Scenery edits ride the same patch: base items (procedurally placed, ids
+ * stable for a given shape) can be removed or re-transformed; new items are
+ * appended. */
+interface SceneryPatch {
+  removed: string[]
+  moved: { id: string; x: number; y: number; z: number; angle: number; scale: number }[]
+  added: { kind: SceneryKind; x: number; y: number; z: number; angle: number; scale: number; variant?: number }[]
+}
+
 /** Hand edits to the generated mountain, made in tools/mountain-editor and
  * saved over src/mountainPatch.json. A patch is a diff against the generator's
  * output, keyed by face index: vertex moves land BEFORE the paint pass (so
@@ -70,6 +97,7 @@ interface MountainPatch {
   addedFaces: { positions: number[]; colors: number[] }[]
   shape?: Partial<MountainShape>
   camera?: Partial<CameraTuning>
+  scenery?: SceneryPatch
 }
 
 const mountainPatch = mountainPatchJson as unknown as MountainPatch
@@ -992,6 +1020,126 @@ function CameraRig({ nav }: { nav: React.MutableRefObject<Nav> }) {
 const GATE_A = APPROACH_A
 const GATE_POS = SUMMIT_CENTRE.clone()
 
+/** Procedural placement of every decoration, exactly as the r10 scene laid
+ * them out — but as a flat item list with stable ids, so the household can
+ * remove/move any of them (or add more) through mountainPatch.json. Ids are
+ * per-kind counters in generation order: stable for a given shape, since
+ * the keep-out tests depend on the spiral. */
+function baseScenery(): SceneryItem[] {
+  const items: SceneryItem[] = []
+  const counters = new Map<SceneryKind, number>()
+  const put = (kind: SceneryKind, p: THREE.Vector3, angle = 0, scale = 1, variant?: number) => {
+    const n = counters.get(kind) ?? 0
+    counters.set(kind, n + 1)
+    items.push({ id: `${kind}-${n}`, kind, x: p.x, y: p.y, z: p.z, angle, scale, variant })
+  }
+
+  const rnd = mulberry(20260709)
+  // slope pines, low-to-mid altitudes, clear of trail/river/caves
+  for (let i = 0; i < 95; i++) {
+    const y = Math.pow(rnd(), 1.9) * 12
+    const phi = rnd() * Math.PI * 2
+    const dy = nearestTurnDy(phi, y)
+    // generous keep-out above the trail — the camera flies through there
+    if (dy !== null && dy > -1.4 && dy < 2.6) continue
+    if (angDiff(phi, riverPhi(y)) < 0.22) continue
+    if (CAVES.some((c) => (angDiff(phi, c.phi) / (c.rp * 2)) ** 2 + ((y - c.y) / (c.ry * 2)) ** 2 < 1)) continue
+    const r = mountainR(y) + 0.15
+    put('pine', new THREE.Vector3(Math.cos(phi) * r, y - 0.1, Math.sin(phi) * r), 0, 0.9 + rnd() * 0.9)
+  }
+  // base-plain flora — a skirt of forest and blossom INSIDE the camera's
+  // low orbit (which stays ≥ path radius + 9), height-capped so treetops
+  // always pass well under the lens
+  for (let i = 0; i < 46; i++) {
+    const phi = rnd() * Math.PI * 2
+    const r = R0 + 3.5 + rnd() * 4.5
+    const p = new THREE.Vector3(Math.cos(phi) * r, 0, Math.sin(phi) * r)
+    if (rnd() < 0.32) put('sakura', p, 0, 0.9 + rnd() * 0.5)
+    else put('pine', p, 0, 0.9 + rnd() * 0.5)
+  }
+  for (let i = 0; i < 22; i++) {
+    const y = rnd() * 14
+    const phi = rnd() * Math.PI * 2
+    const dy = nearestTurnDy(phi, y)
+    if (dy !== null && dy > -1.2 && dy < 1.8) continue
+    const r = y < 0.5 ? R0 + 3.5 + rnd() * 4.5 : mountainR(y) + 0.1
+    put('rock', new THREE.Vector3(Math.cos(phi) * r, Math.max(0.1, y - 0.15), Math.sin(phi) * r), 0, 0.3 + rnd() * 0.55)
+  }
+  // rubble scattered across the summit plateau (kept clear of the gate)
+  let pr = 0
+  for (let i = 0; i < 12; i++) {
+    const a = rnd() * Math.PI * 2
+    const d = rnd() * RTOP * 0.82
+    const p = new THREE.Vector3(Math.cos(a) * d, PLATEAU_Y + 0.07, Math.sin(a) * d)
+    if (p.distanceTo(GATE_POS) < 1.1) continue
+    put('rock', p, pr * 1.3, 0.1 + rnd() * 0.32)
+    pr++
+  }
+  // lanterns line the trail's top third + greet you at the trailhead —
+  // just off the stones' line toward the shelf's outer half, hugging the
+  // trail rather than perched on the lip (household note, round seven)
+  for (let i = 0; i < 11; i++) {
+    const t = 0.68 + (i / 11) * 0.28
+    const p = pathPoint(t + 0.006)
+    const outward = new THREE.Vector3(p.x, 0, p.z).normalize().multiplyScalar(0.45)
+    put('lantern', p.clone().add(outward))
+  }
+  for (const t of [0.006, 0.018]) {
+    const p = pathPoint(t)
+    const outward = new THREE.Vector3(p.x, 0, p.z).normalize().multiplyScalar(0.8)
+    put('lantern', p.clone().add(outward))
+  }
+
+  // bridges where the river ducks under the trail, one per crossing —
+  // fixed-point iteration through the spiral's inverse, since the river's
+  // course wobbles with height
+  const crossT = (phi: number, k: number) => {
+    const off = (((phi - THETA0) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
+    return tAtAngle(THETA0 + off + k * Math.PI * 2)
+  }
+  for (let k = 0; k < TURNS; k++) {
+    let h = ((k + 0.5) / TURNS) * HPATH
+    let t = 0
+    for (let it = 0; it < 4; it++) {
+      t = crossT(riverPhi(h), k)
+      h = t * HPATH
+    }
+    if (t > 0.02 && t < 0.97) {
+      const p = pathPoint(t)
+      put('bridge', new THREE.Vector3(p.x, p.y + 0.1, p.z), -trailAngle(t) - Math.PI / 2)
+    }
+  }
+
+  // the base village + onsen + the shinkansen's tunnel foothill + pond
+  for (const i of [0, 1, 2]) {
+    const phi = 5.35 + i * 0.22
+    const r = R0 + 8 + (i % 2) * 1.6
+    put('house', new THREE.Vector3(Math.cos(phi) * r, 0, Math.sin(phi) * r), -phi + Math.PI / 2 + (i - 1) * 0.3, 1, i === 1 ? 1 : 0)
+  }
+  put('onsen', new THREE.Vector3(Math.cos(0.8) * (R0 + 8.5), 0, Math.sin(0.8) * (R0 + 8.5)))
+  put('hill', new THREE.Vector3(Math.cos(3.6) * (R0 + 5), 0, Math.sin(3.6) * (R0 + 5)), -3.6)
+  put('pond', new THREE.Vector3(Math.cos(riverPhi(0)) * (R0 + 3.2), 0.06, Math.sin(riverPhi(0)) * (R0 + 3.2)))
+  return items
+}
+
+/** Exported for the scenery-patch test — the app applies the committed
+ * patch's scenery section over the procedural base. */
+export function applyScenery(items: SceneryItem[], patch?: SceneryPatch): SceneryItem[] {
+  if (!patch) return items
+  const removed = new Set(patch.removed ?? [])
+  const moved = new Map((patch.moved ?? []).map((m) => [m.id, m]))
+  const out = items
+    .filter((it) => !removed.has(it.id))
+    .map((it) => {
+      const m = moved.get(it.id)
+      return m ? { ...it, x: m.x, y: m.y, z: m.z, angle: m.angle, scale: m.scale } : it
+    })
+  ;(patch.added ?? []).forEach((a, i) => out.push({ id: `add-${i}`, ...a }))
+  return out
+}
+
+const DECOR: SceneryItem[] = applyScenery(baseScenery(), mountainPatch.scenery)
+
 /** The reward for the last lesson: a hinomaru sun rising behind the summit
  * gate. It lives on the eye→gate ray, so it is centred in the gate's frame
  * from wherever the camera stands, and it climbs into place over the final
@@ -1161,27 +1309,6 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
   }, [])
   useEffect(() => () => walkway.dispose(), [walkway])
 
-  // bridges where the river ducks under the trail, one per crossing —
-  // fixed-point iteration through the spiral's inverse, since the river's
-  // course wobbles with height
-  const bridges = useMemo(() => {
-    const list: { pos: THREE.Vector3; angle: number }[] = []
-    const crossT = (phi: number, k: number) => {
-      const off = (((phi - THETA0) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
-      return tAtAngle(THETA0 + off + k * Math.PI * 2)
-    }
-    for (let k = 0; k < TURNS; k++) {
-      let h = ((k + 0.5) / TURNS) * HPATH
-      let t = 0
-      for (let it = 0; it < 4; it++) {
-        t = crossT(riverPhi(h), k)
-        h = t * HPATH
-      }
-      if (t > 0.02 && t < 0.97) list.push({ pos: pathPoint(t), angle: trailAngle(t) })
-    }
-    return list
-  }, [])
-
   // the lead-in: before lesson one the trail doesn't just stop — it bends
   // away across the plain and carries on out of frame (household note)
   const leadIn = useMemo(() => {
@@ -1206,69 +1333,6 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
     return geo
   }, [])
   useEffect(() => () => leadIn.dispose(), [leadIn])
-
-  const scenery = useMemo(() => {
-    const rnd = mulberry(20260709)
-    const pines: { pos: THREE.Vector3; scale: number }[] = []
-    const sakuras: { pos: THREE.Vector3; scale: number }[] = []
-    const rocks: { pos: THREE.Vector3; scale: number }[] = []
-    const lanterns: THREE.Vector3[] = []
-    // slope pines, low-to-mid altitudes, clear of trail/river/caves
-    for (let i = 0; i < 95; i++) {
-      const y = Math.pow(rnd(), 1.9) * 12
-      const phi = rnd() * Math.PI * 2
-      const dy = nearestTurnDy(phi, y)
-      // generous keep-out above the trail — the camera flies through there
-      if (dy !== null && dy > -1.4 && dy < 2.6) continue
-      if (angDiff(phi, riverPhi(y)) < 0.22) continue
-      if (CAVES.some((c) => (angDiff(phi, c.phi) / (c.rp * 2)) ** 2 + ((y - c.y) / (c.ry * 2)) ** 2 < 1)) continue
-      const r = mountainR(y) + 0.15
-      pines.push({ pos: new THREE.Vector3(Math.cos(phi) * r, y - 0.1, Math.sin(phi) * r), scale: 0.9 + rnd() * 0.9 })
-    }
-    // base-plain flora — a skirt of forest and blossom INSIDE the camera's
-    // low orbit (which stays ≥ path radius + 9), height-capped so treetops
-    // always pass well under the lens
-    for (let i = 0; i < 46; i++) {
-      const phi = rnd() * Math.PI * 2
-      const r = R0 + 3.5 + rnd() * 4.5
-      const p = new THREE.Vector3(Math.cos(phi) * r, 0, Math.sin(phi) * r)
-      if (rnd() < 0.32) sakuras.push({ pos: p, scale: 0.9 + rnd() * 0.5 })
-      else pines.push({ pos: p, scale: 0.9 + rnd() * 0.5 })
-    }
-    for (let i = 0; i < 22; i++) {
-      const y = rnd() * 14
-      const phi = rnd() * Math.PI * 2
-      const dy = nearestTurnDy(phi, y)
-      if (dy !== null && dy > -1.2 && dy < 1.8) continue
-      const r = y < 0.5 ? R0 + 3.5 + rnd() * 4.5 : mountainR(y) + 0.1
-      rocks.push({ pos: new THREE.Vector3(Math.cos(phi) * r, Math.max(0.1, y - 0.15), Math.sin(phi) * r), scale: 0.3 + rnd() * 0.55 })
-    }
-    // rubble scattered across the summit plateau (kept clear of the gate)
-    const plateauRocks: { pos: THREE.Vector3; scale: number }[] = []
-    const rimR = RTOP
-    for (let i = 0; i < 12; i++) {
-      const a = rnd() * Math.PI * 2
-      const d = rnd() * rimR * 0.82
-      const p = new THREE.Vector3(Math.cos(a) * d, PLATEAU_Y + 0.07, Math.sin(a) * d)
-      if (p.distanceTo(GATE_POS) < 1.1) continue
-      plateauRocks.push({ pos: p, scale: 0.1 + rnd() * 0.32 })
-    }
-    // lanterns line the trail's top third + greet you at the trailhead —
-    // just off the stones' line toward the shelf's outer half, hugging the
-    // trail rather than perched on the lip (household note, round seven)
-    for (let i = 0; i < 11; i++) {
-      const t = 0.68 + (i / 11) * 0.28
-      const p = pathPoint(t + 0.006)
-      const outward = new THREE.Vector3(p.x, 0, p.z).normalize().multiplyScalar(0.45)
-      lanterns.push(p.clone().add(outward))
-    }
-    for (const t of [0.006, 0.018]) {
-      const p = pathPoint(t)
-      const outward = new THREE.Vector3(p.x, 0, p.z).normalize().multiplyScalar(0.8)
-      lanterns.push(p.clone().add(outward))
-    }
-    return { pines, sakuras, rocks, lanterns, plateauRocks }
-  }, [])
 
   const stars = useMemo(() => {
     const rnd = mulberry(42)
@@ -1296,7 +1360,6 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
   const stateColour = (n: Node3D) =>
     n.state === 'done' ? pal.trailDone : n.state === 'current' ? pal.clay : n.state === 'available' ? pal.trail : pal.cloud
 
-  const riverMouthPhi = riverPhi(0)
   const unitOfFocus = units[nodes[Math.min(nodes.length - 1, Math.max(0, currentIndex))]?.unitIndex ?? 0]
 
   return (
@@ -1385,12 +1448,6 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
             </mesh>
           )
         })}
-
-        {/* river mouth pond */}
-        <mesh position={[Math.cos(riverMouthPhi) * (R0 + 3.2), 0.06, Math.sin(riverMouthPhi) * (R0 + 3.2)]}>
-          <cylinderGeometry args={[2.5, 2.7, 0.14, 12]} />
-          <meshStandardMaterial color={pal.liquid} flatShading />
-        </mesh>
 
         {/* lesson stones — set into the carved shelf */}
         {nodes.map((n, i) => (
@@ -1496,54 +1553,74 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
           clay={pal.clay}
         />
 
-        {/* bridges where the river passes under the trail */}
-        {bridges.map((b, i) => (
-          <mesh key={i} position={[b.pos.x, b.pos.y + 0.1, b.pos.z]} rotation={[0, -b.angle - Math.PI / 2, 0]}>
-            <boxGeometry args={[2.4, 0.14, 1.2]} />
-            <meshStandardMaterial color={pal.kraft} flatShading />
-          </mesh>
-        ))}
-
-        {/* flora + rocks + lanterns */}
-        {scenery.pines.map((t, i) => (
-          <Pine key={`p${i}`} position={t.pos} scale={t.scale} foliage={pal.olive} trunk={pal.kraft} />
-        ))}
-        {scenery.sakuras.map((t, i) => (
-          <Sakura key={`s${i}`} position={t.pos} scale={t.scale} trunk={pal.kraft} />
-        ))}
-        {scenery.rocks.map((r, i) => (
-          <mesh key={`r${i}`} position={r.pos} scale={r.scale}>
-            <icosahedronGeometry args={[1, 0]} />
-            <meshStandardMaterial color={pal.cloud} flatShading />
-          </mesh>
-        ))}
-        {scenery.plateauRocks.map((r, i) => (
-          <mesh key={`pr${i}`} position={r.pos} scale={r.scale} rotation={[0, i * 1.3, 0]}>
-            <icosahedronGeometry args={[1, 0]} />
-            <meshStandardMaterial color={pal.cloud} flatShading />
-          </mesh>
-        ))}
-        {scenery.lanterns.map((p, i) => (
-          <Lantern key={`l${i}`} position={p} lit={shade > 0.15} warm={pal.gold} post={pal.ink} />
-        ))}
-
-        {/* the base village + onsen */}
-        <group>
-          {([0, 1, 2] as const).map((i) => {
-            const phi = 5.35 + i * 0.22
-            const r = R0 + 8 + (i % 2) * 1.6
-            return (
-              <House
-                key={i}
-                position={new THREE.Vector3(Math.cos(phi) * r, 0, Math.sin(phi) * r)}
-                rotation={-phi + Math.PI / 2 + (i - 1) * 0.3}
-                wall="#efe7d6"
-                roof={i === 1 ? pal.clay : pal.ink}
-              />
-            )
-          })}
-        </group>
-        <Onsen position={new THREE.Vector3(Math.cos(0.8) * (R0 + 8.5), 0, Math.sin(0.8) * (R0 + 8.5))} pal={pal} />
+        {/* the decorative dressing — every item placeable/removable via the
+            patch's scenery section (tools/mountain-editor) */}
+        {DECOR.map((it) => {
+          const pos = new THREE.Vector3(it.x, it.y, it.z)
+          switch (it.kind) {
+            case 'pine':
+              return <Pine key={it.id} position={pos} scale={it.scale} foliage={pal.olive} trunk={pal.kraft} />
+            case 'sakura':
+              return <Sakura key={it.id} position={pos} scale={it.scale} trunk={pal.kraft} />
+            case 'rock':
+              return (
+                <mesh key={it.id} position={pos} scale={it.scale} rotation={[0, it.angle, 0]}>
+                  <icosahedronGeometry args={[1, 0]} />
+                  <meshStandardMaterial color={pal.cloud} flatShading />
+                </mesh>
+              )
+            case 'lantern':
+              return <Lantern key={it.id} position={pos} lit={shade > 0.15} warm={pal.gold} post={pal.ink} />
+            case 'bridge':
+              return (
+                <mesh key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <boxGeometry args={[2.4, 0.14, 1.2]} />
+                  <meshStandardMaterial color={pal.kraft} flatShading />
+                </mesh>
+              )
+            case 'house':
+              return (
+                <group key={it.id} position={pos} scale={it.scale}>
+                  <House
+                    position={new THREE.Vector3(0, 0, 0)}
+                    rotation={it.angle}
+                    wall="#efe7d6"
+                    roof={it.variant === 1 ? pal.clay : pal.ink}
+                  />
+                </group>
+              )
+            case 'onsen':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <Onsen position={new THREE.Vector3(0, 0, 0)} pal={pal} />
+                </group>
+              )
+            case 'torii':
+              return <Torii key={it.id} position={pos} angle={-it.angle} scale={it.scale} colour={pal.clay} />
+            case 'hill':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[0, 0.6, 0]}>
+                    <coneGeometry args={[3, 2.8, 8]} />
+                    <meshStandardMaterial color={pal.olive} flatShading />
+                  </mesh>
+                  <group position={[0, 0.45, 0]}>
+                    <mesh rotation={[0, 0, Math.PI / 2]}>
+                      <cylinderGeometry args={[0.75, 0.75, 4, 10, 1, true]} />
+                      <meshStandardMaterial color={pal.ink} side={THREE.DoubleSide} flatShading />
+                    </mesh>
+                  </group>
+                </group>
+              )
+            case 'pond':
+              return (
+                <mesh key={it.id} position={pos} scale={it.scale}>
+                  <cylinderGeometry args={[2.5, 2.7, 0.14, 12]} />
+                  <meshStandardMaterial color={pal.liquid} flatShading />
+                </mesh>
+              )
+          }
+        })}
 
         {/* night sky, fading in with altitude */}
         <points>
@@ -1555,20 +1632,8 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
 
         <Clouds />
 
-        {/* the shinkansen loop + its tunnel foothill */}
+        {/* the shinkansen loop (its tunnel foothill is a scenery item) */}
         <Train pal={pal} />
-        <group position={[Math.cos(3.6) * (R0 + 5), 0, Math.sin(3.6) * (R0 + 5)]}>
-          <mesh position={[0, 0.6, 0]}>
-            <coneGeometry args={[3, 2.8, 8]} />
-            <meshStandardMaterial color={pal.olive} flatShading />
-          </mesh>
-          <group position={[0, 0.45, 0]} rotation={[0, -3.6, 0]}>
-            <mesh rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry args={[0.75, 0.75, 4, 10, 1, true]} />
-              <meshStandardMaterial color={pal.ink} side={THREE.DoubleSide} flatShading />
-            </mesh>
-          </group>
-        </group>
       </Canvas>
 
       {/* HTML overlays */}

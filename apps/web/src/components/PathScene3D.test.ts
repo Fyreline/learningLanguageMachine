@@ -3,7 +3,7 @@
 // application order — moves before the paint pass, recolours after it,
 // deletions/additions last — and the wrong-build guard.
 import { describe, expect, it } from 'vitest'
-import { buildMountain } from './PathScene3D'
+import { applyScenery, buildMountain } from './PathScene3D'
 
 const pal = {
   paper: '#f7fbfa',
@@ -73,6 +73,23 @@ describe('buildMountain patch application', () => {
     expect(pos.getY(last)).toBeCloseTo(30, 5)
     expect(col.getX(last)).toBeCloseTo(1, 5)
     expect(col.getY(last)).toBeCloseTo(0, 5)
+  })
+
+  it('removes, moves and adds scenery items', () => {
+    const base = [
+      { id: 'pine-0', kind: 'pine', x: 1, y: 0, z: 0, angle: 0, scale: 1 },
+      { id: 'house-0', kind: 'house', x: 2, y: 0, z: 0, angle: 0.5, scale: 1, variant: 1 },
+    ] as Parameters<typeof applyScenery>[0]
+    const out = applyScenery(base, {
+      removed: ['pine-0'],
+      moved: [{ id: 'house-0', x: 3, y: 1, z: 2, angle: 1.2, scale: 2 }],
+      added: [{ kind: 'torii', x: 9, y: 0, z: 9, angle: 0.4, scale: 1.5 }],
+    })
+    expect(out.map((i) => i.id)).toEqual(['house-0', 'add-0'])
+    expect(out[0]).toMatchObject({ x: 3, y: 1, z: 2, angle: 1.2, scale: 2, variant: 1 })
+    expect(out[1]).toMatchObject({ kind: 'torii', x: 9, scale: 1.5 })
+    // and with no scenery patch, untouched
+    expect(applyScenery(base, undefined)).toBe(base)
   })
 
   it('ignores a patch saved against a different mountain build', () => {
