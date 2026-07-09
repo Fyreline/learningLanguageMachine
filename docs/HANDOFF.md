@@ -135,3 +135,16 @@ migration ever did real damage. Both closed:
   frames before screenshots. Known rough edges: no reduced-motion pause yet, node taps
   unverified in-harness (stock r3f raycast; try on a real device), summit torii cluster
   slightly crowded on the last helix rows.
+- **3D path, round two (household review).** Trail now carved into one parametric
+  mountain mesh (helix-following vertex rows, sharp radius step = flat dirt shelf +
+  leaning cut wall); close radial camera (~±1 lesson, scroll-only, sun + fill follow the
+  orbit); polygon snow + altitude-banded per-face colours; river/bridges/pond, painted
+  cave mouths, onsen with animated steam, sakura village, clouds; train orientation
+  fixed (rotation.y = -a maps the nose to the track tangent). Two hard-won gotchas:
+  (1) the helix wrap seam pairs vertex rows shifted by ONE FULL TURN — stitching by raw
+  row index tears a dark crack down the trailhead azimuth (looked like camera clipping);
+  (2) anything randomised per-column must be seeded from column index, not drawn from a
+  running stream, or duplicated seam columns diverge. Keep scenery + base flora outside
+  the camera's orbit shell (path radius + dist clamp) and treetops under eye height, or
+  they end up edge-on across the lens. The speaking corner card is configured-gated
+  (hidden until an API key lands in .env) — paused by the household 2026-07-09.
