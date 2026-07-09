@@ -40,6 +40,14 @@ class Settings(BaseSettings):
     # http non-loopback URL at startup. ---
     mishka_base_url: str = "http://127.0.0.1:8000"
 
+    # --- Freeform conversation mode (routers/converse.py). The household
+    # adds MICHI_ANTHROPIC_API_KEY to .env themselves; without it the
+    # endpoint answers a friendly 503 and the UI explains. Haiku by default:
+    # NPC small talk is short and cheap, and latency matters more than depth
+    # in a spoken back-and-forth. ---
+    anthropic_api_key: str = ""
+    anthropic_model: str = "claude-haiku-4-5-20251001"
+
     # --- CORS. Michi's web app owns 5174 (Mishka's owns 5173). ---
     cors_origins: list[str] = [
         "http://localhost:5174",

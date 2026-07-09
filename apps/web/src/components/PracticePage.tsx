@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { fetchReviewsDue } from '../curriculum/loader'
 import type { ReviewsDue } from '../curriculum/types'
+import { ConverseScene } from './ConverseScene'
 import { KanaTrainer } from './KanaTrainer'
 import { ReviewPlayer, type ReviewMode } from './ReviewPlayer'
 
@@ -12,6 +13,7 @@ export function PracticePage() {
   const [due, setDue] = useState<ReviewsDue | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeMode, setActiveMode] = useState<ReviewMode | null>(null)
+  const [conversing, setConversing] = useState(false)
 
   const refresh = useCallback(() => {
     fetchReviewsDue().then(setDue, (e) => setError(e.message))
@@ -102,10 +104,33 @@ export function PracticePage() {
         </button>
       </div>
 
+      {/* the speaking corner — freeform, mic-only, ungraded */}
+      <div className="mt-4 rounded-lg border border-line bg-paper-mid p-6">
+        <div className="flex items-center gap-2">
+          <h2 className="font-display text-base font-medium text-ink">The speaking corner</h2>
+          <span className="rounded-full border border-line-strong px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-soft">
+            Freeform
+          </span>
+        </div>
+        <p className="mt-1 text-sm text-ink-soft">
+          A real back-and-forth — order at a restaurant, buy snacks, find your platform. Just
+          you, a microphone, and someone patient on the other side. Nothing is graded or saved.
+        </p>
+        <button
+          type="button"
+          onClick={() => setConversing(true)}
+          className="mt-4 min-h-11 w-full rounded-lg border border-line-strong px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-oat"
+        >
+          Step in and say hello
+        </button>
+      </div>
+
       {/* kana side trail */}
       <div className="mt-4">
         <KanaTrainer />
       </div>
+
+      {conversing && <ConverseScene onClose={() => setConversing(false)} />}
 
       {activeMode && (
         <ReviewPlayer
