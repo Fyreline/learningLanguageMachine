@@ -7,7 +7,8 @@ import { fetchAllItems } from '../curriculum/loader'
 import type { BankItem } from '../curriculum/types'
 import { fetchManifest } from '../pathData'
 import { speak } from '../audio/tts'
-import { getSettings } from '../settings'
+import { getSettings, useSettings } from '../settings'
+import { currentTripDay, itineraryDay, tagsForLeg } from '../itinerary'
 
 const STRENGTH_DOT = ['bg-cloud', 'bg-kraft', 'bg-oat border border-line-strong', 'bg-olive', 'bg-clay']
 const STRENGTH_LABEL = ['new', 'seen', 'learning', 'known', 'strong']
@@ -28,6 +29,7 @@ export function PhrasebookPage() {
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [activeTag, setActiveTag] = useState<string | null>(null)
+  const { trip_date } = useSettings()
 
   useEffect(() => {
     fetchAllItems().then(setItems, (e) => setError(e.message))
@@ -54,6 +56,21 @@ export function PhrasebookPage() {
   )
 
   const tripCore = useMemo(() => filtered.filter((i) => i.trip_core), [filtered])
+
+  // "Today" per the trip's day-by-day schedule (docs/DESIGN.md household-safe
+  // convention — city/leg only). Quietly absent outside the 14-day window
+  // (before departure, or once home) rather than showing something stale.
+  const today = useMemo(() => {
+    const dayIndex = currentTripDay(trip_date)
+    if (dayIndex === null) return null
+    const day = itineraryDay(dayIndex)
+    if (!day) return null
+    const tags = tagsForLeg(day.leg)
+    const matches = phrases.filter((i) => i.tags.some((t) => tags.includes(t)))
+    // trip-core first (the must-not-fumble set), then whatever else matches
+    matches.sort((a, b) => Number(!!b.trip_core) - Number(!!a.trip_core))
+    return { city: day.city, items: matches.slice(0, 8) }
+  }, [phrases, trip_date])
 
   const byUnit = useMemo(() => {
     const groups = new Map<string, BankItem[]>()
@@ -102,6 +119,14 @@ export function PhrasebookPage() {
             <TagChip key={t} label={t} active={activeTag === t} onClick={() => setActiveTag(t)} />
           ))}
         </div>
+      )}
+
+      {today && today.items.length > 0 && !query && activeTag === null && (
+        <section className="mt-6">
+          <h2 className="font-display text-sm font-semibold text-ink">Today in {today.city}</h2>
+          <p className="mt-0.5 text-xs text-ink-soft">Phrases that tend to come up here.</p>
+          <ItemList items={today.items} />
+        </section>
       )}
 
       {tripCore.length > 0 && !query && activeTag === null && (
