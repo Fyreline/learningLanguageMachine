@@ -3,7 +3,7 @@
 // scene can be seen fully dressed before the lesson engine (phase 3) writes
 // real progress. Mock mode never touches the server and shows a banner chip.
 
-import { get } from './api'
+import { get, post } from './api'
 import type { KitsuneTone } from './components/AnimatedKitsune'
 
 export type LessonState = 'done' | 'current' | 'available' | 'locked'
@@ -49,6 +49,8 @@ export interface StatsMe {
 
 export interface Household {
   partners: {
+    user_id: number
+    is_me: boolean
     display_name: string
     tone: KitsuneTone
     streak: number
@@ -57,6 +59,9 @@ export interface Household {
     current_unit_title: string | null
   }[]
   together_phrases: number
+  /** A calm "thinking of you" poke from your partner, if unseen and less
+   * than a day old (docs/CURRICULUM.md §8: never a guilt mechanic). */
+  pending_nudge: { id: number; from_display_name: string; created_at: string } | null
 }
 
 export const isMockMode = () =>
@@ -75,6 +80,16 @@ export async function fetchStatsMe(): Promise<StatsMe> {
 export async function fetchHousehold(): Promise<Household> {
   const h = await get<Household>('/api/stats/household')
   return isMockMode() ? mockHousehold(h) : h
+}
+
+/** Sends a nudge to your partner — a no-op (server-side cooldown) if you
+ * already nudged them recently, so double-tapping never spams them. */
+export function sendNudge(): Promise<{ sent: boolean; to_display_name?: string }> {
+  return post('/api/stats/nudge', {})
+}
+
+export function dismissNudge(): Promise<{ ok: boolean }> {
+  return post('/api/stats/nudge/dismiss', {})
 }
 
 /* ---------------------------- mock dressing ---------------------------- */
@@ -135,6 +150,8 @@ function mockHousehold(real: Household): Household {
       : [
           ...real.partners,
           {
+            user_id: -1,
+            is_me: false,
             display_name: 'Garfield',
             tone: 'sky' as const,
             streak: 0,
@@ -152,5 +169,6 @@ function mockHousehold(real: Household): Household {
       current_lesson_id: i === 0 ? 'u04.l3' : 'u05.l2',
     })),
     together_phrases: 214,
+    pending_nudge: real.pending_nudge,
   }
 }

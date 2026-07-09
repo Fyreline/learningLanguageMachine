@@ -23,6 +23,19 @@ from ..scoring import fmt_ts, now_utc
 router = APIRouter(prefix="/curriculum", tags=["curriculum"])
 
 
+def find_partner_row(db: Session, user_id: int) -> User | None:
+    """The other real person in the household — filtered by mishka_user_id,
+    not raw row id, since two Michi logins can share one real person's
+    mishka_user_id (e.g. a second device/account for the same household
+    member); "any other row" would wrongly resolve that person's own other
+    login as their "partner". Shared by the manifest endpoint and stats.py
+    (household list, nudges)."""
+    own_mishka_user_id = db.get(User, user_id).mishka_user_id
+    return db.execute(
+        select(User).where(User.mishka_user_id != own_mishka_user_id).limit(1)
+    ).scalar_one_or_none()
+
+
 def _best_completions(db: Session, user_id: int) -> dict[str, dict[str, int]]:
     """lesson_id -> {stars, best_score} over every completion row."""
     rows = db.execute(
@@ -355,9 +368,7 @@ def get_manifest(
     }
 
     # Partner presence (docs/DESIGN.md §5): aggregates only, never item rows.
-    partner_row = db.execute(
-        select(User).where(User.id != user_id).limit(1)
-    ).scalar_one_or_none()
+    partner_row = find_partner_row(db, user_id)
     partner = None
     if partner_row:
         partner_settings = json.loads(partner_row.settings_json or "{}")

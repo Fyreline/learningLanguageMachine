@@ -6,9 +6,11 @@
 
 import { useEffect, useState } from 'react'
 import {
+  dismissNudge,
   fetchHousehold,
   fetchStatsMe,
   isMockMode,
+  sendNudge,
   type Household,
   type StatsMe,
 } from '../pathData'
@@ -54,6 +56,37 @@ function WeekChart({ stats }: { stats: StatsMe }) {
       })}
       <line x1="4" x2="304" y1={goalY} y2={goalY} strokeDasharray="4 4" strokeWidth="1.5" className="stroke-olive" />
     </svg>
+  )
+}
+
+type NudgeState = 'idle' | 'sending' | 'sent' | 'already'
+
+/** A single-tap "thinking of you" poke — no counts, no red badge, and it
+ * settles into a quiet confirmation rather than demanding attention. */
+function NudgeButton() {
+  const [state, setState] = useState<NudgeState>('idle')
+
+  if (state === 'sent') {
+    return <span className="text-xs text-olive">Nudge sent</span>
+  }
+  if (state === 'already') {
+    return <span className="text-xs text-ink-soft">Already nudged them today</span>
+  }
+  return (
+    <button
+      type="button"
+      disabled={state === 'sending'}
+      onClick={() => {
+        setState('sending')
+        sendNudge().then(
+          (r) => setState(r.sent ? 'sent' : 'already'),
+          () => setState('idle'),
+        )
+      }}
+      className="rounded-full border border-line-strong px-2.5 py-1 text-xs font-medium text-ink-mid transition hover:border-clay hover:text-clay disabled:opacity-50"
+    >
+      {state === 'sending' ? 'Sending…' : 'Nudge'}
+    </button>
   )
 }
 
@@ -167,7 +200,22 @@ export function StatsPage() {
       {/* travel buddies — cooperative, always shown */}
       {household && household.partners.length > 0 && (
         <div className="mt-4 rounded-lg border border-line bg-paper-mid p-5">
-          <h2 className="font-display text-sm font-semibold">Travel buddies</h2>
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-display text-sm font-semibold">Travel buddies</h2>
+            {household.pending_nudge && (
+              <button
+                type="button"
+                onClick={() => {
+                  setHousehold((h) => (h ? { ...h, pending_nudge: null } : h))
+                  void dismissNudge()
+                }}
+                className="text-xs text-ink-soft underline decoration-dotted underline-offset-2 hover:text-ink"
+                title="Dismiss"
+              >
+                {household.pending_nudge.from_display_name} was thinking of you
+              </button>
+            )}
+          </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {household.partners.map((p) => (
               <div key={p.display_name} className="flex items-center gap-3 rounded-md border border-line bg-paper p-3.5">
@@ -177,13 +225,14 @@ export function StatsPage() {
                 >
                   {p.display_name.slice(0, 1).toUpperCase()}
                 </span>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-ink">{p.display_name}</p>
                   <p className="truncate text-xs text-ink-soft">
                     {p.current_unit_title ? `${p.current_unit_title} · ` : ''}
                     {p.words_known} phrases · {p.streak}-day streak
                   </p>
                 </div>
+                {!p.is_me && <NudgeButton />}
               </div>
             ))}
           </div>

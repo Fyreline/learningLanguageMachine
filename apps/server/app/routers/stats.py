@@ -12,17 +12,45 @@ import json
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .. import content
 from ..auth import current_user
 from ..db import get_session
-from ..models import DailyActivity, ItemProgress, User
-from .curriculum import _trip_ready, _words_known, current_lesson_id
+from ..models import DailyActivity, ItemProgress, Nudge, User
+from .curriculum import _trip_ready, _words_known, current_lesson_id, find_partner_row
 
 router = APIRouter(prefix="/stats", tags=["stats"])
+
+# A nudge older than this no longer shows as "new" — it's a passing "thinking
+# of you" poke (docs/CURRICULUM.md §8: no guilt UI), not a standing reminder.
+NUDGE_VISIBLE_HOURS = 24
+# Rate limit: sending another nudge to the same partner within this window
+# just returns the existing one instead of piling up pokes.
+NUDGE_COOLDOWN_HOURS = 12
+
+
+def _pending_nudge(db: Session, user_id: int) -> dict[str, Any] | None:
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=NUDGE_VISIBLE_HOURS)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+    row = db.execute(
+        select(Nudge, User.display_name)
+        .join(User, User.id == Nudge.from_user_id)
+        .where(
+            Nudge.to_user_id == user_id,
+            Nudge.dismissed_at.is_(None),
+            Nudge.created_at >= cutoff,
+        )
+        .order_by(Nudge.created_at.desc())
+        .limit(1)
+    ).first()
+    if not row:
+        return None
+    nudge, from_display_name = row
+    return {"id": nudge.id, "from_display_name": from_display_name, "created_at": nudge.created_at}
 
 
 def _streak(db: Session, user_id: int, today: date) -> dict[str, Any]:
@@ -149,10 +177,21 @@ def stats_me(
 
 @router.get("/household")
 def stats_household(
-    _user_id: int = Depends(current_user), db: Session = Depends(get_session)
+    user_id: int = Depends(current_user), db: Session = Depends(get_session)
 ) -> dict[str, Any]:
     today = datetime.now(timezone.utc).date()
-    users = db.execute(select(User).order_by(User.id)).scalars().all()
+    all_users = db.execute(select(User).order_by(User.id)).scalars().all()
+    # Collapse to one row per real person — two Michi logins can share the
+    # same mishka_user_id (e.g. a second device/account for the same
+    # household member), and without this the household view double-counts
+    # them as if they were two different partners.
+    seen_mishka_ids: set[int] = set()
+    users = []
+    for u in all_users:
+        if u.mishka_user_id in seen_mishka_ids:
+            continue
+        seen_mishka_ids.add(u.mishka_user_id)
+        users.append(u)
     manifest = content.manifest()
     unit_titles = {
         lesson["id"]: u["title"]
@@ -160,12 +199,16 @@ def stats_household(
         for lesson in u["lessons"]
     }
 
+    own_mishka_user_id = db.get(User, user_id).mishka_user_id
+
     partners = []
     for u in users:
         current = current_lesson_id(db, u.id)
         u_settings = json.loads(u.settings_json or "{}")
         partners.append(
             {
+                "user_id": u.id,
+                "is_me": u.mishka_user_id == own_mishka_user_id,
                 "display_name": u.display_name,
                 # each user's own chosen kitsune palette (default clay if unset
                 # or a legacy row) — the buddies swatch matches their walker
@@ -184,4 +227,57 @@ def stats_household(
         )
     ).scalar_one()
 
-    return {"partners": partners, "together_phrases": together}
+    return {
+        "partners": partners,
+        "together_phrases": together,
+        "pending_nudge": _pending_nudge(db, user_id),
+    }
+
+
+@router.post("/nudge")
+def send_nudge(
+    user_id: int = Depends(current_user), db: Session = Depends(get_session)
+) -> dict[str, Any]:
+    """A calm, one-tap "thinking of you" poke to your partner — never a
+    guilt mechanic (docs/CURRICULUM.md §8): no counts, no red badges, just a
+    single line the next time they open the app, and it fades after a day."""
+    partner = find_partner_row(db, user_id)
+    if not partner:
+        raise HTTPException(404, "No partner to nudge yet")
+
+    cooldown_cutoff = (
+        datetime.now(timezone.utc) - timedelta(hours=NUDGE_COOLDOWN_HOURS)
+    ).strftime("%Y-%m-%d %H:%M:%S")
+    existing = db.execute(
+        select(Nudge)
+        .where(
+            Nudge.from_user_id == user_id,
+            Nudge.to_user_id == partner.id,
+            Nudge.created_at >= cooldown_cutoff,
+        )
+        .order_by(Nudge.created_at.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+    if existing:
+        return {"sent": False, "reason": "already nudged recently", "created_at": existing.created_at}
+
+    nudge = Nudge(from_user_id=user_id, to_user_id=partner.id)
+    db.add(nudge)
+    db.commit()
+    return {"sent": True, "to_display_name": partner.display_name}
+
+
+@router.post("/nudge/dismiss")
+def dismiss_nudge(
+    user_id: int = Depends(current_user), db: Session = Depends(get_session)
+) -> dict[str, Any]:
+    pending = db.execute(
+        select(Nudge)
+        .where(Nudge.to_user_id == user_id, Nudge.dismissed_at.is_(None))
+        .order_by(Nudge.created_at.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+    if pending:
+        pending.dismissed_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        db.commit()
+    return {"ok": True}

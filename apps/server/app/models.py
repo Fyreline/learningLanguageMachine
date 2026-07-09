@@ -93,3 +93,16 @@ class DailyActivity(Base):
     minutes: Mapped[float] = mapped_column(nullable=False, server_default=text("0"))
     lessons: Mapped[int] = mapped_column(nullable=False, server_default=text("0"))
     reviews: Mapped[int] = mapped_column(nullable=False, server_default=text("0"))
+
+
+# ============ nudges — a calm "thinking of you" poke, not a guilt mechanic ============
+class Nudge(Base):
+    __tablename__ = "nudges"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    from_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    to_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[str] = mapped_column(nullable=False, server_default=NOW)
+    dismissed_at: Mapped[str | None] = mapped_column(nullable=True)
+
+    __table_args__ = (Index("idx_nudges_to_user", "to_user_id", "dismissed_at"),)
