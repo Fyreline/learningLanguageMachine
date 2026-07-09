@@ -32,6 +32,18 @@ take 5173/8000 (Mishka Hub) or 8100 (production Michi API).
   exact coordinates.
 - **Recolour a vertex** — pick a colour, then "Paint vertex" (blends across
   the touching faces) or "Paint touching faces" (solid facets).
+- **Reshape the silhouette** — vertex mode, select a vertex to set the height
+  line, then "Move points below" pushes every vertex at or below that height
+  out from the centre (negative amounts pull in). "Equal" shifts the whole
+  skirt uniformly; "tapered" scales the move from full at the base to zero at
+  the line, which changes the slope angle — the safe equivalent of retuning
+  the spiral constants. (Changing `SPIRAL_A`/`SPIRAL_B` themselves would move
+  the trail, and the lesson stones, torii, camera and scenery all place
+  themselves from that spiral — do not go that way.) Keep moves on trail
+  loops modest: the shelf is part of the mesh but Michi's lesson stones keep
+  their generated spots, so a big flare strands them. A whole-mountain
+  reshape records a move for most vertices and makes the patch a few hundred
+  KB — fine, it gzips well in the build.
 - Undo (⌘Z), wireframe/double-sided/reference toggles, save/load.
 
 ## Getting edits into Michi

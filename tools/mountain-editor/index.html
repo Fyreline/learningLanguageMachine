@@ -95,6 +95,16 @@
       <button id="splitDone" disabled>Finish</button></label>
   </fieldset>
 
+  <fieldset id="silhouetteBox">
+    <legend>Silhouette</legend>
+    <div class="counts">the selected vertex's height sets the line; every
+      point at or below it moves out from the centre (negative moves in)</div>
+    <label class="row">amount <input type="number" id="flareAmount" step="0.1" value="0.5"></label>
+    <label class="row"><input type="radio" name="flareMode" value="equal" checked> equal all the way down</label>
+    <label class="row"><input type="radio" name="flareMode" value="taper"> tapered — full at the base, zero at the line (changes the slope angle)</label>
+    <button id="flareBtn">Move points below</button>
+  </fieldset>
+
   <fieldset id="edgeBox">
     <legend>Edge</legend>
     <div>selected: <span id="edgeLabel" class="sel">none</span></div>
@@ -596,7 +606,12 @@ function undo() {
   const s = undoStack.pop()
   if (!s) { setStatus('Nothing to undo.'); return }
   restore(s)
-  clearSelection()
+  // keep selections that still point at something
+  if (selVert != null && selVert >= verts.length) selVert = null
+  const edgeOk = (e) => e && e[0] < verts.length && e[1] < verts.length
+  if (!edgeOk(selEdge)) selEdge = null
+  if (!edgeOk(selEdge2)) selEdge2 = null
+  lastBridge = []
   rebuild()
   setStatus('Undone.')
 }
@@ -942,6 +957,37 @@ function paint(vertexOnly) {
   rebuild()
 }
 
+function flareBelow() {
+  if (mode !== 'vertex' || selVert == null) {
+    setStatus('Select a vertex first — its height sets the silhouette line.')
+    return
+  }
+  const amount = parseFloat(document.getElementById('flareAmount').value)
+  if (!Number.isFinite(amount) || amount === 0) { setStatus('Set a non-zero amount.'); return }
+  const taper = document.querySelector('input[name="flareMode"]:checked').value === 'taper'
+  const ySel = verts[selVert].p[1]
+  if (ySel <= 0.05) { setStatus('That vertex is at ground level — there is nothing below it.'); return }
+  pushUndo()
+  let n = 0
+  for (const v of verts) {
+    const [x, y, z] = v.p
+    if (y > ySel + 1e-6) continue
+    const r = Math.hypot(x, z)
+    if (r < 0.3) continue // never through the axis
+    const f = taper ? Math.min(1, Math.max(0, (ySel - y) / ySel)) : 1
+    const d = amount * f
+    if (d === 0 || r + d < 0.05) continue
+    v.p = [x + (x / r) * d, y, z + (z / r) * d]
+    n++
+  }
+  rebuild()
+  setStatus(
+    `Moved ${n} vertices below y=${ySel.toFixed(2)} ${amount > 0 ? 'outward' : 'inward'} ` +
+    `(${taper ? 'tapered' : 'equal'}). Mind the carved shelf — Michi's lesson stones keep ` +
+    `their generated spots, so big moves on trail loops will strand them. <kbd>⌘Z</kbd> undoes.`,
+  )
+}
+
 function startSplit() {
   if (mode !== 'vertex' || selVert == null) { setStatus('Select the vertex to split first.'); return }
   if (splitting) { setStatus('Already splitting — click faces, then Finish.'); return }
@@ -1106,6 +1152,7 @@ for (const [axis, i] of [['vx', 0], ['vy', 1], ['vz', 2]]) {
 }
 document.getElementById('paintVertex').onclick = () => paint(true)
 document.getElementById('paintFaces').onclick = () => paint(false)
+document.getElementById('flareBtn').onclick = flareBelow
 document.getElementById('splitBtn').onclick = startSplit
 document.getElementById('splitDone').onclick = finishSplit
 document.getElementById('deleteEdge').onclick = deleteSelectedEdge
