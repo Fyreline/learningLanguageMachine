@@ -58,3 +58,66 @@ content_version now reports the manifest course id.
    katakana, へ-particle lines) — needs ears.
 4. Lighthouse a11y ≥95 (DESIGN §9) — not run; keyboard operability and reduced-motion
    are implemented and unit-verified but unscored.
+
+## Post-launch ops — 2026-07-09
+
+Two real incidents this project paid for: testing against the live household db
+(corrupted real progress/settings twice) and no way to recover if a bad script or
+migration ever did real damage. Both closed:
+
+- **Dev/prod db split.** `data/michi.db` is the household's only copy — the LaunchAgent
+  (`com.michi.api`, port 8100, no `--reload`) is the only thing that should ever touch
+  it. Local dev now runs on **port 8101** against `data/michi.dev.db` (see the `michi-api`
+  entry in the shared launch.json and CLAUDE.md's Gotchas). Refresh the dev copy anytime
+  with `sqlite3 data/michi.db ".backup 'data/michi.dev.db'"`. `michi-verify` now mints
+  its throwaway session against 8101, never a real email.
+- **Nightly backups.** `com.michi.backup` (LaunchAgent, 3am daily) runs
+  `apps/server/scripts/backup_db.py`, which uses sqlite3's own `.backup()` API (safe
+  against a live WAL-mode db — a plain file copy isn't) to snapshot into
+  `data/backups/michi-<timestamp>.db`, pruning to the newest 30. Gotcha paid for here:
+  the script **must** run under the venv's python, not `/bin/sh` — macOS's per-app Files
+  & Folders permission for `~/Documents` was granted to that python binary (since
+  `com.michi.api` already runs under it) but not to `/bin/sh`, so a shell-script version
+  of this failed with a bare "Operation not permitted" from launchd with no obvious
+  cause. If you ever add another LaunchAgent that touches files under `~/Documents`,
+  invoke it via `.venv/bin/python`, not a shell script.
+- **Partner nudge.** `nudges` table + `POST /api/stats/nudge` (12h cooldown per sender) +
+  `POST /api/stats/nudge/dismiss`; `GET /api/stats/household` gained `pending_nudge`
+  (null once >24h old or dismissed) and `is_me`/`user_id` per partner tile. Shares
+  `find_partner_row` (now in curriculum.py, used by both routers) — the same
+  mishka_user_id-based resolution as the manifest partner. UI: a dismissable one-line
+  banner + a per-tile "Nudge" button on StatsPage, no counts or badges (CURRICULUM §8).
+- **Phrasebook × itinerary.** `apps/web/src/itinerary.ts` mirrors the household's
+  day→{city,leg} schedule from Dev/Japan_website (14 fixed days, city/leg labels only —
+  no real names, no bookings; that repo stays the source of truth for the actual
+  schedule). PhrasebookPage shows a "Today in {city}" shortlist (leg → tag mapping,
+  trip-core first) when `trip_date` puts today inside the 14-day window; quietly absent
+  otherwise. Deliberately NOT a live dependency on Japan_website's Supabase — this is a
+  hand-maintained mirror of non-secret schedule data only.
+- **PWA/offline.** `vite-plugin-pwa` (generateSW mode) in `vite.config.ts`: precaches the
+  whole app shell (152 entries) so it opens with zero network, and runtime-caches
+  `/api/curriculum/*` GETs with StaleWhileRevalidate so a lesson/phrasebook fetched once
+  stays readable offline. Icons: `public/pwa-192.png` / `pwa-512.png` / `apple-touch-icon.png`
+  (rasterized from MichiMark via `sips -s format png`, padded onto a square paper-coloured
+  background — the source torii mark is non-square). Gotcha paid for: those API responses
+  are per-caller (progress, partner presence), not shared static content, so the runtime
+  cache uses a custom `cacheKeyWillBeUsed` that hashes the bearer token into the cache key
+  — otherwise two accounts on one browser/device would risk being served each other's
+  cached progress offline. Verified live: built with `VITE_API_BASE` pointed at a
+  throwaway API + a temporary `MICHI_CORS_ORIGINS` override (never touched the shared
+  cors_origins default), served via a new `michi-web-dist` launch.json entry
+  (`python3 -m http.server 5176`), confirmed SW installs/controls/precaches, and that
+  `caches.open('michi-content')` holds real 200 JSON responses keyed per-token. Auth/
+  settings/progress POSTs are NOT cached — they need a live round-trip; the settings
+  error banner (above) is what surfaces a genuine offline failure there.
+- **The speaking corner.** Mic-only freeform conversation with a Claude-played character
+  (konbini clerk / restaurant server / station attendant): `routers/converse.py`
+  (stateless — the client resends the short transcript each turn, nothing conversational
+  ever touches the db), `ConverseScene.tsx` + a card on PracticePage. Openers are
+  hardcoded (instant, free); real turns call the Anthropic API via httpx (no SDK dep)
+  with a strict-JSON N5-level system prompt, degrading gracefully: non-JSON reply →
+  treated as the JP line; API error/bad key → friendly 503 the UI renders with a
+  "Try again"; no `MICHI_ANTHROPIC_API_KEY` in .env → "not set up yet" card. The key is
+  the household's own (slot + instructions left in `.env`/`.env.example`, restart the
+  LaunchAgent after pasting it). Mocked-transport tests in `tests/test_converse.py`.
+  No grading, no saving, ends naturally after ~8 exchanges (CURRICULUM §8).

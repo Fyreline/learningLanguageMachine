@@ -8,13 +8,13 @@ docs/PLAN.md; current build state in docs/HANDOFF.md.
 
 ```
 apps/server: .venv/bin/python -m pytest -q          # must stay green
-             .venv/bin/uvicorn app.main:app --port 8100
+             .venv/bin/uvicorn app.main:app --port 8101   # dev — see Gotchas re: 8100 vs 8101
 apps/web:    npm run typecheck && npm run build     # must stay green
 python3 apps/server/scripts/validate_content.py     # content gate — its output IS the content TODO list
 ```
 
 Preview servers are in the shared `~/…/Dev/.claude/launch.json` as `michi-web` (5174) +
-`michi-api` (8100). Mishka Hub owns 5173/8000 — never take those ports.
+`michi-api` (8101, dev db). Mishka Hub owns 5173/8000 — never take those ports.
 
 ## Hard rules
 
@@ -41,3 +41,13 @@ Preview servers are in the shared `~/…/Dev/.claude/launch.json` as `michi-web`
 - To see the authenticated app without real credentials: mint a session
   (`.claude/skills/michi-verify` has the snippet). `?mock` on the URL dresses Path/Stats
   with fake progress, client-side only.
+- **Port 8100 is the production API** — a `launchctl`-managed LaunchAgent
+  (`com.michi.api`), always running, fronted by the Cloudflare Tunnel the real deployed
+  site talks to. It has **no `--reload`**: editing a `.py` file does nothing until you
+  `launchctl kickstart -k gui/$(id -u)/com.michi.api`. **Port 8101 is local dev** (the
+  `michi-api` launch.json entry), pointed at `data/michi.dev.db` via `MICHI_DATABASE_URL`
+  — a separate file from `data/michi.db`, which the LaunchAgent serves and the real
+  household uses. Never mint sessions, run curl round-trips, or complete lessons against
+  8100/`michi.db` for testing — that already corrupted real progress and settings once.
+  Refresh `michi.dev.db` from the real one with `sqlite3 data/michi.db ".backup
+  'data/michi.dev.db'"` whenever you want realistic fixtures.
