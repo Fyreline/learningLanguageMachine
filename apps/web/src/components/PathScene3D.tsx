@@ -54,16 +54,18 @@ function mountainR(y: number): number {
   return R0 - ((R0 - RTOP) / PLATEAU_Y) * Math.min(Math.max(y, 0), PLATEAU_Y)
 }
 
-// The lower slopes bulge out below the trail (a frustum widens downward),
-// hiding stones and torii behind the foreground hillside. Compensate by
-// pushing the whole cut outward the further DOWN the spiral you are.
-// Gentler taper than round five (0.9 → ~0.4 at the summit, never zero):
-// the residual out-shift near the top is what keeps a torii's inner
-// pillar clear of the cut wall WITHOUT nudging the gates off the trail's
-// centreline (household note, round seven).
+// Terrace-out: how far the shelf pushes past the natural slope line.
+// 0.9 at the base (the foreground bulge otherwise hides trail objects),
+// GROWING to ~2.55 at the summit — the top loop becomes a full balcony
+// wrapping OUTSIDE the plateau's rim. Round eight had it shrinking
+// instead, which drove the final loop underneath the plateau's edge: the
+// mountain "stops rising" at the flat top, so the cut had nothing to lean
+// back into and the rim itself became a roof the last torii clipped
+// through (household diagnosis, round nine).
 const OUT0 = 0.9
+const OUT_SLOPE = 0.075
 function terraceOut(y: number): number {
-  return OUT0 * (1 - (0.55 * Math.min(y, HPATH)) / HPATH)
+  return OUT0 + OUT_SLOPE * Math.min(Math.max(y, 0), HPATH)
 }
 
 // The trail is a CONSTANT-ARC spiral, not a linear helix: with dθ/dt fixed,
@@ -73,7 +75,9 @@ function terraceOut(y: number): number {
 // → θ(t) = θ0 + (C/B)·ln(A / (A − B·t)), and every lesson is the same
 // stride apart from base to summit.
 const SPIRAL_A = R0 - DEPTH + PATH_IN + OUT0
-const SPIRAL_B = ((R0 - RTOP) / PLATEAU_Y) * HPATH + OUT0 * 0.55
+// the growing terrace-out SLOWS the radius shrink (minus sign): the top
+// loop stays wide even as the cone narrows
+const SPIRAL_B = ((R0 - RTOP) / PLATEAU_Y) * HPATH - OUT_SLOPE * HPATH
 const SPIRAL_C =
   (TURNS * 2 * Math.PI * SPIRAL_B) / Math.log(SPIRAL_A / (SPIRAL_A - SPIRAL_B))
 
@@ -121,8 +125,10 @@ function pathPoint(t: number): THREE.Vector3 {
     const s = f * f * (3 - 2 * f)
     // height rises FASTER than the ground track: the bend climbs up over
     // the plateau rim and crosses ON TOP of it — lerping y at the same
-    // rate dived the stepping stones underneath the summit's flat cap
-    const sUp = Math.min(1, s * 2.2)
+    // rate dived the stepping stones underneath the summit's flat cap.
+    // 3.4×: with the balcony anchor now well outside the rim, the climb
+    // must clear the rim slope before crossing it.
+    const sUp = Math.min(1, s * 3.4)
     return new THREE.Vector3(
       ANCHOR.x + (SUMMIT_CENTRE.x - ANCHOR.x) * s,
       ANCHOR.y + (SUMMIT_CENTRE.y - ANCHOR.y) * sUp,
@@ -241,11 +247,15 @@ const ROWS_PER_TURN = ROW_OFFS.length + GAP_FRACS.length
 // The LIP takes no terrace-out: flaring it made every turn an eave hanging
 // over the trail below (household note, round seven) — the shelf floor
 // simply runs out to the natural slope line instead.
+// The lip carries 60% of the terrace-out: enough floor that the path and
+// its stones stay well inside the shelf edge as the balcony grows toward
+// the summit, while the eave over the loop below stays tucked inside the
+// slope's own descent (checked against the 3-turn gaps).
 function cutRadius(base: number, offIdx: number, out: number, ds: number): number {
   switch (offIdx) {
     case 0: return base // untouched slope below
-    case 1: return base + 0.12 * ds
-    case 2: return base + 0.25 * ds // the lip — natural line, no flare
+    case 1: return base + (0.12 + out * 0.4) * ds
+    case 2: return base + (0.25 + out * 0.6) * ds // the lip
     case 3: return base - DEPTH * ds + out * ds // shelf inner edge / wall base
     case 4: return base - (DEPTH - 0.05) * ds + out * ds // wall, near vertical
     case 5: return base - DEPTH * 0.97 * ds + out * 0.7 * ds
@@ -265,6 +275,11 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
     const jj = j
     const phi = THETA0 + (jj / COLS) * Math.PI * 2
     const thetaNorm = jj / COLS
+    // columns in the walkway's corridor drop their rim: the climbing
+    // stairs pass through a notch in the mountain's edge instead of
+    // clipping the lip on their way onto the plateau
+    const inCorridor = angDiff(phi, APPROACH_A) < 0.16
+    const clampY = inCorridor ? PLATEAU_Y - 0.5 : PLATEAU_Y - 0.012
     const col: { y: number; r: number }[] = []
     // Modest foot flare only — a big one (this was 2.6) sat at the exact
     // radius the low camera orbits, shoving a dark wall across the frame.
@@ -298,7 +313,7 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
         if (oi === 0 || oi === 9 || ds < 0.4) y += (jrnd() - 0.5) * 0.3 * (ds < 0.4 ? 0.6 : 1)
         // clamp BEFORE computing the radius: rows squashed onto the plateau
         // must not keep their mid-slope radius or the rim grows overhangs
-        y = Math.min(PLATEAU_Y - 0.012, Math.max(0.02, y))
+        y = Math.min(clampY, Math.max(0.02, y))
         let r = cutRadius(mountainR(y), oi, terraceOut(y), ds)
         if (oi === 0 || oi === 9) r += (jrnd() - 0.5) * 0.55
         // the river carves its own groove where the trail hasn't
@@ -310,7 +325,7 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
         }
         // rows squashed onto the rim JOIN it exactly — recessed leftovers
         // here were the grey apron; bulges were the overhangs
-        if (y >= PLATEAU_Y - 0.03) r = RTOP
+        if (y >= clampY - 0.02) r = RTOP
         col.push({ y, r: Math.max(0.05, r) })
       }
       // filler rows across the open slope to the next turn — one stretched
@@ -321,21 +336,21 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
           h + ROW_OFFS[ROW_OFFS.length - 1] +
           GAP_FRACS[gi] * (hNext + ROW_OFFS[0] - (h + ROW_OFFS[ROW_OFFS.length - 1])) +
           (jrnd() - 0.5) * 0.3
-        y = Math.min(PLATEAU_Y - 0.012, Math.max(0.02, y))
+        y = Math.min(clampY, Math.max(0.02, y))
         let r = mountainR(y) + (jrnd() - 0.5) * 0.5
         if (angDiff(phi, riverPhi(y)) < 0.1) r -= 0.5
         for (const c of CAVES) {
           const e = (angDiff(phi, c.phi) / c.rp) ** 2 + ((y - c.y) / c.ry) ** 2
           if (e < 1) r -= 0.9 * (1 - e)
         }
-        if (y >= PLATEAU_Y - 0.03) r = RTOP
+        if (y >= clampY - 0.02) r = RTOP
         col.push({ y, r: Math.max(0.05, r) })
       }
     }
     // the grid stops AT the rim — the plateau's top face is a separate,
     // properly triangulated cap mesh (see buildPlateauCap), because any
     // ring-to-centre topology here fans 112 spokes into one point
-    col.push({ y: PLATEAU_Y, r: RTOP })
+    col.push({ y: inCorridor ? PLATEAU_Y - 0.42 : PLATEAU_Y, r: RTOP })
     // enforce strictly climbing rows (clamps near the ground can stack)
     for (let i = 1; i < col.length; i++) {
       if (col[i].y <= col[i - 1].y + 0.015) col[i].y = col[i - 1].y + 0.015
@@ -442,33 +457,22 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
  * single centre vertex (household notes, rounds five AND six). The outer
  * ring overhangs the rim slightly and droops, skirting the join. */
 function buildPlateauCap(pal: ScenePalette): THREE.BufferGeometry {
+  // Edge ring sits flush with the mountain grid's own rim — the old
+  // overhung, drooped skirt read as a distracting disc line running the
+  // whole way round the summit (household note, round nine).
   const RINGS: { r: number; n: number; y: number }[] = [
-    { r: RTOP + 0.32, n: 44, y: PLATEAU_Y - 0.05 },
+    { r: RTOP + 0.06, n: 44, y: PLATEAU_Y - 0.005 },
     { r: RTOP * 0.72, n: 28, y: PLATEAU_Y + 0.05 },
     { r: RTOP * 0.44, n: 16, y: PLATEAU_Y + 0.08 },
     { r: RTOP * 0.2, n: 8, y: PLATEAU_Y + 0.1 },
   ]
   const rnd = mulberry(4831)
-  // the walkway's height at a given planar radius — the cap's corridor
-  // vertices must sit BELOW this, or the floor pokes up through the
-  // climbing stairs (household notes, rounds seven AND eight: a fixed dip
-  // wasn't deep enough where the ribbon is still low near the rim)
-  const anchorR = Math.hypot(ANCHOR.x, ANCHOR.z)
-  const walkYAt = (rr: number) => {
-    const s = Math.min(1, Math.max(0, 1 - rr / anchorR))
-    const sUp = Math.min(1, s * 2.2)
-    return ANCHOR.y + (SUMMIT_CENTRE.y - ANCHOR.y) * sUp + 0.06
-  }
   const rings: THREE.Vector3[][] = RINGS.map(({ r, n, y }, ri) =>
     Array.from({ length: n }, (_, i) => {
       const a = (i / n) * Math.PI * 2
       const wob = ri === 0 ? 0 : 1 + (rnd() - 0.5) * 0.14
-      let vy = y + (rnd() - 0.5) * 0.045
+      const vy = y + (ri === 0 ? 0 : (rnd() - 0.5) * 0.045)
       const rr = r * (wob || 1)
-      const corridor = ri === 0 ? 0.3 : ri === 1 ? 0.2 : 0
-      if (corridor > 0 && angDiff(a, APPROACH_A) < corridor) {
-        vy = Math.min(vy, walkYAt(rr) - 0.12)
-      }
       return new THREE.Vector3(Math.cos(a) * rr, vy, Math.sin(a) * rr)
     }),
   )
@@ -476,6 +480,14 @@ function buildPlateauCap(pal: ScenePalette): THREE.BufferGeometry {
 
   const positions: number[] = []
   const tri = (a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3) => {
+    // NO triangles above the walkway at all (household ask, round nine):
+    // faces whose centroid falls in the stairs' corridor are simply not
+    // emitted — the widened ribbon fills the opening.
+    const cxm = (a.x + b.x + c.x) / 3
+    const czm = (a.z + b.z + c.z) / 3
+    if (Math.hypot(cxm, czm) > RTOP * 0.42 && angDiff(Math.atan2(czm, cxm), APPROACH_A) < 0.2) {
+      return
+    }
     // force the upward winding regardless of walk order
     const crossY = (b.z - a.z) * (c.x - a.x) - (b.x - a.x) * (c.z - a.z)
     if (crossY >= 0) positions.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z)
@@ -890,10 +902,12 @@ function SummitSun({ nav, show, clay }: { nav: React.MutableRefObject<Nav>; show
   useFrame(({ camera }) => {
     const g = group.current
     if (!g) return
-    // start early and deep: the sun spends its first stretch fully hidden
-    // behind the mountain, so its entrance is a gradual dawn over the rim
-    // rather than popping into an already-visible sky (household note)
-    const rise = Math.min(1, Math.max(0, (nav.current.focusT - 0.72) / 0.28))
+    // The dawn belongs to the final approach: the sun only starts climbing
+    // as you round the SECOND-TO-LAST torii gate (t≈0.918) and reaches its
+    // place in the gate as the camera comes to rest (household note, round
+    // nine). It still starts deep behind the mountain, so its first sign
+    // is a glow cresting the rim, never a pop.
+    const rise = Math.min(1, Math.max(0, (nav.current.focusT - 0.918) / 0.082))
     g.visible = show && rise > 0
     if (!g.visible) return
     const gateCentre = GATE_POS.clone().setY(PLATEAU_Y + 1.3)
@@ -1011,11 +1025,13 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
     const dir = new THREE.Vector3().subVectors(SUMMIT_CENTRE, ANCHOR)
     dir.y = 0
     dir.normalize()
-    const side = new THREE.Vector3(-dir.z, 0, dir.x).multiplyScalar(0.8)
+    // 1.15 half-width: wide enough to fully floor the wedge deleted from
+    // the plateau cap above it
+    const side = new THREE.Vector3(-dir.z, 0, dir.x).multiplyScalar(1.15)
     const N = 10
     const at = (u: number) => {
       const s = u * u * (3 - 2 * u)
-      const sUp = Math.min(1, s * 2.2)
+      const sUp = Math.min(1, s * 3.4) // must match pathPoint's climb curve
       return new THREE.Vector3(
         ANCHOR.x + (SUMMIT_CENTRE.x - ANCHOR.x) * s,
         ANCHOR.y + (SUMMIT_CENTRE.y - ANCHOR.y) * sUp + 0.06,
