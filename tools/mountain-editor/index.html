@@ -91,6 +91,7 @@
     <legend>Mode</legend>
     <button id="modeVertex" class="on">Vertex</button>
     <button id="modeEdge">Edge</button>
+    <button id="modeFace">Face</button>
     <button id="modeScenery">Scenery</button>
   </fieldset>
 
@@ -130,14 +131,18 @@
     <legend>Vertex</legend>
     <div>selected: <span id="vertLabel" class="sel">none</span></div>
     <label class="row">x <input type="number" id="vx" step="0.05"> y <input type="number" id="vy" step="0.05"> z <input type="number" id="vz" step="0.05"></label>
-    <div class="counts">paint roles — the mountain's own colours plus three
-      greys, re-resolved from the live theme in Michi so painted spots
-      follow dark mode</div>
-    <div id="paintRoles" style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0"></div>
-    <label class="row"><button id="paintVertex">Paint vertex</button>
-      <button id="paintFaces">Paint touching faces</button></label>
     <label class="row"><button id="splitBtn">Split from corner</button>
       <button id="splitDone" disabled>Finish</button></label>
+  </fieldset>
+
+  <fieldset id="faceBox">
+    <legend>Face</legend>
+    <div>selected: <span id="faceLabel" class="sel">none</span></div>
+    <div class="counts">paint roles — the mountain's own colours plus three
+      greys, re-resolved from the live theme in Michi so painted triangles
+      follow dark mode. Colouring is whole-triangle only — never per corner.</div>
+    <div id="paintRoles" style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0"></div>
+    <button id="paintFaceBtn">Paint face</button>
   </fieldset>
 
   <fieldset id="silhouetteBox">
@@ -200,12 +205,13 @@
   </fieldset>
 
   <p id="hint">
-    Drag to orbit, scroll to zoom. Click picks the nearest vertex, edge or
-    scenery object by mode. Drag a selection's gold marker to move it —
-    scenery sticks to the terrain under the pointer. <kbd>⌫</kbd> removes
-    the selected edge or object, <kbd>⌘Z</kbd> undoes, <kbd>esc</kbd>
-    clears or cancels a split. Lesson stones and checkpoint torii are
-    curriculum-owned and stay put; the summit gate shows as reference.
+    Drag to orbit, scroll to zoom. Click picks the nearest vertex or edge,
+    the exact triangle under the pointer in Face mode, or a scenery object
+    in Scenery mode. Drag a selection's gold marker to move it — scenery
+    sticks to the terrain under the pointer. <kbd>⌫</kbd> removes the
+    selected edge or object, <kbd>⌘Z</kbd> undoes, <kbd>esc</kbd> clears or
+    cancels a split. Lesson stones and checkpoint torii are curriculum-owned
+    and stay put; the summit gate shows as reference.
   </p>
 </aside>
 
@@ -1097,11 +1103,13 @@ function undo() {
   const s = undoStack.pop()
   if (!s) { setStatus('Nothing to undo.'); return }
   restore(s)
-  // keep selections that still point at something
+  // keep selections that still point at something; face indices shift
+  // under undo in ways that can't be validated cheaply, so always clear
   if (selVert != null && selVert >= verts.length) selVert = null
   const edgeOk = (e) => e && e[0] < verts.length && e[1] < verts.length
   if (!edgeOk(selEdge)) selEdge = null
   if (!edgeOk(selEdge2)) selEdge2 = null
+  selFace = null
   lastBridge = []
   selScenery = null
   rebuild()
@@ -1266,6 +1274,16 @@ const edgeMarkerB = edgeMarker('#e05a72')
 const splitMarkers = new THREE.Group()
 scene.add(splitMarkers)
 
+// the selected triangle, in Face mode: a closed gold outline around its
+// three corners — painting always targets this whole shape, never a corner
+const faceMarker = new THREE.LineLoop(
+  new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()]),
+  new THREE.LineBasicMaterial({ color: '#e8b84b', depthTest: false }),
+)
+faceMarker.renderOrder = 10
+faceMarker.visible = false
+scene.add(faceMarker)
+
 function placeEdgeMarker(marker, a, b) {
   const pa = new THREE.Vector3(...verts[a].p)
   const pb = new THREE.Vector3(...verts[b].p)
@@ -1337,6 +1355,7 @@ let mode = 'vertex'
 let selVert = null
 let selEdge = null // [a, b]
 let selEdge2 = null
+let selFace = null // index into faces[] — Face mode's whole-triangle target
 let splitting = null // { vid, newVid, snapshot, count }
 let lastBridge = []
 
@@ -1344,6 +1363,7 @@ function clearSelection() {
   selVert = null
   selEdge = null
   selEdge2 = null
+  selFace = null
   lastBridge = []
   selScenery = null
   updateMarkers()
@@ -1373,6 +1393,17 @@ function updateMarkers() {
   edgeMarkerB.visible = edgeMarkerB.visible && mode === 'edge'
   document.getElementById('edgeLabel').textContent = selEdge ? `${selEdge[0]}–${selEdge[1]}` : 'none'
   document.getElementById('edge2Label').textContent = selEdge2 ? `${selEdge2[0]}–${selEdge2[1]}` : 'none'
+
+  if (selFace != null && faces[selFace] && mode === 'face') {
+    const pts = faces[selFace].v.map((vi) => new THREE.Vector3(...verts[vi].p))
+    faceMarker.geometry.dispose()
+    faceMarker.geometry = new THREE.BufferGeometry().setFromPoints(pts)
+    faceMarker.visible = true
+    document.getElementById('faceLabel').textContent = `#${selFace}`
+  } else {
+    faceMarker.visible = false
+    document.getElementById('faceLabel').textContent = 'none'
+  }
 
   splitMarkers.clear()
   if (splitting) {
@@ -1450,6 +1481,7 @@ function deleteSelectedEdge() {
   setStatus(`Deleted edge ${selEdge[0]}–${selEdge[1]} (${doomed.length} face${doomed.length === 1 ? '' : 's'}).`)
   selEdge = null
   selEdge2 = null
+  selFace = null // face indices shift after the filter
   lastBridge = []
   rebuild()
 }
@@ -1496,28 +1528,19 @@ function flipBridge() {
   rebuild()
 }
 
-function paint(vertexOnly) {
-  if (mode !== 'vertex' || selVert == null) { setStatus('Select a vertex first.'); return }
-  const adj = vertAdj.get(selVert)
-  if (!adj?.length) { setStatus('That vertex has no faces left.'); return }
+/** Recolours exactly one triangle, solid — all three corners get the same
+ * role, so there is never a per-corner gradient. */
+function paintFace() {
+  if (mode !== 'face' || selFace == null || !faces[selFace]) { setStatus('Select a triangle first.'); return }
   pushUndo()
   const c = roleColour(paintRole)
   const rgb = [c.r, c.g, c.b]
-  for (const [fi, k] of adj) {
-    const face = faces[fi]
-    if (vertexOnly) {
-      face.col[k] = [...rgb]
-      face.recol[k] = paintRole
-    } else {
-      for (let kk = 0; kk < 3; kk++) {
-        face.col[kk] = [...rgb]
-        face.recol[kk] = paintRole
-      }
-    }
+  const face = faces[selFace]
+  for (let k = 0; k < 3; k++) {
+    face.col[k] = [...rgb]
+    face.recol[k] = paintRole
   }
-  setStatus(vertexOnly
-    ? `Painted the vertex ${paintRole} — the colour blends across its faces, and re-themes in Michi.`
-    : `Painted every face touching the vertex ${paintRole} — re-themes in Michi.`)
+  setStatus(`Painted triangle #${selFace} ${paintRole} — solid across the whole face, re-themes in Michi.`)
   rebuild()
 }
 
@@ -1744,6 +1767,9 @@ addEventListener('pointerup', (e) => {
   if (mode === 'vertex') {
     selVert = faces[hit.faceIdx].v[nearestCorner(hit.faceIdx, hit.point)]
     setStatus(`Vertex #${selVert} selected — drag the gold marker to move it.`)
+  } else if (mode === 'face') {
+    selFace = hit.faceIdx
+    setStatus(`Triangle #${selFace} selected — pick a paint role and Paint face to recolour it, whole and solid.`)
   } else {
     const edge = nearestEdge(hit.faceIdx, hit.point)
     if (e.shiftKey && selEdge) {
@@ -1764,18 +1790,24 @@ function setMode(m) {
   mode = m
   document.getElementById('modeVertex').classList.toggle('on', m === 'vertex')
   document.getElementById('modeEdge').classList.toggle('on', m === 'edge')
+  document.getElementById('modeFace').classList.toggle('on', m === 'face')
   document.getElementById('modeScenery').classList.toggle('on', m === 'scenery')
   if (splitting) cancelSplit()
   updateMarkers()
   updateSceneryMarker()
-  setStatus(m === 'vertex'
-    ? 'Vertex mode — click the mesh to pick the nearest vertex.'
-    : m === 'edge'
-      ? 'Edge mode — click near an edge to pick it; shift-click picks the second edge for bridging.'
-      : 'Scenery mode — click an object to select it, drag to move it (it sticks to the terrain).')
+  setStatus(
+    m === 'vertex'
+      ? 'Vertex mode — click the mesh to pick the nearest vertex.'
+      : m === 'edge'
+        ? 'Edge mode — click near an edge to pick it; shift-click picks the second edge for bridging.'
+        : m === 'face'
+          ? 'Face mode — click a triangle to select it, then Paint face. Colouring is always the whole triangle.'
+          : 'Scenery mode — click an object to select it, drag to move it (it sticks to the terrain).',
+  )
 }
 document.getElementById('modeVertex').onclick = () => setMode('vertex')
 document.getElementById('modeEdge').onclick = () => setMode('edge')
+document.getElementById('modeFace').onclick = () => setMode('face')
 document.getElementById('modeScenery').onclick = () => setMode('scenery')
 
 for (const [axis, i] of [['vx', 0], ['vy', 1], ['vz', 2]]) {
@@ -1805,8 +1837,7 @@ let paintRole = 'snow'
     box.appendChild(b)
   }
 }
-document.getElementById('paintVertex').onclick = () => paint(true)
-document.getElementById('paintFaces').onclick = () => paint(false)
+document.getElementById('paintFaceBtn').onclick = paintFace
 document.getElementById('flareBtn').onclick = flareBelow
 document.getElementById('splitBtn').onclick = startSplit
 document.getElementById('splitDone').onclick = finishSplit

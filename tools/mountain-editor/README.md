@@ -30,13 +30,15 @@ take 5173/8000 (Mishka Hub) or 8100 (production Michi API).
   "Finish", and drag the new vertex apart.
 - **Move a vertex** — drag its gold marker (moves in the camera plane) or type
   exact coordinates.
-- **Recolour a vertex** — pick a paint role from the swatches (the
-  mountain's own colours: grass, light grass, rock, snow, dirt, water,
-  cave ink — plus light/mid/dark grey), then "Paint vertex" (blends across
-  the touching faces) or "Paint touching faces" (solid facets). The patch
-  stores the role name, not the colour, and Michi resolves it from the
-  live palette — so painted spots follow light/dark mode like everything
-  else. There is deliberately no free colour picker.
+- **Recolour a triangle** — Face mode, click a triangle to select it (a gold
+  outline traces exactly that one face), pick a paint role from the swatches
+  (the mountain's own colours: grass, light grass, rock, snow, dirt, water,
+  cave ink — plus light/mid/dark grey), then "Paint face". Colouring is
+  always the whole triangle, solid — never a single corner, so there's no
+  gradient smear across a face. The patch stores the role name, not the
+  colour, and Michi resolves it from the live palette — so painted
+  triangles follow light/dark mode like everything else. There is
+  deliberately no free colour picker.
 - **Reshape the silhouette (mesh-only)** — vertex mode, select a vertex to
   set the height line, then "Move points below" pushes every vertex at or
   below that height out from the centre (negative amounts pull in). "Equal"
@@ -98,9 +100,13 @@ live from the Aizome theme tokens (light *and* dark). So the patch stores only
 the diff: corner moves and face deletions/additions by face index, plus your
 recolours as named paint roles that re-resolve from the palette per theme.
 Untouched faces stay fully procedural and theme-aware; moved faces are even
-re-banded by their new altitude. (Patches saved before the role system, with
-absolute rgb recolours, still load — the editor maps them to the nearest
-role on load, and Michi applies them as-is, fixed across themes.)
+re-banded by their new altitude. Under the hood a recolour is stored per
+corner (three entries per triangle), but the editor's Face mode only ever
+writes all three of a triangle's corners together, to the same role — so
+colouring is effectively whole-triangle, never a partial corner. (Patches
+saved before the role system, with absolute rgb recolours, still load — the
+editor maps them to the nearest role on load, and Michi applies them as-is,
+fixed across themes.)
 
 The caveat: face indices are only meaningful for the generator build they were
 saved against. The editor embeds a verbatim port of `buildMountain` ("round
