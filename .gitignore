@@ -6,3 +6,7 @@ __pycache__/
 .env
 .DS_Store
 .venv/
+# scoped symlink tree for serving tools/mountain-editor without exposing the
+# repo root (which would leak apps/server/.env and data/michi.db) — see
+# tools/mountain-editor/README.md
+.mountain-editor-serve/

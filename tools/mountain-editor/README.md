@@ -9,14 +9,30 @@ of the generator at runtime.
 ## Running it
 
 Three.js is resolved from `apps/web/node_modules` (run `npm install` there
-once if you haven't), so serve from the **repo root**:
+once if you haven't) via the absolute import paths `/apps/web/node_modules/three/...`
+baked into this file's import map, so the server root needs `apps/web/node_modules`
+and `tools/mountain-editor` at those exact relative paths.
+
+**Do not serve the repo root directly** (`python3 -m http.server` from the
+top of the repo) — it would also serve `apps/server/.env` (JWT secret, API
+key slot) and `data/michi.db` (the real household's progress) as plain
+downloadable files. Instead, serve a small directory of symlinks that only
+exposes those two paths:
 
 ```
-python3 -m http.server 8102          # from the repo root
+mkdir -p .mountain-editor-serve/apps/web/node_modules .mountain-editor-serve/tools
+ln -sfn ../../../../apps/web/node_modules/three .mountain-editor-serve/apps/web/node_modules/three
+ln -sfn ../../tools/mountain-editor .mountain-editor-serve/tools/mountain-editor
+cd .mountain-editor-serve && python3 -m http.server 8104
 ```
 
-then open http://localhost:8102/tools/mountain-editor/ in a browser. Do not
-take 5173/8000 (Mishka Hub) or 8100 (production Michi API).
+`.mountain-editor-serve/` is gitignored — recreate it any time (it's just
+two symlinks). The shared `~/…/Dev/.claude/launch.json` has a `michi-mountain-editor`
+entry that already points at this directory.
+
+Then open http://localhost:8104/tools/mountain-editor/ in a browser. Do not
+take 5173/8000 (Mishka Hub), 8100/8101 (Michi's prod/dev API), 8102/8103
+(Japan_website's servers), or 5174-5177/8199 (the other web/scratch previews).
 
 ## What it can do
 
