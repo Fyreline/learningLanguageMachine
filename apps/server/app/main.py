@@ -16,7 +16,7 @@ from .db import engine
 from .errors import register_error_handlers
 from .identity import MishkaIdentityClient
 from .models import Base
-from .routers import auth, converse, curriculum, health, progress, reviews, stats
+from .routers import auth, converse, curriculum, health, progress, reviews, service, stats
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -57,6 +57,7 @@ def create_app() -> FastAPI:
     app.include_router(progress.router, prefix="/api")
     app.include_router(reviews.router, prefix="/api")
     app.include_router(stats.router, prefix="/api")
+    app.include_router(service.router, prefix="/api")
     app.include_router(converse.router, prefix="/api")
 
     return app

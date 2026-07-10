@@ -75,6 +75,10 @@ GET /api/stats/household → {partners:[{display_name,
                             words_known, current_lesson_id, current_unit_title}],
                             together_phrases: int}   # both users, aggregates only
                             # tone = each user's chosen kitsune palette (default clay)
+GET /api/stats/service   → {streak_days, studied_today, due_reviews, words_known,
+                            last_session_at}   # static bearer token (MICHI_SERVICE_TOKEN),
+                            # for Sukumo's sibling read (not user JWT); 401 without/wrong
+                            # token, 503 if unconfigured
 ```
 
 ## Misc

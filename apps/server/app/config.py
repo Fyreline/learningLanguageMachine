@@ -48,6 +48,19 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-haiku-4-5-20251001"
 
+    # --- Sukumo's read-only sibling client (Sukumo docs/API.md §4,
+    # docs/phases/PHASE-3-siblings.md there). A static bearer token, deliberately
+    # NOT the user-JWT flow — Sukumo never holds a household password. Unset =>
+    # GET /api/stats/service answers 503 (same "friendly unconfigured" convention
+    # as MICHI_ANTHROPIC_API_KEY / converse.py). ---
+    service_token: str = ""
+    # Which household member's stats /api/stats/service reports. Michi has no
+    # built-in "primary" user concept (unlike Sukumo/Kakeibo) — this repo has no
+    # other way to know which of the two logins the sibling call means. Matched
+    # case-insensitively against users.email; unset, or no matching user row yet,
+    # also answers 503 (nothing configured to report).
+    service_user_email: str = ""
+
     # --- CORS. Michi's web app owns 5174 (Mishka's owns 5173). ---
     cors_origins: list[str] = [
         "http://localhost:5174",
