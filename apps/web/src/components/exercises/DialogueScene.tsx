@@ -67,13 +67,16 @@ export function DialogueScene({ dialogue, itemsById, pool, onTurnResult, onCompl
         {dialogue.scene}
       </p>
 
-      {/* what has been said so far */}
+      {/* what has been said so far — tap a line to hear it again */}
       {history.length > 0 && (
         <div className="mb-5 flex flex-col gap-2">
           {history.slice(-4).map((h, i) => (
-            <div
+            <button
               key={i}
-              className={`max-w-[85%] rounded-lg border border-line px-3 py-2 ${
+              type="button"
+              onClick={() => void speak(h.jp, { rate: h.speaker === 'npc' ? NPC_RATE : getSettings().tts_rate })}
+              aria-label={`Hear again: ${h.jp}`}
+              className={`max-w-[85%] rounded-lg border border-line px-3 py-2 text-left transition hover:border-line-strong active:scale-[0.98] ${
                 h.speaker === 'you' ? 'self-end bg-clay/10' : 'self-start bg-paper-mid'
               }`}
             >
@@ -81,7 +84,7 @@ export function DialogueScene({ dialogue, itemsById, pool, onTurnResult, onCompl
                 {h.jp}
               </p>
               <p className="text-xs text-ink-soft">{h.en}</p>
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -173,9 +176,18 @@ function YourTurn({
           onChoose={(key) => {
             setChosen(key)
             setAnswered(true)
-            // brief beat so the olive/fig state is visible before moving on
             const verdict: Verdict = key === item.id ? 'pass' : 'miss'
-            setTimeout(() => onLand(item, verdict, 'dialogue-pick'), 900)
+            if (verdict === 'miss') {
+              // ChoiceCards already spoke the tapped (wrong) option — queue
+              // the correct line after it, don't cut it off, so a miss
+              // always ends with hearing what you should have said
+              void speak(item.jp, { rate: getSettings().tts_rate, interrupt: false }).then(() => {
+                setTimeout(() => onLand(item, verdict, 'dialogue-pick'), 500)
+              })
+            } else {
+              // brief beat so the olive state is visible before moving on
+              setTimeout(() => onLand(item, verdict, 'dialogue-pick'), 900)
+            }
           }}
         />
       </div>
