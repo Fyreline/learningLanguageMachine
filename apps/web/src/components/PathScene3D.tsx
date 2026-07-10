@@ -343,6 +343,9 @@ const ROW_OFFS = [-0.5, -0.06, 0, 0.9, 1.6]
 // sloped-face rows running from the riser's top to the next loop's lip
 const GAP_FRACS = [0.2, 0.4, 0.6, 0.8]
 const ROWS_PER_TURN = ROW_OFFS.length + GAP_FRACS.length
+// hoisted so capTriangles() can share it with buildMountain's per-column
+// loop — both need the SAME column count to reference the SAME rim angles
+const COLS = 112
 
 /** Radius of a terrace row. `rp` is the path radius at the loop's height;
  * `ds` fades the step back into a plain cone face past the walkway anchor. */
@@ -366,8 +369,6 @@ export function buildMountain(
   pal: ScenePalette,
   patch: MountainPatch = mountainPatch,
 ): THREE.BufferGeometry {
-  const COLS = 112
-
   // per-column vertex rows, bottom→top, all columns sharing the same count
   const rows: { y: number; r: number }[][] = []
   for (let j = 0; j < COLS; j++) {
@@ -444,9 +445,10 @@ export function buildMountain(
         col.push({ y, r: Math.max(0.05, r) })
       }
     }
-    // the grid stops AT the rim — the plateau's top face is a separate,
-    // properly triangulated cap mesh (see buildPlateauCap), because any
-    // ring-to-centre topology here fans 112 spokes into one point
+    // the grid stops AT the rim — the plateau's top face is triangulated
+    // separately (see capTriangles) and welded on by reusing these exact
+    // rim vertices, because any ring-to-centre topology here fans 112
+    // spokes into one point
     col.push({ y: inCorridor ? PLATEAU_Y - 0.42 : PLATEAU_Y, r: RTOP })
     // enforce strictly climbing rows (clamps near the ground can stack)
     for (let i = 1; i < col.length; i++) {
@@ -454,6 +456,13 @@ export function buildMountain(
     }
     rows.push(col)
   }
+
+  // The rim row per column — captured here (rather than recomputed) so
+  // capTriangles' outer ring shares BIT-IDENTICAL positions with the
+  // cone's own rim: same {y, r} objects, same Math.cos/sin(phi) formula
+  // below, so the editor's position-keyed vertex weld actually joins them
+  // into one mesh instead of two that just sit flush.
+  const rimRows = rows.map((col) => col[col.length - 1])
 
   // Stitching: within a column pair, rows align by index — EXCEPT across
   // the wrap-around seam, where the helix's turn index shifts by one. Row
@@ -498,6 +507,13 @@ export function buildMountain(
       }
     }
   }
+
+  // Weld the plateau's top face onto the cone's own rim, rather than
+  // rendering it as a visually-flush-but-topologically-separate mesh — see
+  // capTriangles for how the outer ring shares the cone's exact vertices.
+  const coneFaceCount = positions.length / 9
+  positions.push(...capTriangles(rimRows))
+  const capFaceCount = positions.length / 9 - coneFaceCount
 
   const patchOk =
     patch.baseFaceCount === null || patch.baseFaceCount * 9 === positions.length
@@ -544,7 +560,10 @@ export function buildMountain(
   // gave — some band comparisons sit right on their thresholds
   const pos = new Float32Array(positions)
   const tmp = new THREE.Color()
-  for (let f = 0; f < pos.length / 3; f += 3) {
+  // altitude-banded painting is a CONE-body-only rule (snowline, shelf/wall
+  // detection etc. are all trail-relative) — the cap's flat, wide faces
+  // paint separately just below, same as when it was its own mesh
+  for (let f = 0; f < coneFaceCount * 3; f += 3) {
     const cx = (pos[f * 3] + pos[(f + 1) * 3] + pos[(f + 2) * 3]) / 3
     const cy = (pos[f * 3 + 1] + pos[(f + 1) * 3 + 1] + pos[(f + 2) * 3 + 1]) / 3
     const cz = (pos[f * 3 + 2] + pos[(f + 1) * 3 + 2] + pos[(f + 2) * 3 + 2]) / 3
@@ -569,6 +588,16 @@ export function buildMountain(
     else tmp.copy(rock).lerp(grass, Math.max(0, (12 - cy) / 8) * 0.5)
 
     tmp.multiplyScalar(0.93 + cRnd() * 0.14)
+    for (let v = 0; v < 3; v++) colours.push(tmp.r, tmp.g, tmp.b)
+  }
+
+  // the cap's own speckled snow/rock paint, unchanged from when it was a
+  // separate mesh — same seed, so the summit keeps its look
+  const capSnow = new THREE.Color('#f3f6f5')
+  const capRock = new THREE.Color(pal.cloud).lerp(new THREE.Color(pal.ink), 0.35)
+  const capRnd = mulberry(271)
+  for (let i = 0; i < capFaceCount; i++) {
+    tmp.copy(capRnd() < 0.15 ? capRock : capSnow).multiplyScalar(0.94 + capRnd() * 0.12)
     for (let v = 0; v < 3; v++) colours.push(tmp.r, tmp.g, tmp.b)
   }
 
@@ -623,39 +652,41 @@ export function buildMountain(
   return geo
 }
 
-/** The plateau's top face, as its own mesh: concentric rings with FEWER
- * segments toward the middle, stitched by walking both rings' angles — so
- * triangles stay chunky and uniform instead of 112 spokes converging on a
- * single centre vertex (household notes, rounds five AND six). The outer
- * ring overhangs the rim slightly and droops, skirting the join. */
-function buildPlateauCap(pal: ScenePalette): THREE.BufferGeometry {
-  // Edge ring sits flush with the mountain grid's own rim — the old
-  // overhung, drooped skirt read as a distracting disc line running the
-  // whole way round the summit (household note, round nine).
-  const RINGS: { r: number; n: number; y: number }[] = [
-    { r: RTOP + 0.06, n: 44, y: PLATEAU_Y - 0.005 },
+/** The plateau's top face — POSITIONS ONLY (buildMountain colours it,
+ * having appended these onto the cone's own position array). Welded
+ * straight onto the cone's rim: the outer ring reuses `rimRows`, the
+ * SAME {y, r} pairs the per-column loop already computed for the cone's
+ * top row, converted with the identical Math.cos/sin(phi) formula — so the
+ * cap and cone are no longer two meshes that just sit flush, they share
+ * real vertices at the seam (the editor's position-keyed weld joins them
+ * automatically). Inner rings step down with FEWER segments toward the
+ * middle, stitched by walking both rings' angles — so triangles stay
+ * chunky and uniform instead of 112 spokes converging on a single centre
+ * vertex (household notes, rounds five AND six). */
+function capTriangles(rimRows: { y: number; r: number }[]): number[] {
+  const outerRing = rimRows.map((rv, j) => {
+    const phi = THETA0 + (j / COLS) * Math.PI * 2
+    return new THREE.Vector3(Math.cos(phi) * rv.r, rv.y, Math.sin(phi) * rv.r)
+  })
+  const INNER_RINGS: { r: number; n: number; y: number }[] = [
     { r: RTOP * 0.72, n: 28, y: PLATEAU_Y + 0.05 },
     { r: RTOP * 0.44, n: 16, y: PLATEAU_Y + 0.08 },
     { r: RTOP * 0.2, n: 8, y: PLATEAU_Y + 0.1 },
   ]
   const rnd = mulberry(4831)
-  const rings: THREE.Vector3[][] = RINGS.map(({ r, n, y }, ri) =>
+  const innerRings: THREE.Vector3[][] = INNER_RINGS.map(({ r, n, y }) =>
     Array.from({ length: n }, (_, i) => {
       const a = (i / n) * Math.PI * 2
-      const wob = ri === 0 ? 0 : 1 + (rnd() - 0.5) * 0.14
-      const vy = y + (ri === 0 ? 0 : (rnd() - 0.5) * 0.045)
-      const rr = r * (wob || 1)
-      return new THREE.Vector3(Math.cos(a) * rr, vy, Math.sin(a) * rr)
+      const wob = 1 + (rnd() - 0.5) * 0.14
+      const vy = y + (rnd() - 0.5) * 0.045
+      return new THREE.Vector3(Math.cos(a) * r * wob, vy, Math.sin(a) * r * wob)
     }),
   )
+  const rings = [outerRing, ...innerRings]
   const centre = new THREE.Vector3(0, PLATEAU_Y + 0.11, 0)
 
   const positions: number[] = []
   const tri = (a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3) => {
-    // (round ten: the corridor wedge deletion is gone — with the terraced
-    // cone the walkway anchors OUTSIDE the rim and is already at plateau
-    // height before it crosses, so the cap never sits above the stairs;
-    // deleting faces only opened sky-holes beside the ribbon)
     // force the upward winding regardless of walk order
     const crossY = (b.z - a.z) * (c.x - a.x) - (b.x - a.x) * (c.z - a.z)
     if (crossY >= 0) positions.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z)
@@ -678,23 +709,7 @@ function buildPlateauCap(pal: ScenePalette): THREE.BufferGeometry {
   }
   const last = rings[rings.length - 1]
   for (let i = 0; i < last.length; i++) tri(last[i], last[(i + 1) % last.length], centre)
-
-  const geo = new THREE.BufferGeometry()
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
-
-  const snow = new THREE.Color('#f3f6f5')
-  const rock = new THREE.Color(pal.cloud).lerp(new THREE.Color(pal.ink), 0.35)
-  const colours: number[] = []
-  const cRnd = mulberry(271)
-  const tmp = new THREE.Color()
-  const pos = geo.getAttribute('position')
-  for (let f = 0; f < pos.count; f += 3) {
-    tmp.copy(cRnd() < 0.15 ? rock : snow).multiplyScalar(0.94 + cRnd() * 0.12)
-    for (let v = 0; v < 3; v++) colours.push(tmp.r, tmp.g, tmp.b)
-  }
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(colours, 3))
-  geo.computeVertexNormals()
-  return geo
+  return positions
 }
 
 /* ------------------------------ tiny models ----------------------------- */
@@ -1306,8 +1321,6 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
 
   const mountain = useMemo(() => buildMountain(pal), [pal])
   useEffect(() => () => mountain.dispose(), [mountain])
-  const plateauCap = useMemo(() => buildPlateauCap(pal), [pal])
-  useEffect(() => () => plateauCap.dispose(), [plateauCap])
 
   // The summit walkway: constant width, built from a polyline that STARTS
   // on the spiral shelf (two pre-anchor samples follow the trail's curve),
@@ -1473,12 +1486,10 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
         <CameraRig nav={nav} />
         <SkyFade nav={nav} onShade={setShade} />
 
-        {/* the mountain — trail, river, caves and snow are all IN the mesh */}
+        {/* the mountain — trail, river, caves, snow AND the plateau cap are
+            all IN this one mesh; the cap is welded onto the cone's own rim
+            (see capTriangles), not a separate flush-fitted mesh */}
         <mesh geometry={mountain}>
-          <meshStandardMaterial vertexColors flatShading />
-        </mesh>
-        {/* the plateau's top face — its own chunky-triangulated cap */}
-        <mesh geometry={plateauCap}>
           <meshStandardMaterial vertexColors flatShading />
         </mesh>
 

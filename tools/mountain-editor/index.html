@@ -130,6 +130,9 @@
   <fieldset id="vertexBox">
     <legend>Vertex</legend>
     <div>selected: <span id="vertLabel" class="sel">none</span></div>
+    <div class="counts">⌘/Ctrl-click to add more vertices; dragging moves
+      the whole selection together. Coordinate fields below always target
+      the last-clicked (primary) vertex.</div>
     <label class="row">x <input type="number" id="vx" step="0.05"> y <input type="number" id="vy" step="0.05"> z <input type="number" id="vz" step="0.05"></label>
     <label class="row"><button id="splitBtn">Split from corner</button>
       <button id="splitDone" disabled>Finish</button></label>
@@ -140,9 +143,10 @@
     <div>selected: <span id="faceLabel" class="sel">none</span></div>
     <div class="counts">paint roles — the mountain's own colours plus three
       greys, re-resolved from the live theme in Michi so painted triangles
-      follow dark mode. Colouring is whole-triangle only — never per corner.</div>
+      follow dark mode. Colouring is whole-triangle only — never per corner.
+      ⌘/Ctrl-click to select more triangles and paint them all at once.</div>
     <div id="paintRoles" style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0"></div>
-    <button id="paintFaceBtn">Paint face</button>
+    <button id="paintFaceBtn">Paint face(s)</button>
   </fieldset>
 
   <fieldset id="silhouetteBox">
@@ -158,8 +162,11 @@
   <fieldset id="edgeBox">
     <legend>Edge</legend>
     <div>selected: <span id="edgeLabel" class="sel">none</span></div>
-    <div>second (shift-click): <span id="edge2Label" class="sel">none</span></div>
-    <button id="deleteEdge" class="danger">Delete edge</button>
+    <div>second (shift-click, for bridging): <span id="edge2Label" class="sel">none</span></div>
+    <div class="counts">⌘/Ctrl-click to select more edges and delete them
+      all at once. Shift-click keeps its own meaning — pick the second edge
+      to bridge — and is unaffected by the multi-selection.</div>
+    <button id="deleteEdge" class="danger">Delete edge(s)</button>
     <button id="bridgeEdges">Bridge edges</button>
     <button id="flipBridge" disabled>Flip bridge</button>
   </fieldset>
@@ -168,7 +175,6 @@
     <legend>View</legend>
     <label class="row"><input type="checkbox" id="showWire"> wireframe</label>
     <label class="row"><input type="checkbox" id="showBack"> double-sided (hides holes)</label>
-    <label class="row"><input type="checkbox" id="showCap" checked> plateau cap (reference)</label>
     <label class="row"><input type="checkbox" id="showTrail" checked> trail + summit gate (reference)</label>
     <label class="row"><input type="checkbox" id="showScenery" checked> scenery objects</label>
   </fieldset>
@@ -207,11 +213,14 @@
   <p id="hint">
     Drag to orbit, scroll to zoom. Click picks the nearest vertex or edge,
     the exact triangle under the pointer in Face mode, or a scenery object
-    in Scenery mode. Drag a selection's gold marker to move it — scenery
-    sticks to the terrain under the pointer. <kbd>⌫</kbd> removes the
-    selected edge or object, <kbd>⌘Z</kbd> undoes, <kbd>esc</kbd> clears or
-    cancels a split. Lesson stones and checkpoint torii are curriculum-owned
-    and stay put; the summit gate shows as reference.
+    in Scenery mode. <kbd>⌘/Ctrl</kbd>-click adds more to the selection in
+    Vertex, Edge and Face modes, so Paint face(s)/Delete edge(s)/dragging
+    a vertex act on everything selected at once. Drag a selection's gold
+    marker to move it — scenery sticks to the terrain under the pointer.
+    <kbd>⌫</kbd> removes the selected edge(s) or object, <kbd>⌘Z</kbd>
+    undoes, <kbd>esc</kbd> clears or cancels a split. Lesson stones and
+    checkpoint torii are curriculum-owned and stay put; the summit gate
+    shows as reference.
   </p>
 </aside>
 
@@ -269,6 +278,10 @@ const LIP_OUT = 1.05
 const WALL_IN = 1.6
 const T_BEND = 0.9945
 const BLEND0 = T_BEND - 0.0001
+// hoisted so capTriangles() can share it with buildMountainArrays' own
+// per-column loop — both need the SAME column count to reference the SAME
+// rim angles (mirrors PathScene3D.tsx)
+const COLS = 112
 // the no-overhang staircase floor: each loop must shrink by at least
 // LIP_OUT + WALL_IN (2.65) plus sloped-face/jitter margin, per turn
 const MIN_SHRINK_PER_TURN = 3.05
@@ -392,8 +405,6 @@ function terraceRadius(rp, offIdx, ds) {
 
 /** Positions + colours in exactly the order Michi's buildMountain emits. */
 function buildMountainArrays() {
-  const COLS = 112
-
   const rows = []
   for (let j = 0; j < COLS; j++) {
     const jj = j
@@ -454,6 +465,12 @@ function buildMountainArrays() {
     rows.push(col)
   }
 
+  // the rim row per column — captured here (not recomputed) so
+  // capTriangles' outer ring shares BIT-IDENTICAL positions with the
+  // cone's own rim, letting resetToBase()'s position-keyed weld actually
+  // join them into one mesh
+  const rimRows = rows.map((col) => col[col.length - 1])
+
   const RPT = ROWS_PER_TURN
   const rowCount = rows[0].length
   const positions = []
@@ -486,6 +503,12 @@ function buildMountainArrays() {
     }
   }
 
+  // weld the plateau's top face onto the cone's own rim, rather than a
+  // separate flush-fitted mesh (see capTriangles)
+  const coneFaceCount = positions.length / 9
+  positions.push(...capTriangles(rimRows))
+  const capFaceCount = positions.length / 9 - coneFaceCount
+
   const grass = new THREE.Color(PAL.olive)
   const grassLight = grass.clone().lerp(new THREE.Color('#ffffff'), 0.12)
   const rock = new THREE.Color(PAL.cloud).lerp(new THREE.Color(PAL.ink), 0.42)
@@ -500,7 +523,10 @@ function buildMountainArrays() {
   // float32-rounded reads, matching what Michi's paint pass sees
   const pos = new Float32Array(positions)
   const tmp = new THREE.Color()
-  for (let f = 0; f < pos.length / 3; f += 3) {
+  // altitude-banded painting is a CONE-body-only rule — the cap's flat,
+  // wide faces paint separately just below, same speckled snow/rock as
+  // when it was its own mesh
+  for (let f = 0; f < coneFaceCount * 3; f += 3) {
     const cx = (pos[f * 3] + pos[(f + 1) * 3] + pos[(f + 2) * 3]) / 3
     const cy = (pos[f * 3 + 1] + pos[(f + 1) * 3 + 1] + pos[(f + 2) * 3 + 1]) / 3
     const cz = (pos[f * 3 + 2] + pos[(f + 1) * 3 + 2] + pos[(f + 2) * 3 + 2]) / 3
@@ -527,27 +553,48 @@ function buildMountainArrays() {
     tmp.multiplyScalar(0.93 + cRnd() * 0.14)
     for (let v = 0; v < 3; v++) colours.push(tmp.r, tmp.g, tmp.b)
   }
+
+  // the cap's own speckled snow/rock paint, unchanged from when it was a
+  // separate mesh — same seed, so the summit keeps its look
+  const capSnow = new THREE.Color('#f3f6f5')
+  const capRock = new THREE.Color(PAL.cloud).lerp(new THREE.Color(PAL.ink), 0.35)
+  const capRnd = mulberry(271)
+  for (let i = 0; i < capFaceCount; i++) {
+    tmp.copy(capRnd() < 0.15 ? capRock : capSnow).multiplyScalar(0.94 + capRnd() * 0.12)
+    for (let v = 0; v < 3; v++) colours.push(tmp.r, tmp.g, tmp.b)
+  }
   return { positions, colours }
 }
 
-/** Reference-only plateau cap, same as Michi's buildPlateauCap. */
-function buildPlateauCap() {
-  const RINGS = [
-    { r: RTOP + 0.06, n: 44, y: PLATEAU_Y - 0.005 },
+/** The plateau's top face — POSITIONS ONLY (buildMountainArrays colours it,
+ * having appended these onto the cone's own position array). Welded
+ * straight onto the cone's rim: the outer ring reuses `rimRows`, the SAME
+ * {y, r} pairs the per-column loop already computed for the cone's top
+ * row, converted with the identical Math.cos/sin(phi) formula — so the cap
+ * and cone share real vertices at the seam instead of two meshes that just
+ * sit flush. Inner rings step down with fewer segments toward the middle,
+ * stitched by walking both rings' angles (household notes, rounds five and
+ * six — avoids 112 spokes fanning into one centre vertex). */
+function capTriangles(rimRows) {
+  const outerRing = rimRows.map((rv, j) => {
+    const phi = THETA0 + (j / COLS) * Math.PI * 2
+    return new THREE.Vector3(Math.cos(phi) * rv.r, rv.y, Math.sin(phi) * rv.r)
+  })
+  const INNER_RINGS = [
     { r: RTOP * 0.72, n: 28, y: PLATEAU_Y + 0.05 },
     { r: RTOP * 0.44, n: 16, y: PLATEAU_Y + 0.08 },
     { r: RTOP * 0.2, n: 8, y: PLATEAU_Y + 0.1 },
   ]
   const rnd = mulberry(4831)
-  const rings = RINGS.map(({ r, n, y }, ri) =>
+  const innerRings = INNER_RINGS.map(({ r, n, y }) =>
     Array.from({ length: n }, (_, i) => {
       const a = (i / n) * Math.PI * 2
-      const wob = ri === 0 ? 0 : 1 + (rnd() - 0.5) * 0.14
-      const vy = y + (ri === 0 ? 0 : (rnd() - 0.5) * 0.045)
-      const rr = r * (wob || 1)
-      return new THREE.Vector3(Math.cos(a) * rr, vy, Math.sin(a) * rr)
+      const wob = 1 + (rnd() - 0.5) * 0.14
+      const vy = y + (rnd() - 0.5) * 0.045
+      return new THREE.Vector3(Math.cos(a) * r * wob, vy, Math.sin(a) * r * wob)
     }),
   )
+  const rings = [outerRing, ...innerRings]
   const centre = new THREE.Vector3(0, PLATEAU_Y + 0.11, 0)
   const positions = []
   const tri = (a, b, c) => {
@@ -571,22 +618,7 @@ function buildPlateauCap() {
   }
   const last = rings[rings.length - 1]
   for (let i = 0; i < last.length; i++) tri(last[i], last[(i + 1) % last.length], centre)
-
-  const geo = new THREE.BufferGeometry()
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
-  const snow = new THREE.Color('#f3f6f5')
-  const rock = new THREE.Color(PAL.cloud).lerp(new THREE.Color(PAL.ink), 0.35)
-  const colours = []
-  const cRnd = mulberry(271)
-  const tmp = new THREE.Color()
-  const pos = geo.getAttribute('position')
-  for (let f = 0; f < pos.count; f += 3) {
-    tmp.copy(cRnd() < 0.15 ? rock : snow).multiplyScalar(0.94 + cRnd() * 0.12)
-    for (let v = 0; v < 3; v++) colours.push(tmp.r, tmp.g, tmp.b)
-  }
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(colours, 3))
-  geo.computeVertexNormals()
-  return geo
+  return positions
 }
 
 /* ------------------------- scenery: base placement ------------------- */
@@ -1106,10 +1138,13 @@ function undo() {
   // keep selections that still point at something; face indices shift
   // under undo in ways that can't be validated cheaply, so always clear
   if (selVert != null && selVert >= verts.length) selVert = null
+  selVerts = new Set([...selVerts].filter((vid) => vid < verts.length))
   const edgeOk = (e) => e && e[0] < verts.length && e[1] < verts.length
   if (!edgeOk(selEdge)) selEdge = null
   if (!edgeOk(selEdge2)) selEdge2 = null
+  selEdges = new Set([...selEdges].filter((k) => edgeOk(edgeFromKey(k))))
   selFace = null
+  selFaces = new Set()
   lastBridge = []
   selScenery = null
   rebuild()
@@ -1158,8 +1193,6 @@ const wire = new THREE.LineSegments(
 wire.visible = false
 scene.add(wire)
 
-const capMesh = new THREE.Mesh(buildPlateauCap(), material.clone())
-scene.add(capMesh)
 const ground = new THREE.Mesh(
   new THREE.CylinderGeometry(R0 + 15, R0 + 16, 1, 36),
   new THREE.MeshStandardMaterial({ color: PAL.olive, flatShading: true }),
@@ -1180,10 +1213,10 @@ scene.add(trailLine)
 // the summit gate — curriculum-owned in Michi, shown here as reference only
 let gateRef = null
 
-/** Re-derive everything that depends on the shape but is not the mesh. */
+/** Re-derive everything that depends on the shape but is not the mesh —
+ * the plateau cap no longer needs its own entry here: it's part of
+ * mountainMesh's own geometry now, rebuilt by rebuild() like the rest. */
 function updateReferences() {
-  capMesh.geometry.dispose()
-  capMesh.geometry = buildPlateauCap()
   trailLine.geometry.dispose()
   trailLine.geometry = new THREE.BufferGeometry().setFromPoints(trailPoints())
   ground.geometry.dispose()
@@ -1251,7 +1284,10 @@ function updateSceneryMarker() {
   }
 }
 
-// selection markers
+// selection markers. vertMarker is the PRIMARY vertex only (the drag
+// handle); vertMarkers is a Group holding one small dot per member of the
+// multi-selection (including the primary), so ⌘/Ctrl-click additions are
+// visible too.
 const vertMarker = new THREE.Mesh(
   new THREE.SphereGeometry(0.14, 12, 10),
   new THREE.MeshBasicMaterial({ color: '#e8b84b', depthTest: false }),
@@ -1259,6 +1295,11 @@ const vertMarker = new THREE.Mesh(
 vertMarker.renderOrder = 10
 vertMarker.visible = false
 scene.add(vertMarker)
+const vertMarkers = new THREE.Group()
+scene.add(vertMarkers)
+const vertDotGeo = new THREE.SphereGeometry(0.08, 8, 6)
+const vertDotMat = new THREE.MeshBasicMaterial({ color: '#e8b84b', depthTest: false })
+
 function edgeMarker(colour) {
   const m = new THREE.Mesh(
     new THREE.CylinderGeometry(0.045, 0.045, 1, 6),
@@ -1269,20 +1310,31 @@ function edgeMarker(colour) {
   scene.add(m)
   return m
 }
-const edgeMarkerA = edgeMarker('#e8b84b')
+// the multi-selected edges (always includes the primary — a plain click
+// resets the set to just that edge, so this covers the single-select case
+// too). Shared unit-cylinder geometry, scaled per-instance to each edge's
+// length (as placeEdgeMarker already does) — same sharing trick as the
+// vertex dots, so rebuilding this group every click never leaks geometry.
+// edgeMarkerB stays a dedicated single marker: it only ever shows the
+// bridge's "second pick", a concept that stays pairwise.
+const edgeMarkers = new THREE.Group()
+scene.add(edgeMarkers)
+const edgeCylGeo = new THREE.CylinderGeometry(0.045, 0.045, 1, 6)
+const edgeCylMat = new THREE.MeshBasicMaterial({ color: '#e8b84b', depthTest: false })
 const edgeMarkerB = edgeMarker('#e05a72')
 const splitMarkers = new THREE.Group()
 scene.add(splitMarkers)
+const splitDotGeo = new THREE.SphereGeometry(0.1, 8, 6)
+const splitDotMat = new THREE.MeshBasicMaterial({ color: '#e05a72', depthTest: false })
 
-// the selected triangle, in Face mode: a closed gold outline around its
-// three corners — painting always targets this whole shape, never a corner
-const faceMarker = new THREE.LineLoop(
-  new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()]),
-  new THREE.LineBasicMaterial({ color: '#e8b84b', depthTest: false }),
-)
-faceMarker.renderOrder = 10
-faceMarker.visible = false
-scene.add(faceMarker)
+// the selected triangle(s), in Face mode: a closed gold outline around
+// each one's three corners — painting always targets whole triangles,
+// never a corner. Each triangle's outline geometry is necessarily unique
+// (three arbitrary points), so — unlike the shared dot/cylinder geometry
+// above — refreshFaceMarkers() disposes the old ones before rebuilding.
+const faceMarkers = new THREE.Group()
+scene.add(faceMarkers)
+const faceLineMat = new THREE.LineBasicMaterial({ color: '#e8b84b', depthTest: false })
 
 function placeEdgeMarker(marker, a, b) {
   const pa = new THREE.Vector3(...verts[a].p)
@@ -1329,14 +1381,22 @@ function rebuild() {
   updateCounts()
 }
 
-/** Cheap position-only refresh while dragging a vertex. */
-function refreshVertex(vid) {
+/** Writes one vertex's current position into every face corner that
+ * references it — no normals recompute, so callers moving several
+ * vertices in one drag frame can batch that into a single pass. */
+function writeVertexPosition(vid) {
   const attr = mountainMesh.geometry.getAttribute('position')
   const p = verts[vid].p
   for (const [fi, k] of vertAdj.get(vid) ?? []) {
     attr.setXYZ(fi * 3 + k, p[0], p[1], p[2])
   }
   attr.needsUpdate = true
+}
+
+/** Cheap refresh while dragging one or more vertices: positions only,
+ * normals recomputed once for the whole batch, markers repositioned. */
+function refreshDraggedVerts(vids) {
+  for (const vid of vids) writeVertexPosition(vid)
   mountainMesh.geometry.computeVertexNormals()
   updateMarkers()
 }
@@ -1352,18 +1412,33 @@ function updateCounts() {
 /* --------------------------- selection ------------------------------- */
 
 let mode = 'vertex'
+// Each mode keeps a PRIMARY selection (unchanged from before — drives the
+// numeric fields, the drag handle, and edge mode's bridge pairing) plus a
+// multi-select SET that a plain click always resets to just the primary,
+// and ⌘/Ctrl-click toggles membership in. Batch actions (delete, paint,
+// group-drag) iterate the set, so single-select keeps working unchanged
+// (the set is simply size 1) while multi-select layers on top of it.
 let selVert = null
-let selEdge = null // [a, b]
-let selEdge2 = null
-let selFace = null // index into faces[] — Face mode's whole-triangle target
+let selVerts = new Set()
+let selEdge = null // [a, b] — also edge mode's bridge-pairing "first pick"
+let selEdge2 = null // bridge-pairing "second pick"; shift-click only, never in selEdges
+let selEdges = new Set() // "a-b" keys, a<b
+let selFace = null // index into faces[]
+let selFaces = new Set()
 let splitting = null // { vid, newVid, snapshot, count }
 let lastBridge = []
 
+const edgeKey = (a, b) => (a < b ? `${a}-${b}` : `${b}-${a}`)
+const edgeFromKey = (k) => k.split('-').map(Number)
+
 function clearSelection() {
   selVert = null
+  selVerts = new Set()
   selEdge = null
   selEdge2 = null
+  selEdges = new Set()
   selFace = null
+  selFaces = new Set()
   lastBridge = []
   selScenery = null
   updateMarkers()
@@ -1375,7 +1450,8 @@ function updateMarkers() {
     vertMarker.position.set(...verts[selVert].p)
     vertMarker.visible = mode === 'vertex'
     document.getElementById('vertLabel').textContent =
-      `#${selVert}${verts[selVert].base < 0 ? ' (new)' : ''}`
+      `#${selVert}${verts[selVert].base < 0 ? ' (new)' : ''}` +
+      (selVerts.size > 1 ? ` (+${selVerts.size - 1} more)` : '')
     const p = verts[selVert].p
     for (const [axis, i] of [['vx', 0], ['vy', 1], ['vz', 2]]) {
       const el = document.getElementById(axis)
@@ -1385,37 +1461,59 @@ function updateMarkers() {
     vertMarker.visible = false
     document.getElementById('vertLabel').textContent = 'none'
   }
-  if (selEdge) placeEdgeMarker(edgeMarkerA, selEdge[0], selEdge[1])
-  else edgeMarkerA.visible = false
-  if (selEdge2) placeEdgeMarker(edgeMarkerB, selEdge2[0], selEdge2[1])
-  else edgeMarkerB.visible = false
-  edgeMarkerA.visible = edgeMarkerA.visible && mode === 'edge'
-  edgeMarkerB.visible = edgeMarkerB.visible && mode === 'edge'
-  document.getElementById('edgeLabel').textContent = selEdge ? `${selEdge[0]}–${selEdge[1]}` : 'none'
-  document.getElementById('edge2Label').textContent = selEdge2 ? `${selEdge2[0]}–${selEdge2[1]}` : 'none'
-
-  if (selFace != null && faces[selFace] && mode === 'face') {
-    const pts = faces[selFace].v.map((vi) => new THREE.Vector3(...verts[vi].p))
-    faceMarker.geometry.dispose()
-    faceMarker.geometry = new THREE.BufferGeometry().setFromPoints(pts)
-    faceMarker.visible = true
-    document.getElementById('faceLabel').textContent = `#${selFace}`
-  } else {
-    faceMarker.visible = false
-    document.getElementById('faceLabel').textContent = 'none'
+  vertMarkers.clear()
+  if (mode === 'vertex') {
+    for (const vid of selVerts) {
+      if (!verts[vid]) continue
+      const dot = new THREE.Mesh(vertDotGeo, vertDotMat)
+      dot.renderOrder = 10
+      dot.position.set(...verts[vid].p)
+      vertMarkers.add(dot)
+    }
   }
 
-  splitMarkers.clear()
+  edgeMarkers.clear() // shared cylinder geo/mat below — nothing to dispose
+  if (mode === 'edge') {
+    for (const k of selEdges) {
+      const [a, b] = edgeFromKey(k)
+      if (!verts[a] || !verts[b]) continue
+      const m = new THREE.Mesh(edgeCylGeo, edgeCylMat)
+      m.renderOrder = 10
+      placeEdgeMarker(m, a, b)
+      edgeMarkers.add(m)
+    }
+  }
+  if (selEdge2) placeEdgeMarker(edgeMarkerB, selEdge2[0], selEdge2[1])
+  else edgeMarkerB.visible = false
+  edgeMarkerB.visible = edgeMarkerB.visible && mode === 'edge'
+  document.getElementById('edgeLabel').textContent =
+    selEdge ? `${selEdge[0]}–${selEdge[1]}${selEdges.size > 1 ? ` (+${selEdges.size - 1} more)` : ''}` : 'none'
+  document.getElementById('edge2Label').textContent = selEdge2 ? `${selEdge2[0]}–${selEdge2[1]}` : 'none'
+
+  // each triangle's outline needs its own geometry (three arbitrary
+  // points) — unlike the shared dot/cylinder above, dispose before rebuild
+  for (const child of faceMarkers.children) child.geometry.dispose()
+  faceMarkers.clear()
+  if (mode === 'face') {
+    for (const fi of selFaces) {
+      if (!faces[fi]) continue
+      const pts = faces[fi].v.map((vi) => new THREE.Vector3(...verts[vi].p))
+      const m = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), faceLineMat)
+      m.renderOrder = 10
+      faceMarkers.add(m)
+    }
+  }
+  document.getElementById('faceLabel').textContent =
+    selFace != null && faces[selFace] ? `#${selFace}${selFaces.size > 1 ? ` (+${selFaces.size - 1} more)` : ''}` : 'none'
+
+  splitMarkers.clear() // shared geo/mat below — nothing to dispose
   if (splitting) {
     for (const [fi] of vertAdj.get(splitting.newVid) ?? []) {
       const face = faces[fi]
       const c = new THREE.Vector3()
       for (const vi of face.v) c.add(new THREE.Vector3(...verts[vi].p))
       c.multiplyScalar(1 / 3)
-      const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(0.1, 8, 6),
-        new THREE.MeshBasicMaterial({ color: '#e05a72', depthTest: false }),
-      )
+      const dot = new THREE.Mesh(splitDotGeo, splitDotMat)
       dot.renderOrder = 10
       dot.position.copy(c)
       splitMarkers.add(dot)
@@ -1471,17 +1569,26 @@ function facesOnEdge([a, b]) {
   return out
 }
 
+/** Deletes every face touching any edge in the current multi-selection —
+ * a plain click always leaves selEdges = {that one edge}, so this is also
+ * the single-edge path (unchanged behaviour when nothing else was added
+ * with ⌘/Ctrl-click). */
 function deleteSelectedEdge() {
-  if (mode !== 'edge' || !selEdge) { setStatus('Select an edge first.'); return }
-  const doomed = facesOnEdge(selEdge)
-  if (!doomed.length) { setStatus('No faces share that edge.'); return }
+  if (mode !== 'edge' || selEdges.size === 0) { setStatus('Select an edge first.'); return }
+  const drop = new Set()
+  for (const k of selEdges) {
+    for (const fi of facesOnEdge(edgeFromKey(k))) drop.add(fi)
+  }
+  if (!drop.size) { setStatus('No faces share the selected edge(s).'); return }
   pushUndo()
-  const drop = new Set(doomed)
   faces = faces.filter((_, i) => !drop.has(i))
-  setStatus(`Deleted edge ${selEdge[0]}–${selEdge[1]} (${doomed.length} face${doomed.length === 1 ? '' : 's'}).`)
+  const n = selEdges.size
+  setStatus(`Deleted ${n} edge${n === 1 ? '' : 's'} (${drop.size} face${drop.size === 1 ? '' : 's'}).`)
   selEdge = null
   selEdge2 = null
+  selEdges = new Set()
   selFace = null // face indices shift after the filter
+  selFaces = new Set()
   lastBridge = []
   rebuild()
 }
@@ -1528,19 +1635,26 @@ function flipBridge() {
   rebuild()
 }
 
-/** Recolours exactly one triangle, solid — all three corners get the same
- * role, so there is never a per-corner gradient. */
+/** Recolours every selected triangle, solid — all three corners of each
+ * get the same role, so there is never a per-corner gradient. A plain
+ * click always leaves selFaces = {that one triangle}, so this is also the
+ * single-triangle path. */
 function paintFace() {
-  if (mode !== 'face' || selFace == null || !faces[selFace]) { setStatus('Select a triangle first.'); return }
+  if (mode !== 'face' || selFaces.size === 0) { setStatus('Select a triangle first.'); return }
   pushUndo()
   const c = roleColour(paintRole)
   const rgb = [c.r, c.g, c.b]
-  const face = faces[selFace]
-  for (let k = 0; k < 3; k++) {
-    face.col[k] = [...rgb]
-    face.recol[k] = paintRole
+  let n = 0
+  for (const fi of selFaces) {
+    const face = faces[fi]
+    if (!face) continue
+    for (let k = 0; k < 3; k++) {
+      face.col[k] = [...rgb]
+      face.recol[k] = paintRole
+    }
+    n++
   }
-  setStatus(`Painted triangle #${selFace} ${paintRole} — solid across the whole face, re-themes in Michi.`)
+  setStatus(`Painted ${n} triangle${n === 1 ? '' : 's'} ${paintRole} — solid across each whole face, re-themes in Michi.`)
   rebuild()
 }
 
@@ -1618,6 +1732,7 @@ function finishSplit() {
     undoStack.push(snapshot)
     if (undoStack.length > 60) undoStack.shift()
     selVert = newVid
+    selVerts = new Set([newVid])
     splitting = null
     setStatus(`Split done — vertex #${newVid} is selected; drag it apart or type coordinates.`)
   }
@@ -1641,6 +1756,7 @@ function cancelSplit() {
 
 let down = null
 let dragging = false
+let dragStart = null // Map<vid, [x,y,z]> — every selected vertex's position when the drag began
 let scDrag = false
 const dragPlane = new THREE.Plane()
 
@@ -1678,10 +1794,11 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
     if (Math.hypot(sx - e.clientX, sy - e.clientY) < 14) {
       pushUndo()
       dragging = true
+      dragStart = new Map([...selVerts].map((vid) => [vid, [...verts[vid].p]]))
       controls.enabled = false
       camera.getWorldDirection(dragPlane.normal)
       dragPlane.setFromNormalAndCoplanarPoint(dragPlane.normal, new THREE.Vector3(...verts[selVert].p))
-      setStatus('Moving vertex — release to drop it.')
+      setStatus(selVerts.size > 1 ? `Moving ${selVerts.size} vertices — release to drop.` : 'Moving vertex — release to drop it.')
     }
   }
 })
@@ -1691,7 +1808,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
     const g = sceneryGroup.children[selScenery]
     if (!g) return
     raycaster.setFromCamera(pointerNdc(e), camera)
-    const targets = [mountainMesh, capMesh, ground].filter((o) => o.visible)
+    const targets = [mountainMesh, ground].filter((o) => o.visible)
     const hit = raycaster.intersectObjects(targets, false)[0]
     if (hit) {
       g.position.copy(hit.point)
@@ -1705,12 +1822,16 @@ renderer.domElement.addEventListener('pointermove', (e) => {
     sceneryMarker?.update()
     return
   }
-  if (!dragging || selVert == null) return
+  if (!dragging || selVert == null || !dragStart) return
   raycaster.setFromCamera(pointerNdc(e), camera)
   const hit = new THREE.Vector3()
   if (raycaster.ray.intersectPlane(dragPlane, hit)) {
-    verts[selVert].p = [hit.x, hit.y, hit.z]
-    refreshVertex(selVert)
+    const start = dragStart.get(selVert)
+    const dx = hit.x - start[0], dy = hit.y - start[1], dz = hit.z - start[2]
+    for (const [vid, p0] of dragStart) {
+      verts[vid].p = [p0[0] + dx, p0[1] + dy, p0[2] + dz]
+    }
+    refreshDraggedVerts(dragStart.keys())
   }
 })
 
@@ -1730,9 +1851,11 @@ addEventListener('pointerup', (e) => {
   }
   if (dragging) {
     dragging = false
+    const n = dragStart ? dragStart.size : 1
+    dragStart = null
     controls.enabled = true
     rebuild()
-    setStatus(`Vertex #${selVert} moved.`)
+    setStatus(n > 1 ? `${n} vertices moved.` : `Vertex #${selVert} moved.`)
     down = null
     return
   }
@@ -1764,21 +1887,67 @@ addEventListener('pointerup', (e) => {
     splitToggleFace(hit.faceIdx)
     return
   }
+  const multi = e.ctrlKey || e.metaKey
   if (mode === 'vertex') {
-    selVert = faces[hit.faceIdx].v[nearestCorner(hit.faceIdx, hit.point)]
-    setStatus(`Vertex #${selVert} selected — drag the gold marker to move it.`)
+    const vid = faces[hit.faceIdx].v[nearestCorner(hit.faceIdx, hit.point)]
+    if (multi) {
+      if (selVerts.has(vid)) {
+        selVerts.delete(vid)
+        if (selVert === vid) selVert = selVerts.size ? [...selVerts].pop() : null
+      } else {
+        selVerts.add(vid)
+        selVert = vid
+      }
+      setStatus(`${selVerts.size} vertex${selVerts.size === 1 ? '' : 'es'} selected.`)
+    } else {
+      selVerts = new Set([vid])
+      selVert = vid
+      setStatus(`Vertex #${selVert} selected — drag the gold marker to move it (⌘/Ctrl-click to add more).`)
+    }
   } else if (mode === 'face') {
-    selFace = hit.faceIdx
-    setStatus(`Triangle #${selFace} selected — pick a paint role and Paint face to recolour it, whole and solid.`)
+    const fi = hit.faceIdx
+    if (multi) {
+      if (selFaces.has(fi)) {
+        selFaces.delete(fi)
+        if (selFace === fi) selFace = selFaces.size ? [...selFaces].pop() : null
+      } else {
+        selFaces.add(fi)
+        selFace = fi
+      }
+      setStatus(`${selFaces.size} triangle${selFaces.size === 1 ? '' : 's'} selected.`)
+    } else {
+      selFaces = new Set([fi])
+      selFace = fi
+      setStatus(`Triangle #${selFace} selected — pick a paint role and Paint face(s) (⌘/Ctrl-click to add more).`)
+    }
   } else {
     const edge = nearestEdge(hit.faceIdx, hit.point)
-    if (e.shiftKey && selEdge) {
-      selEdge2 = edge
-      setStatus(`Second edge ${edge[0]}–${edge[1]} selected — ready to bridge.`)
+    if (e.shiftKey) {
+      if (selEdge) {
+        selEdge2 = edge
+        setStatus(`Second edge ${edge[0]}–${edge[1]} selected — ready to bridge.`)
+      } else {
+        setStatus('Select a first edge, then shift-click a second to bridge.')
+      }
+    } else if (multi) {
+      const k = edgeKey(edge[0], edge[1])
+      if (selEdges.has(k)) {
+        selEdges.delete(k)
+        if (selEdge && edgeKey(selEdge[0], selEdge[1]) === k) {
+          const remaining = [...selEdges]
+          selEdge = remaining.length ? edgeFromKey(remaining[remaining.length - 1]) : null
+        }
+      } else {
+        selEdges.add(k)
+        selEdge = edge
+      }
+      selEdge2 = null
+      setStatus(`${selEdges.size} edge${selEdges.size === 1 ? '' : 's'} selected.`)
     } else {
+      selEdges = new Set([edgeKey(edge[0], edge[1])])
       selEdge = edge
       selEdge2 = null
-      setStatus(`Edge ${edge[0]}–${edge[1]} selected (${facesOnEdge(edge).length} faces). Shift-click another to bridge, or delete it.`)
+      setStatus(`Edge ${edge[0]}–${edge[1]} selected (${facesOnEdge(edge).length} faces). Shift-click a second to bridge, ⌘/Ctrl-click to add more, or delete.`)
     }
   }
   updateMarkers()
@@ -1797,11 +1966,11 @@ function setMode(m) {
   updateSceneryMarker()
   setStatus(
     m === 'vertex'
-      ? 'Vertex mode — click the mesh to pick the nearest vertex.'
+      ? 'Vertex mode — click the mesh to pick the nearest vertex (⌘/Ctrl-click to add more).'
       : m === 'edge'
-        ? 'Edge mode — click near an edge to pick it; shift-click picks the second edge for bridging.'
+        ? 'Edge mode — click near an edge to pick it (⌘/Ctrl-click to add more); shift-click picks the second edge for bridging.'
         : m === 'face'
-          ? 'Face mode — click a triangle to select it, then Paint face. Colouring is always the whole triangle.'
+          ? 'Face mode — click a triangle to select it (⌘/Ctrl-click to add more), then Paint face(s). Colouring is always the whole triangle.'
           : 'Scenery mode — click an object to select it, drag to move it (it sticks to the terrain).',
   )
 }
@@ -1878,7 +2047,7 @@ document.getElementById('scAdd').onclick = () => {
   // spawn on the terrain under the camera's focus point
   const target = controls.target.clone()
   raycaster.set(new THREE.Vector3(target.x, PLATEAU_Y * 3, target.z), new THREE.Vector3(0, -1, 0))
-  const hit = raycaster.intersectObjects([mountainMesh, capMesh, ground], false)[0]
+  const hit = raycaster.intersectObjects([mountainMesh, ground], false)[0]
   const p = hit ? hit.point : target
   sceneryEdits.added.push({ kind, x: p.x, y: p.y, z: p.z, angle: 0, scale: 1 })
   if (mode !== 'scenery') setMode('scenery')
@@ -1995,7 +2164,6 @@ document.getElementById('showBack').onchange = (e) => {
   material.side = e.target.checked ? THREE.DoubleSide : THREE.FrontSide
   material.needsUpdate = true
 }
-document.getElementById('showCap').onchange = (e) => { capMesh.visible = e.target.checked }
 document.getElementById('showTrail').onchange = (e) => {
   trailLine.visible = e.target.checked
   if (gateRef) gateRef.visible = e.target.checked
@@ -2101,6 +2269,17 @@ window.__michiEditor = {
   controls,
   get sceneryList() { return sceneryList },
   get sceneryGroup() { return sceneryGroup },
+  get verts() { return verts },
+  get faces() { return faces },
+  get mountainMesh() { return mountainMesh },
+  rebuild,
+  /** World position → screen coords, for headless tests to drive real
+   * clicks/drags at a specific vertex/object instead of guessing pixels. */
+  projectToScreen(x, y, z) {
+    const p = new THREE.Vector3(x, y, z).project(camera)
+    const rect = renderer.domElement.getBoundingClientRect()
+    return { x: (p.x * 0.5 + 0.5) * rect.width + rect.left, y: (-p.y * 0.5 + 0.5) * rect.height + rect.top, visible: p.z < 1 }
+  },
 }
 setStatus(`Mountain rebuilt: <strong>${faces.length}</strong> faces, ${verts.length} welded vertices, ${sceneryList.length} scenery objects. Vertex mode — click the mesh to begin.`)
 </script>

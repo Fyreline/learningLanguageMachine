@@ -36,25 +36,35 @@ take 5173/8000 (Mishka Hub), 8100/8101 (Michi's prod/dev API), 8102/8103
 
 ## What it can do
 
-- **Delete an edge** — edge mode, click near an edge, press ⌫ (removes the
-  faces sharing it).
+- **Select several at once** — in Vertex, Edge and Face modes, ⌘/Ctrl-click
+  adds (or removes) an item from the selection; a plain click always
+  resets it to just the one you clicked. Batch actions then act on
+  everything selected: dragging one selected vertex moves the whole
+  group together (by the same delta), "Paint face(s)" recolours every
+  selected triangle, and "Delete edge(s)" removes every face touching any
+  selected edge. Shift-click keeps its own separate meaning in edge mode
+  (pick the bridge's second edge) and is unaffected by the multi-selection.
+- **Delete an edge (or several)** — edge mode, click near an edge, press ⌫
+  (removes the faces sharing it).
 - **Bridge two edges** — edge mode, click one edge, shift-click another,
   "Bridge edges" (fills a quad between them; "Flip bridge" if the new faces
   render dark/invisible — Michi front-face culls, so winding matters).
+  Bridging stays pairwise regardless of any multi-selection.
 - **Split a vertex from a corner** — vertex mode, select the vertex, "Split
   from corner", then click the corner face(s) to peel onto the duplicate,
-  "Finish", and drag the new vertex apart.
-- **Move a vertex** — drag its gold marker (moves in the camera plane) or type
-  exact coordinates.
-- **Recolour a triangle** — Face mode, click a triangle to select it (a gold
-  outline traces exactly that one face), pick a paint role from the swatches
-  (the mountain's own colours: grass, light grass, rock, snow, dirt, water,
-  cave ink — plus light/mid/dark grey), then "Paint face". Colouring is
-  always the whole triangle, solid — never a single corner, so there's no
-  gradient smear across a face. The patch stores the role name, not the
-  colour, and Michi resolves it from the live palette — so painted
-  triangles follow light/dark mode like everything else. There is
-  deliberately no free colour picker.
+  "Finish", and drag the new vertex apart. (Single-vertex only — splitting
+  doesn't extend to a multi-selection.)
+- **Move a vertex (or several)** — drag the gold marker (moves in the
+  camera plane) or type exact coordinates for the last-clicked one.
+- **Recolour a triangle (or several)** — Face mode, click a triangle to
+  select it (a gold outline traces exactly that one face), pick a paint
+  role from the swatches (the mountain's own colours: grass, light grass,
+  rock, snow, dirt, water, cave ink — plus light/mid/dark grey), then
+  "Paint face(s)". Colouring is always the whole triangle, solid — never a
+  single corner, so there's no gradient smear across a face. The patch
+  stores the role name, not the colour, and Michi resolves it from the
+  live palette — so painted triangles follow light/dark mode like
+  everything else. There is deliberately no free colour picker.
 - **Reshape the silhouette (mesh-only)** — vertex mode, select a vertex to
   set the height line, then "Move points below" pushes every vertex at or
   below that height out from the centre (negative amounts pull in). "Equal"
@@ -101,6 +111,13 @@ take 5173/8000 (Mishka Hub), 8100/8101 (Michi's prod/dev API), 8102/8103
   the trail lanterns). "Swap selected to this kind" replaces any object
   in place, keeping its position, rotation and scale — handy for turning a
   procedural pine into a maple, or the odd trail torii spot into a ruin.
+- **Edit the plateau cap like the rest of the mountain** — the summit's flat
+  top is no longer a separate mesh sitting flush against the cone; it's
+  welded onto the cone's own rim (same 112 vertices, exact positions) and
+  merged into one editable model. Select, move, split, bridge, delete and
+  paint work on it exactly as everywhere else — drag a rim vertex and both
+  the terrace wall below it and the cap's edge above it move together,
+  since they're now the same vertex, not two that happen to line up.
 - Undo (⌘Z), wireframe/double-sided/reference toggles, save/load.
 
 ## Getting edits into Michi
@@ -129,7 +146,12 @@ saved against. The editor embeds a verbatim port of `buildMountain` ("round
 ten") and stamps `baseFaceCount` into the patch; if the generator in
 `PathScene3D.tsx` ever changes shape, Michi notices the mismatch, warns on the
 console and ignores the patch — re-port the generator into `index.html` here
-and redo the edits (or reload the old patch and fix up what moved).
+and redo the edits (or reload the old patch and fix up what moved). The
+plateau cap's triangles are appended after the cone's own faces in that same
+flat array (`capTriangles`, fed by `rimRows` — the cone's own rim positions,
+so the seam is a real shared vertex, not two meshes sitting flush); a shape
+change regenerates both together, so `baseFaceCount` always covers the whole
+welded mountain.
 
 Small print: the editor bakes its display colours with the light palette, so
 what you see is the light theme; in Michi's dark mode both the procedural
