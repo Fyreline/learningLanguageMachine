@@ -28,11 +28,120 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import type { PathManifest } from '../pathData'
 import { useSettings } from '../settings'
 import { PALETTE, type KitsuneTone } from './AnimatedKitsune'
+import mountainPatchJson from '../mountainPatch.json'
+
+/* ---------------- household patch & tuning (tools/mountain-editor) ------- */
+
+/** The spiral's household-adjustable proportions: the trail still starts at
+ * the trailhead (t=0, radius baseRadius) and ends at the summit centre —
+ * everything between (mountain surface, camera, lesson stones, scenery,
+ * even the train's track) derives from these three numbers. */
+interface MountainShape {
+  baseRadius: number
+  topRadius: number
+  height: number
+}
+
+/** Close-third-person camera feel. Purely presentational — safe to tune. */
+interface CameraTuning {
+  distMin: number
+  distMax: number
+  height: number
+  azimuthBias: number
+  lookAtHeight: number
+}
+
+/** The decorative dressing — every placeable object except the ones the
+ * curriculum owns (lesson stones, checkpoint torii, kitsune, summit gate),
+ * which keep deriving from the manifest. `angle` is plain rotation.y.
+ * The second row are add-in variants with no procedural placements of
+ * their own — swap-ins and extras for the household to scatter. */
+type SceneryKind =
+  | 'pine' | 'sakura' | 'rock' | 'lantern' | 'bridge'
+  | 'house' | 'onsen' | 'torii' | 'hill' | 'pond'
+  | 'cedar' | 'snowpine' | 'maple' | 'bamboo' | 'deadtree'
+  | 'torii-worn' | 'torii-fallen' | 'torii-broken' | 'shrine' | 'toro'
+
+interface SceneryItem {
+  id: string
+  kind: SceneryKind
+  x: number
+  y: number
+  z: number
+  angle: number
+  scale: number
+  variant?: number
+}
+
+/** Scenery edits ride the same patch: base items (procedurally placed, ids
+ * stable for a given shape) can be removed or re-transformed; new items are
+ * appended. */
+interface SceneryPatch {
+  removed: string[]
+  moved: { id: string; x: number; y: number; z: number; angle: number; scale: number }[]
+  added: { kind: SceneryKind; x: number; y: number; z: number; angle: number; scale: number; variant?: number }[]
+}
+
+/** Hand edits to the generated mountain, made in tools/mountain-editor and
+ * saved over src/mountainPatch.json. A patch is a diff against the generator's
+ * output, keyed by face index: vertex moves land BEFORE the paint pass (so
+ * moved faces re-band by their new altitude and stay theme-aware), while
+ * recolours name a PAINT ROLE — one of the pass's own colours or a grey —
+ * that resolves from the live palette at build time, so hand-painted corners
+ * follow light/dark mode too. Deletions/additions come last. Face indices
+ * only mean something for the build they were saved against, hence the
+ * baseFaceCount guard — if buildMountain changes shape, re-export the patch
+ * from the editor after re-porting it there. (shape/camera overrides don't
+ * disturb the guard: the grid's topology is fixed, only positions move, and
+ * the editor always saves its mesh edits against its own shape.) */
+interface MountainPatch {
+  version: number
+  baseFaceCount: number | null
+  movedCorners: [number, number, number, number][]
+  /** [cornerIndex, paintRole]; legacy absolute [ci, r, g, b] entries from
+   * pre-role patches are still applied, but cannot re-theme. */
+  recoloredCorners: ([number, string] | [number, number, number, number])[]
+  deletedFaces: number[]
+  /** roles, when present, override colors per corner and re-theme. */
+  addedFaces: { positions: number[]; colors: number[]; roles?: (string | null)[] }[]
+  shape?: Partial<MountainShape>
+  camera?: Partial<CameraTuning>
+  scenery?: SceneryPatch
+}
+
+const mountainPatch = mountainPatchJson as unknown as MountainPatch
+
+const SHAPE: MountainShape = {
+  baseRadius: 18.45,
+  topRadius: 7.5,
+  height: 22,
+  ...mountainPatch.shape,
+}
+SHAPE.height = Math.min(60, Math.max(8, SHAPE.height))
+SHAPE.baseRadius = Math.min(40, Math.max(12, SHAPE.baseRadius))
+SHAPE.topRadius = Math.max(2.6, SHAPE.topRadius) // plateau must survive: RTOP = topRadius − 2
+// The no-overhang staircase floor: each loop must shrink by at least
+// LIP_OUT + WALL_IN (2.65) plus sloped-face/jitter margin, per turn — any
+// less and a loop's lip juts over the shelf below.
+const MIN_SHRINK_PER_TURN = 3.05
+if (SHAPE.baseRadius - SHAPE.topRadius < MIN_SHRINK_PER_TURN * 3) {
+  console.warn('michi: mountain shape would overhang the trail — clamping the top radius')
+  SHAPE.topRadius = SHAPE.baseRadius - MIN_SHRINK_PER_TURN * 3
+}
+
+const CAM: CameraTuning = {
+  distMin: 9,
+  distMax: 12,
+  height: 3.4,
+  azimuthBias: 0.12,
+  lookAtHeight: 0.6,
+  ...mountainPatch.camera,
+}
 
 /* ------------------------------ geometry -------------------------------- */
 
-const HPATH = 22 // trail summit height
-const PLATEAU_Y = 22.9 // the flat summit
+const HPATH = SHAPE.height // trail summit height
+const PLATEAU_Y = HPATH + 0.9 // the flat summit
 // 3 revolutions: a loose spiral that climbs plenty per wrap. Integral, to
 // keep the terrace grid's seam stitching clean.
 const TURNS = 3
@@ -55,10 +164,11 @@ const WALL_IN = 1.6 // ...and this far inside, to the riser's foot
 // crowd (household note). Solve dθ/dt = C / r(t) with r(t) = A − B·t linear
 // → θ(t) = θ0 + (C/B)·ln(A / (A − B·t)), and every lesson is the same
 // stride apart from base to summit.
-const SPIRAL_A = 18.45 // path radius at the trailhead
-// Per-turn shrink of 3.65: each loop's OUTER edge sits inside the loop
-// below's INNER edge, which is exactly the no-overhang staircase condition.
-const SPIRAL_B = 10.95
+const SPIRAL_A = SHAPE.baseRadius // path radius at the trailhead (default 18.45)
+// Default per-turn shrink of 3.65: each loop's OUTER edge sits inside the
+// loop below's INNER edge, which is exactly the no-overhang staircase
+// condition — MIN_SHRINK_PER_TURN above enforces the floor for overrides.
+const SPIRAL_B = SPIRAL_A - SHAPE.topRadius
 
 /** The path spiral's radius at height y — the terraced surface, scenery
  * and camera all derive from this envelope now. */
@@ -250,7 +360,12 @@ function terraceRadius(rp: number, offIdx: number, ds: number): number {
   return face + (step - face) * ds
 }
 
-function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
+/** Exported for the patch-application test — the app always calls this with
+ * the committed src/mountainPatch.json. */
+export function buildMountain(
+  pal: ScenePalette,
+  patch: MountainPatch = mountainPatch,
+): THREE.BufferGeometry {
   const COLS = 112
 
   // per-column vertex rows, bottom→top, all columns sharing the same count
@@ -384,8 +499,18 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
     }
   }
 
-  const geo = new THREE.BufferGeometry()
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  const patchOk =
+    patch.baseFaceCount === null || patch.baseFaceCount * 9 === positions.length
+  if (!patchOk) {
+    console.warn('michi: mountainPatch.json was saved against a different mountain build — ignoring it')
+  }
+  if (patchOk) {
+    for (const [ci, x, y, z] of patch.movedCorners) {
+      positions[ci * 3] = x
+      positions[ci * 3 + 1] = y
+      positions[ci * 3 + 2] = z
+    }
+  }
 
   // per-face painting: altitude bands + carve/river/cave overrides
   const grass = new THREE.Color(pal.olive)
@@ -397,14 +522,32 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
   const water = new THREE.Color(pal.liquid)
   const caveInk = new THREE.Color(pal.ink).lerp(new THREE.Color('#000000'), 0.35)
 
+  // the paint roles the household can recolour with (tools/mountain-editor):
+  // the pass's own colours plus a small grey ramp, all resolved from the
+  // live palette here so hand recolours re-theme like everything else
+  const roleColours: Record<string, THREE.Color> = {
+    grass,
+    'grass-light': grassLight,
+    rock,
+    snow,
+    dirt,
+    water,
+    'cave-ink': caveInk,
+    'grey-light': new THREE.Color(pal.cloud).lerp(new THREE.Color('#ffffff'), 0.3),
+    grey: new THREE.Color(pal.cloud),
+    'grey-dark': new THREE.Color(pal.cloud).lerp(new THREE.Color(pal.ink), 0.6),
+  }
+
   const cRnd = mulberry(99)
   const colours: number[] = []
-  const pos = geo.getAttribute('position')
+  // float32-rounded reads, exactly as the old read-back-from-the-attribute
+  // gave — some band comparisons sit right on their thresholds
+  const pos = new Float32Array(positions)
   const tmp = new THREE.Color()
-  for (let f = 0; f < pos.count; f += 3) {
-    const cx = (pos.getX(f) + pos.getX(f + 1) + pos.getX(f + 2)) / 3
-    const cy = (pos.getY(f) + pos.getY(f + 1) + pos.getY(f + 2)) / 3
-    const cz = (pos.getZ(f) + pos.getZ(f + 1) + pos.getZ(f + 2)) / 3
+  for (let f = 0; f < pos.length / 3; f += 3) {
+    const cx = (pos[f * 3] + pos[(f + 1) * 3] + pos[(f + 2) * 3]) / 3
+    const cy = (pos[f * 3 + 1] + pos[(f + 1) * 3 + 1] + pos[(f + 2) * 3 + 1]) / 3
+    const cz = (pos[f * 3 + 2] + pos[(f + 1) * 3 + 2] + pos[(f + 2) * 3 + 2]) / 3
     const phi = Math.atan2(cz, cx)
     const dy = nearestTurnDy(phi, cy)
     const snowline = 16.4 + 1.5 * Math.sin(2.3 * phi + 0.8) + cRnd() * 1.1
@@ -428,7 +571,54 @@ function buildMountain(pal: ScenePalette): THREE.BufferGeometry {
     tmp.multiplyScalar(0.93 + cRnd() * 0.14)
     for (let v = 0; v < 3; v++) colours.push(tmp.r, tmp.g, tmp.b)
   }
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(colours, 3))
+
+  let finalPos: number[] = positions
+  let finalCol: number[] = colours
+  if (patchOk) {
+    for (const rc of patch.recoloredCorners) {
+      const ci = rc[0]
+      let cr: number, cg: number, cb: number
+      if (typeof rc[1] === 'string') {
+        const c = roleColours[rc[1]] ?? roleColours.grey
+        cr = c.r
+        cg = c.g
+        cb = c.b
+      } else {
+        const abs = rc as [number, number, number, number]
+        cr = abs[1]
+        cg = abs[2]
+        cb = abs[3]
+      }
+      colours[ci * 3] = cr
+      colours[ci * 3 + 1] = cg
+      colours[ci * 3 + 2] = cb
+    }
+    if (patch.deletedFaces.length > 0 || patch.addedFaces.length > 0) {
+      const drop = new Set(patch.deletedFaces)
+      finalPos = []
+      finalCol = []
+      for (let f = 0; f * 9 < positions.length; f++) {
+        if (drop.has(f)) continue
+        for (let i = 0; i < 9; i++) {
+          finalPos.push(positions[f * 9 + i])
+          finalCol.push(colours[f * 9 + i])
+        }
+      }
+      for (const af of patch.addedFaces) {
+        finalPos.push(...af.positions)
+        for (let k = 0; k < 3; k++) {
+          const role = af.roles?.[k]
+          const c = role ? roleColours[role] : undefined
+          if (c) finalCol.push(c.r, c.g, c.b)
+          else finalCol.push(af.colors[k * 3], af.colors[k * 3 + 1], af.colors[k * 3 + 2])
+        }
+      }
+    }
+  }
+
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(finalPos, 3))
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(finalCol, 3))
   geo.computeVertexNormals()
   return geo
 }
@@ -838,11 +1028,11 @@ function CameraRig({ nav }: { nav: React.MutableRefObject<Nav> }) {
     const focus = pathPoint(s.t)
     const halfWidth = 3.2 // ~1.3 node spacings each side (3-turn spiral packs nodes tighter)
     const aspect = size.width / size.height
-    // floor of 9: any closer and the slope at eye height grazes the frame
-    // edges on wide viewports (reads as clipping into the mountain).
-    // ceiling of 12: keeps the low camera orbit OUTSIDE the base forest
-    // ring, whose trees otherwise end up edge-on across the lens.
-    const dist = Math.min(12, Math.max(9, halfWidth / (Math.tan((wantFov * Math.PI) / 360) * aspect)))
+    // floor (default 9): any closer and the slope at eye height grazes the
+    // frame edges on wide viewports (reads as clipping into the mountain).
+    // ceiling (default 12): keeps the low camera orbit OUTSIDE the base
+    // forest ring, whose trees otherwise end up edge-on across the lens.
+    const dist = Math.min(CAM.distMax, Math.max(CAM.distMin, halfWidth / (Math.tan((wantFov * Math.PI) / 360) * aspect)))
     // bias the azimuth a touch toward what's ahead — fading to zero over
     // the final stretch so the camera comes to rest EXACTLY square to the
     // summit gate and the climbing bend, not drifted past it (household
@@ -853,14 +1043,14 @@ function CameraRig({ nav }: { nav: React.MutableRefObject<Nav> }) {
     const biasFade = 1 - Math.min(1, Math.max(0, (tc - 0.9) / 0.08))
     // clamp at T_BEND: past it the walkway runs straight and radial, and
     // the camera must rest exactly on its axis, square to the gate
-    const a = trailAngle(Math.min(tc, T_BEND)) + 0.12 * biasFade
+    const a = trailAngle(Math.min(tc, T_BEND)) + CAM.azimuthBias * biasFade
     // never orbit inside the terrain's local bulge below the eye — the
     // lower mountain widens toward the foot, and an orbit radius chosen
     // only from the path's radius clips through that flank
     const bulge = mountainR(Math.max(0, focus.y - 3)) + 4
     const rEye = Math.max(Math.hypot(focus.x, focus.z) + dist, bulge)
-    camera.position.set(Math.cos(a) * rEye, focus.y + 3.4, Math.sin(a) * rEye)
-    camera.lookAt(focus.x, focus.y + 0.6, focus.z)
+    camera.position.set(Math.cos(a) * rEye, focus.y + CAM.height, Math.sin(a) * rEye)
+    camera.lookAt(focus.x, focus.y + CAM.lookAtHeight, focus.z)
   })
   return null
 }
@@ -872,6 +1062,126 @@ function CameraRig({ nav }: { nav: React.MutableRefObject<Nav> }) {
 // APPROACH_A) sees it face-on
 const GATE_A = APPROACH_A
 const GATE_POS = SUMMIT_CENTRE.clone()
+
+/** Procedural placement of every decoration, exactly as the r10 scene laid
+ * them out — but as a flat item list with stable ids, so the household can
+ * remove/move any of them (or add more) through mountainPatch.json. Ids are
+ * per-kind counters in generation order: stable for a given shape, since
+ * the keep-out tests depend on the spiral. */
+function baseScenery(): SceneryItem[] {
+  const items: SceneryItem[] = []
+  const counters = new Map<SceneryKind, number>()
+  const put = (kind: SceneryKind, p: THREE.Vector3, angle = 0, scale = 1, variant?: number) => {
+    const n = counters.get(kind) ?? 0
+    counters.set(kind, n + 1)
+    items.push({ id: `${kind}-${n}`, kind, x: p.x, y: p.y, z: p.z, angle, scale, variant })
+  }
+
+  const rnd = mulberry(20260709)
+  // slope pines, low-to-mid altitudes, clear of trail/river/caves
+  for (let i = 0; i < 95; i++) {
+    const y = Math.pow(rnd(), 1.9) * 12
+    const phi = rnd() * Math.PI * 2
+    const dy = nearestTurnDy(phi, y)
+    // generous keep-out above the trail — the camera flies through there
+    if (dy !== null && dy > -1.4 && dy < 2.6) continue
+    if (angDiff(phi, riverPhi(y)) < 0.22) continue
+    if (CAVES.some((c) => (angDiff(phi, c.phi) / (c.rp * 2)) ** 2 + ((y - c.y) / (c.ry * 2)) ** 2 < 1)) continue
+    const r = mountainR(y) + 0.15
+    put('pine', new THREE.Vector3(Math.cos(phi) * r, y - 0.1, Math.sin(phi) * r), 0, 0.9 + rnd() * 0.9)
+  }
+  // base-plain flora — a skirt of forest and blossom INSIDE the camera's
+  // low orbit (which stays ≥ path radius + 9), height-capped so treetops
+  // always pass well under the lens
+  for (let i = 0; i < 46; i++) {
+    const phi = rnd() * Math.PI * 2
+    const r = R0 + 3.5 + rnd() * 4.5
+    const p = new THREE.Vector3(Math.cos(phi) * r, 0, Math.sin(phi) * r)
+    if (rnd() < 0.32) put('sakura', p, 0, 0.9 + rnd() * 0.5)
+    else put('pine', p, 0, 0.9 + rnd() * 0.5)
+  }
+  for (let i = 0; i < 22; i++) {
+    const y = rnd() * 14
+    const phi = rnd() * Math.PI * 2
+    const dy = nearestTurnDy(phi, y)
+    if (dy !== null && dy > -1.2 && dy < 1.8) continue
+    const r = y < 0.5 ? R0 + 3.5 + rnd() * 4.5 : mountainR(y) + 0.1
+    put('rock', new THREE.Vector3(Math.cos(phi) * r, Math.max(0.1, y - 0.15), Math.sin(phi) * r), 0, 0.3 + rnd() * 0.55)
+  }
+  // rubble scattered across the summit plateau (kept clear of the gate)
+  let pr = 0
+  for (let i = 0; i < 12; i++) {
+    const a = rnd() * Math.PI * 2
+    const d = rnd() * RTOP * 0.82
+    const p = new THREE.Vector3(Math.cos(a) * d, PLATEAU_Y + 0.07, Math.sin(a) * d)
+    if (p.distanceTo(GATE_POS) < 1.1) continue
+    put('rock', p, pr * 1.3, 0.1 + rnd() * 0.32)
+    pr++
+  }
+  // lanterns line the trail's top third + greet you at the trailhead —
+  // just off the stones' line toward the shelf's outer half, hugging the
+  // trail rather than perched on the lip (household note, round seven)
+  for (let i = 0; i < 11; i++) {
+    const t = 0.68 + (i / 11) * 0.28
+    const p = pathPoint(t + 0.006)
+    const outward = new THREE.Vector3(p.x, 0, p.z).normalize().multiplyScalar(0.45)
+    put('lantern', p.clone().add(outward))
+  }
+  for (const t of [0.006, 0.018]) {
+    const p = pathPoint(t)
+    const outward = new THREE.Vector3(p.x, 0, p.z).normalize().multiplyScalar(0.8)
+    put('lantern', p.clone().add(outward))
+  }
+
+  // bridges where the river ducks under the trail, one per crossing —
+  // fixed-point iteration through the spiral's inverse, since the river's
+  // course wobbles with height
+  const crossT = (phi: number, k: number) => {
+    const off = (((phi - THETA0) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
+    return tAtAngle(THETA0 + off + k * Math.PI * 2)
+  }
+  for (let k = 0; k < TURNS; k++) {
+    let h = ((k + 0.5) / TURNS) * HPATH
+    let t = 0
+    for (let it = 0; it < 4; it++) {
+      t = crossT(riverPhi(h), k)
+      h = t * HPATH
+    }
+    if (t > 0.02 && t < 0.97) {
+      const p = pathPoint(t)
+      put('bridge', new THREE.Vector3(p.x, p.y + 0.1, p.z), -trailAngle(t) - Math.PI / 2)
+    }
+  }
+
+  // the base village + onsen + the shinkansen's tunnel foothill + pond
+  for (const i of [0, 1, 2]) {
+    const phi = 5.35 + i * 0.22
+    const r = R0 + 8 + (i % 2) * 1.6
+    put('house', new THREE.Vector3(Math.cos(phi) * r, 0, Math.sin(phi) * r), -phi + Math.PI / 2 + (i - 1) * 0.3, 1, i === 1 ? 1 : 0)
+  }
+  put('onsen', new THREE.Vector3(Math.cos(0.8) * (R0 + 8.5), 0, Math.sin(0.8) * (R0 + 8.5)))
+  put('hill', new THREE.Vector3(Math.cos(3.6) * (R0 + 5), 0, Math.sin(3.6) * (R0 + 5)), -3.6)
+  put('pond', new THREE.Vector3(Math.cos(riverPhi(0)) * (R0 + 3.2), 0.06, Math.sin(riverPhi(0)) * (R0 + 3.2)))
+  return items
+}
+
+/** Exported for the scenery-patch test — the app applies the committed
+ * patch's scenery section over the procedural base. */
+export function applyScenery(items: SceneryItem[], patch?: SceneryPatch): SceneryItem[] {
+  if (!patch) return items
+  const removed = new Set(patch.removed ?? [])
+  const moved = new Map((patch.moved ?? []).map((m) => [m.id, m]))
+  const out = items
+    .filter((it) => !removed.has(it.id))
+    .map((it) => {
+      const m = moved.get(it.id)
+      return m ? { ...it, x: m.x, y: m.y, z: m.z, angle: m.angle, scale: m.scale } : it
+    })
+  ;(patch.added ?? []).forEach((a, i) => out.push({ id: `add-${i}`, ...a }))
+  return out
+}
+
+const DECOR: SceneryItem[] = applyScenery(baseScenery(), mountainPatch.scenery)
 
 /** The reward for the last lesson: a hinomaru sun rising behind the summit
  * gate. It lives on the eye→gate ray, so it is centred in the gate's frame
@@ -1042,27 +1352,6 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
   }, [])
   useEffect(() => () => walkway.dispose(), [walkway])
 
-  // bridges where the river ducks under the trail, one per crossing —
-  // fixed-point iteration through the spiral's inverse, since the river's
-  // course wobbles with height
-  const bridges = useMemo(() => {
-    const list: { pos: THREE.Vector3; angle: number }[] = []
-    const crossT = (phi: number, k: number) => {
-      const off = (((phi - THETA0) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
-      return tAtAngle(THETA0 + off + k * Math.PI * 2)
-    }
-    for (let k = 0; k < TURNS; k++) {
-      let h = ((k + 0.5) / TURNS) * HPATH
-      let t = 0
-      for (let it = 0; it < 4; it++) {
-        t = crossT(riverPhi(h), k)
-        h = t * HPATH
-      }
-      if (t > 0.02 && t < 0.97) list.push({ pos: pathPoint(t), angle: trailAngle(t) })
-    }
-    return list
-  }, [])
-
   // the lead-in: before lesson one the trail doesn't just stop — it bends
   // away across the plain and carries on out of frame (household note)
   const leadIn = useMemo(() => {
@@ -1087,69 +1376,6 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
     return geo
   }, [])
   useEffect(() => () => leadIn.dispose(), [leadIn])
-
-  const scenery = useMemo(() => {
-    const rnd = mulberry(20260709)
-    const pines: { pos: THREE.Vector3; scale: number }[] = []
-    const sakuras: { pos: THREE.Vector3; scale: number }[] = []
-    const rocks: { pos: THREE.Vector3; scale: number }[] = []
-    const lanterns: THREE.Vector3[] = []
-    // slope pines, low-to-mid altitudes, clear of trail/river/caves
-    for (let i = 0; i < 95; i++) {
-      const y = Math.pow(rnd(), 1.9) * 12
-      const phi = rnd() * Math.PI * 2
-      const dy = nearestTurnDy(phi, y)
-      // generous keep-out above the trail — the camera flies through there
-      if (dy !== null && dy > -1.4 && dy < 2.6) continue
-      if (angDiff(phi, riverPhi(y)) < 0.22) continue
-      if (CAVES.some((c) => (angDiff(phi, c.phi) / (c.rp * 2)) ** 2 + ((y - c.y) / (c.ry * 2)) ** 2 < 1)) continue
-      const r = mountainR(y) + 0.15
-      pines.push({ pos: new THREE.Vector3(Math.cos(phi) * r, y - 0.1, Math.sin(phi) * r), scale: 0.9 + rnd() * 0.9 })
-    }
-    // base-plain flora — a skirt of forest and blossom INSIDE the camera's
-    // low orbit (which stays ≥ path radius + 9), height-capped so treetops
-    // always pass well under the lens
-    for (let i = 0; i < 46; i++) {
-      const phi = rnd() * Math.PI * 2
-      const r = R0 + 3.5 + rnd() * 4.5
-      const p = new THREE.Vector3(Math.cos(phi) * r, 0, Math.sin(phi) * r)
-      if (rnd() < 0.32) sakuras.push({ pos: p, scale: 0.9 + rnd() * 0.5 })
-      else pines.push({ pos: p, scale: 0.9 + rnd() * 0.5 })
-    }
-    for (let i = 0; i < 22; i++) {
-      const y = rnd() * 14
-      const phi = rnd() * Math.PI * 2
-      const dy = nearestTurnDy(phi, y)
-      if (dy !== null && dy > -1.2 && dy < 1.8) continue
-      const r = y < 0.5 ? R0 + 3.5 + rnd() * 4.5 : mountainR(y) + 0.1
-      rocks.push({ pos: new THREE.Vector3(Math.cos(phi) * r, Math.max(0.1, y - 0.15), Math.sin(phi) * r), scale: 0.3 + rnd() * 0.55 })
-    }
-    // rubble scattered across the summit plateau (kept clear of the gate)
-    const plateauRocks: { pos: THREE.Vector3; scale: number }[] = []
-    const rimR = RTOP
-    for (let i = 0; i < 12; i++) {
-      const a = rnd() * Math.PI * 2
-      const d = rnd() * rimR * 0.82
-      const p = new THREE.Vector3(Math.cos(a) * d, PLATEAU_Y + 0.07, Math.sin(a) * d)
-      if (p.distanceTo(GATE_POS) < 1.1) continue
-      plateauRocks.push({ pos: p, scale: 0.1 + rnd() * 0.32 })
-    }
-    // lanterns line the trail's top third + greet you at the trailhead —
-    // just off the stones' line toward the shelf's outer half, hugging the
-    // trail rather than perched on the lip (household note, round seven)
-    for (let i = 0; i < 11; i++) {
-      const t = 0.68 + (i / 11) * 0.28
-      const p = pathPoint(t + 0.006)
-      const outward = new THREE.Vector3(p.x, 0, p.z).normalize().multiplyScalar(0.45)
-      lanterns.push(p.clone().add(outward))
-    }
-    for (const t of [0.006, 0.018]) {
-      const p = pathPoint(t)
-      const outward = new THREE.Vector3(p.x, 0, p.z).normalize().multiplyScalar(0.8)
-      lanterns.push(p.clone().add(outward))
-    }
-    return { pines, sakuras, rocks, lanterns, plateauRocks }
-  }, [])
 
   const stars = useMemo(() => {
     const rnd = mulberry(42)
@@ -1177,7 +1403,6 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
   const stateColour = (n: Node3D) =>
     n.state === 'done' ? pal.trailDone : n.state === 'current' ? pal.clay : n.state === 'available' ? pal.trail : pal.cloud
 
-  const riverMouthPhi = riverPhi(0)
   const unitOfFocus = units[nodes[Math.min(nodes.length - 1, Math.max(0, currentIndex))]?.unitIndex ?? 0]
 
   // Fill the whole viewport between the header and the mobile tab bar
@@ -1283,12 +1508,6 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
           )
         })}
 
-        {/* river mouth pond */}
-        <mesh position={[Math.cos(riverMouthPhi) * (R0 + 3.2), 0.06, Math.sin(riverMouthPhi) * (R0 + 3.2)]}>
-          <cylinderGeometry args={[2.5, 2.7, 0.14, 12]} />
-          <meshStandardMaterial color={pal.liquid} flatShading />
-        </mesh>
-
         {/* lesson stones — set into the carved shelf */}
         {nodes.map((n, i) => (
           <group key={n.id}>
@@ -1393,54 +1612,275 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
           clay={pal.clay}
         />
 
-        {/* bridges where the river passes under the trail */}
-        {bridges.map((b, i) => (
-          <mesh key={i} position={[b.pos.x, b.pos.y + 0.1, b.pos.z]} rotation={[0, -b.angle - Math.PI / 2, 0]}>
-            <boxGeometry args={[2.4, 0.14, 1.2]} />
-            <meshStandardMaterial color={pal.kraft} flatShading />
-          </mesh>
-        ))}
-
-        {/* flora + rocks + lanterns */}
-        {scenery.pines.map((t, i) => (
-          <Pine key={`p${i}`} position={t.pos} scale={t.scale} foliage={pal.olive} trunk={pal.kraft} />
-        ))}
-        {scenery.sakuras.map((t, i) => (
-          <Sakura key={`s${i}`} position={t.pos} scale={t.scale} trunk={pal.kraft} />
-        ))}
-        {scenery.rocks.map((r, i) => (
-          <mesh key={`r${i}`} position={r.pos} scale={r.scale}>
-            <icosahedronGeometry args={[1, 0]} />
-            <meshStandardMaterial color={pal.cloud} flatShading />
-          </mesh>
-        ))}
-        {scenery.plateauRocks.map((r, i) => (
-          <mesh key={`pr${i}`} position={r.pos} scale={r.scale} rotation={[0, i * 1.3, 0]}>
-            <icosahedronGeometry args={[1, 0]} />
-            <meshStandardMaterial color={pal.cloud} flatShading />
-          </mesh>
-        ))}
-        {scenery.lanterns.map((p, i) => (
-          <Lantern key={`l${i}`} position={p} lit={shade > 0.15} warm={pal.gold} post={pal.ink} />
-        ))}
-
-        {/* the base village + onsen */}
-        <group>
-          {([0, 1, 2] as const).map((i) => {
-            const phi = 5.35 + i * 0.22
-            const r = R0 + 8 + (i % 2) * 1.6
-            return (
-              <House
-                key={i}
-                position={new THREE.Vector3(Math.cos(phi) * r, 0, Math.sin(phi) * r)}
-                rotation={-phi + Math.PI / 2 + (i - 1) * 0.3}
-                wall="#efe7d6"
-                roof={i === 1 ? pal.clay : pal.ink}
-              />
-            )
-          })}
-        </group>
-        <Onsen position={new THREE.Vector3(Math.cos(0.8) * (R0 + 8.5), 0, Math.sin(0.8) * (R0 + 8.5))} pal={pal} />
+        {/* the decorative dressing — every item placeable/removable via the
+            patch's scenery section (tools/mountain-editor) */}
+        {DECOR.map((it) => {
+          const pos = new THREE.Vector3(it.x, it.y, it.z)
+          // weathered timber: clay washed toward stone-grey; cedar darker
+          // than pine so the two species read apart at a glance
+          const worn = `#${new THREE.Color(pal.clay).lerp(new THREE.Color(pal.cloud), 0.55).getHexString()}`
+          const cedarGreen = `#${new THREE.Color(pal.olive).lerp(new THREE.Color(pal.ink), 0.3).getHexString()}`
+          const bambooLight = `#${new THREE.Color(pal.olive).lerp(new THREE.Color('#ffffff'), 0.18).getHexString()}`
+          const snow = '#f3f6f5'
+          switch (it.kind) {
+            case 'pine':
+              return <Pine key={it.id} position={pos} scale={it.scale} foliage={pal.olive} trunk={pal.kraft} />
+            case 'sakura':
+              return <Sakura key={it.id} position={pos} scale={it.scale} trunk={pal.kraft} />
+            case 'rock':
+              return (
+                <mesh key={it.id} position={pos} scale={it.scale} rotation={[0, it.angle, 0]}>
+                  <icosahedronGeometry args={[1, 0]} />
+                  <meshStandardMaterial color={pal.cloud} flatShading />
+                </mesh>
+              )
+            case 'lantern':
+              return <Lantern key={it.id} position={pos} lit={shade > 0.15} warm={pal.gold} post={pal.ink} />
+            case 'bridge':
+              return (
+                <mesh key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <boxGeometry args={[2.4, 0.14, 1.2]} />
+                  <meshStandardMaterial color={pal.kraft} flatShading />
+                </mesh>
+              )
+            case 'house':
+              return (
+                <group key={it.id} position={pos} scale={it.scale}>
+                  <House
+                    position={new THREE.Vector3(0, 0, 0)}
+                    rotation={it.angle}
+                    wall="#efe7d6"
+                    roof={it.variant === 1 ? pal.clay : pal.ink}
+                  />
+                </group>
+              )
+            case 'onsen':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <Onsen position={new THREE.Vector3(0, 0, 0)} pal={pal} />
+                </group>
+              )
+            case 'torii':
+              return <Torii key={it.id} position={pos} angle={-it.angle} scale={it.scale} colour={pal.clay} />
+            case 'hill':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[0, 0.6, 0]}>
+                    <coneGeometry args={[3, 2.8, 8]} />
+                    <meshStandardMaterial color={pal.olive} flatShading />
+                  </mesh>
+                  <group position={[0, 0.45, 0]}>
+                    <mesh rotation={[0, 0, Math.PI / 2]}>
+                      <cylinderGeometry args={[0.75, 0.75, 4, 10, 1, true]} />
+                      <meshStandardMaterial color={pal.ink} side={THREE.DoubleSide} flatShading />
+                    </mesh>
+                  </group>
+                </group>
+              )
+            case 'pond':
+              return (
+                <mesh key={it.id} position={pos} scale={it.scale}>
+                  <cylinderGeometry args={[2.5, 2.7, 0.14, 12]} />
+                  <meshStandardMaterial color={pal.liquid} flatShading />
+                </mesh>
+              )
+            case 'cedar':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[0, 0.35, 0]}>
+                    <cylinderGeometry args={[0.06, 0.09, 0.7, 5]} />
+                    <meshStandardMaterial color={pal.kraft} flatShading />
+                  </mesh>
+                  {([[0.32, 0.7, 0.9], [0.25, 0.6, 1.32], [0.17, 0.52, 1.72]] as const).map(([r, h, y], i) => (
+                    <mesh key={i} position={[0, y, 0]}>
+                      <coneGeometry args={[r, h, 6]} />
+                      <meshStandardMaterial color={cedarGreen} flatShading />
+                    </mesh>
+                  ))}
+                </group>
+              )
+            case 'snowpine':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[0, 0.25, 0]}>
+                    <cylinderGeometry args={[0.07, 0.1, 0.5, 5]} />
+                    <meshStandardMaterial color={pal.kraft} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.72, 0]}>
+                    <coneGeometry args={[0.42, 0.8, 6]} />
+                    <meshStandardMaterial color={pal.olive} flatShading />
+                  </mesh>
+                  <mesh position={[0, 1.02, 0]}>
+                    <coneGeometry args={[0.34, 0.32, 6]} />
+                    <meshStandardMaterial color={snow} flatShading />
+                  </mesh>
+                  <mesh position={[0, 1.24, 0]}>
+                    <coneGeometry args={[0.26, 0.55, 6]} />
+                    <meshStandardMaterial color={pal.olive} flatShading />
+                  </mesh>
+                  <mesh position={[0, 1.5, 0]}>
+                    <coneGeometry args={[0.2, 0.28, 6]} />
+                    <meshStandardMaterial color={snow} flatShading />
+                  </mesh>
+                </group>
+              )
+            case 'maple':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[0, 0.3, 0]}>
+                    <cylinderGeometry args={[0.07, 0.11, 0.6, 5]} />
+                    <meshStandardMaterial color={pal.kraft} flatShading />
+                  </mesh>
+                  <mesh position={[0.05, 0.85, 0]}>
+                    <dodecahedronGeometry args={[0.45, 0]} />
+                    <meshStandardMaterial color={pal.clay} flatShading />
+                  </mesh>
+                  <mesh position={[-0.27, 0.62, 0.1]}>
+                    <dodecahedronGeometry args={[0.28, 0]} />
+                    <meshStandardMaterial color={pal.kraft} flatShading />
+                  </mesh>
+                  <mesh position={[0.22, 0.58, -0.16]}>
+                    <dodecahedronGeometry args={[0.24, 0]} />
+                    <meshStandardMaterial color={pal.gold} flatShading />
+                  </mesh>
+                </group>
+              )
+            case 'bamboo':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  {([[-0.13, 1.45, 0.05, 0.06], [0.02, 1.7, -0.03, -0.03], [0.15, 1.3, 0.02, 0.08]] as const).map(
+                    ([x, h, z, tilt], i) => (
+                      <group key={i} position={[x, 0, z]} rotation={[0, 0, tilt]}>
+                        <mesh position={[0, h / 2, 0]}>
+                          <cylinderGeometry args={[0.035, 0.04, h, 5]} />
+                          <meshStandardMaterial color={i === 1 ? bambooLight : pal.olive} flatShading />
+                        </mesh>
+                        <mesh position={[0.05, h + 0.08, 0]}>
+                          <dodecahedronGeometry args={[0.16, 0]} />
+                          <meshStandardMaterial color={pal.olive} flatShading />
+                        </mesh>
+                      </group>
+                    ),
+                  )}
+                </group>
+              )
+            case 'deadtree':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[0, 0.45, 0]}>
+                    <cylinderGeometry args={[0.05, 0.1, 0.9, 5]} />
+                    <meshStandardMaterial color={pal.kraft} flatShading />
+                  </mesh>
+                  <mesh position={[0.16, 0.82, 0]} rotation={[0, 0, -0.85]}>
+                    <cylinderGeometry args={[0.02, 0.04, 0.45, 4]} />
+                    <meshStandardMaterial color={pal.kraft} flatShading />
+                  </mesh>
+                  <mesh position={[-0.12, 0.66, 0.05]} rotation={[0.2, 0, 0.75]}>
+                    <cylinderGeometry args={[0.02, 0.035, 0.35, 4]} />
+                    <meshStandardMaterial color={pal.kraft} flatShading />
+                  </mesh>
+                </group>
+              )
+            case 'torii-worn':
+              return (
+                <group key={it.id} position={pos} rotation={[0.02, it.angle, 0.06]} scale={it.scale}>
+                  <Torii position={new THREE.Vector3(0, 0, 0)} angle={0} colour={worn} />
+                </group>
+              )
+            case 'torii-fallen':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[-0.62, 0.16, 0]} rotation={[0, 0, 0.08]}>
+                    <cylinderGeometry args={[0.09, 0.11, 0.32, 6]} />
+                    <meshStandardMaterial color={worn} flatShading />
+                  </mesh>
+                  <mesh position={[0.62, 0.12, 0]} rotation={[0.06, 0, -0.1]}>
+                    <cylinderGeometry args={[0.09, 0.11, 0.24, 6]} />
+                    <meshStandardMaterial color={worn} flatShading />
+                  </mesh>
+                  <mesh position={[0.14, 0.08, 0.78]} rotation={[0, 0.28, 0]}>
+                    <boxGeometry args={[1.85, 0.15, 0.22]} />
+                    <meshStandardMaterial color={worn} flatShading />
+                  </mesh>
+                  <mesh position={[-0.2, 0.05, 1.06]} rotation={[0, 0.55, 0]}>
+                    <boxGeometry args={[1.46, 0.1, 0.15]} />
+                    <meshStandardMaterial color={worn} flatShading />
+                  </mesh>
+                </group>
+              )
+            case 'torii-broken':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[-0.62, 0.65, 0]}>
+                    <cylinderGeometry args={[0.09, 0.11, 1.35, 6]} />
+                    <meshStandardMaterial color={pal.clay} flatShading />
+                  </mesh>
+                  <mesh position={[0.62, 0.24, 0]} rotation={[0, 0, -0.07]}>
+                    <cylinderGeometry args={[0.09, 0.105, 0.48, 6]} />
+                    <meshStandardMaterial color={pal.clay} flatShading />
+                  </mesh>
+                  <mesh position={[0.95, 0.1, 0.4]} rotation={[1.45, 0, 0.5]}>
+                    <cylinderGeometry args={[0.08, 0.095, 0.72, 6]} />
+                    <meshStandardMaterial color={pal.clay} flatShading />
+                  </mesh>
+                  <mesh position={[-0.05, 0.78, 0.1]} rotation={[0.1, 0.1, -0.5]}>
+                    <boxGeometry args={[1.85, 0.15, 0.22]} />
+                    <meshStandardMaterial color={pal.clay} flatShading />
+                  </mesh>
+                </group>
+              )
+            case 'shrine':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[0, 0.1, 0]}>
+                    <boxGeometry args={[0.7, 0.2, 0.6]} />
+                    <meshStandardMaterial color={pal.cloud} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.42, 0]}>
+                    <boxGeometry args={[0.5, 0.45, 0.42]} />
+                    <meshStandardMaterial color="#efe7d6" flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.42, 0.215]}>
+                    <boxGeometry args={[0.18, 0.26, 0.02]} />
+                    <meshStandardMaterial color={pal.ink} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.76, 0]} rotation={[0, Math.PI / 4, 0]}>
+                    <coneGeometry args={[0.52, 0.34, 4]} />
+                    <meshStandardMaterial color={pal.ink} flatShading />
+                  </mesh>
+                </group>
+              )
+            case 'toro':
+              return (
+                <group key={it.id} position={pos} rotation={[0, it.angle, 0]} scale={it.scale}>
+                  <mesh position={[0, 0.06, 0]}>
+                    <cylinderGeometry args={[0.16, 0.2, 0.12, 6]} />
+                    <meshStandardMaterial color={pal.cloud} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.3, 0]}>
+                    <cylinderGeometry args={[0.07, 0.09, 0.36, 6]} />
+                    <meshStandardMaterial color={pal.cloud} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.52, 0]}>
+                    <cylinderGeometry args={[0.15, 0.11, 0.08, 6]} />
+                    <meshStandardMaterial color={pal.cloud} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.66, 0]}>
+                    <boxGeometry args={[0.22, 0.2, 0.22]} />
+                    <meshStandardMaterial color="#efe7d6" emissive={pal.gold} emissiveIntensity={shade > 0.15 ? 0.6 : 0} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.82, 0]}>
+                    <coneGeometry args={[0.24, 0.16, 6]} />
+                    <meshStandardMaterial color={pal.cloud} flatShading />
+                  </mesh>
+                  <mesh position={[0, 0.94, 0]}>
+                    <sphereGeometry args={[0.05, 6, 5]} />
+                    <meshStandardMaterial color={pal.cloud} flatShading />
+                  </mesh>
+                </group>
+              )
+          }
+        })}
 
         {/* night sky, fading in with altitude */}
         <points>
@@ -1452,20 +1892,8 @@ export function PathScene3D({ manifest, onSelectLesson }: PathScene3DProps) {
 
         <Clouds />
 
-        {/* the shinkansen loop + its tunnel foothill */}
+        {/* the shinkansen loop (its tunnel foothill is a scenery item) */}
         <Train pal={pal} />
-        <group position={[Math.cos(3.6) * (R0 + 5), 0, Math.sin(3.6) * (R0 + 5)]}>
-          <mesh position={[0, 0.6, 0]}>
-            <coneGeometry args={[3, 2.8, 8]} />
-            <meshStandardMaterial color={pal.olive} flatShading />
-          </mesh>
-          <group position={[0, 0.45, 0]} rotation={[0, -3.6, 0]}>
-            <mesh rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry args={[0.75, 0.75, 4, 10, 1, true]} />
-              <meshStandardMaterial color={pal.ink} side={THREE.DoubleSide} flatShading />
-            </mesh>
-          </group>
-        </group>
       </Canvas>
 
       {/* HTML overlays */}
