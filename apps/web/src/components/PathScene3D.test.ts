@@ -3,6 +3,7 @@
 // application order — moves before the paint pass, recolours after it,
 // deletions/additions last — and the wrong-build guard.
 import { describe, expect, it } from 'vitest'
+import * as THREE from 'three'
 import { applyScenery, buildMountain } from './PathScene3D'
 
 const pal = {
@@ -73,6 +74,45 @@ describe('buildMountain patch application', () => {
     expect(pos.getY(last)).toBeCloseTo(30, 5)
     expect(col.getX(last)).toBeCloseTo(1, 5)
     expect(col.getY(last)).toBeCloseTo(0, 5)
+  })
+
+  it('recolours by paint role, re-resolving from the palette per theme', () => {
+    const patch = {
+      version: 2,
+      baseFaceCount: baseFaces,
+      movedCorners: [],
+      recoloredCorners: [[0, 'snow'], [1, 'grass']] as [number, string][],
+      deletedFaces: [],
+      addedFaces: [
+        {
+          positions: [0, 30, 0, 1, 30, 0, 0, 30, 1],
+          colors: [0.5, 0.5, 0.5, 0.25, 0.25, 0.25, 0.5, 0.5, 0.5],
+          roles: ['water', null, 'grey'],
+        },
+      ],
+    }
+    const light = buildMountain(pal, patch)
+    const lightCol = light.getAttribute('color')
+    // snow is a fixed hex; grass is the palette's olive
+    const snow = new THREE.Color('#f3f6f5')
+    const grass = new THREE.Color(pal.olive)
+    expect(lightCol.getX(0)).toBeCloseTo(snow.r, 4)
+    expect(lightCol.getY(1)).toBeCloseTo(grass.g, 4)
+    // added face: corner 0 takes the water role, corner 1 keeps its
+    // absolute colour, corner 2 takes the grey role (the cloud token)
+    const last = lightCol.count - 3
+    expect(lightCol.getX(last)).toBeCloseTo(new THREE.Color(pal.liquid).r, 4)
+    expect(lightCol.getX(last + 1)).toBeCloseTo(0.25, 4)
+    expect(lightCol.getX(last + 2)).toBeCloseTo(new THREE.Color(pal.cloud).r, 4)
+
+    // dark theme: same patch, different palette → grass corner re-themes
+    const darkPal = { ...pal, olive: '#5fcfae', cloud: '#6d8794' }
+    const dark = buildMountain(darkPal, patch)
+    const darkCol = dark.getAttribute('color')
+    expect(darkCol.getY(1)).toBeCloseTo(new THREE.Color('#5fcfae').g, 4)
+    expect(darkCol.getY(1)).not.toBeCloseTo(grass.g, 4)
+    // while snow (fixed) stays put
+    expect(darkCol.getX(0)).toBeCloseTo(snow.r, 4)
   })
 
   it('removes, moves and adds scenery items', () => {

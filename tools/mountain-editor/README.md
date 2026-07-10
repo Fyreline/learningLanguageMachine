@@ -30,8 +30,13 @@ take 5173/8000 (Mishka Hub) or 8100 (production Michi API).
   "Finish", and drag the new vertex apart.
 - **Move a vertex** — drag its gold marker (moves in the camera plane) or type
   exact coordinates.
-- **Recolour a vertex** — pick a colour, then "Paint vertex" (blends across
-  the touching faces) or "Paint touching faces" (solid facets).
+- **Recolour a vertex** — pick a paint role from the swatches (the
+  mountain's own colours: grass, light grass, rock, snow, dirt, water,
+  cave ink — plus light/mid/dark grey), then "Paint vertex" (blends across
+  the touching faces) or "Paint touching faces" (solid facets). The patch
+  stores the role name, not the colour, and Michi resolves it from the
+  live palette — so painted spots follow light/dark mode like everything
+  else. There is deliberately no free colour picker.
 - **Reshape the silhouette (mesh-only)** — vertex mode, select a vertex to
   set the height line, then "Move points below" pushes every vertex at or
   below that height out from the centre (negative amounts pull in). "Equal"
@@ -91,8 +96,11 @@ edits) is committed there by default.
 Baking the whole mesh would freeze its colours, but Michi paints the mountain
 live from the Aizome theme tokens (light *and* dark). So the patch stores only
 the diff: corner moves and face deletions/additions by face index, plus your
-explicit recolours as absolute values. Untouched faces stay fully procedural
-and theme-aware; moved faces are even re-banded by their new altitude.
+recolours as named paint roles that re-resolve from the palette per theme.
+Untouched faces stay fully procedural and theme-aware; moved faces are even
+re-banded by their new altitude. (Patches saved before the role system, with
+absolute rgb recolours, still load — the editor maps them to the nearest
+role on load, and Michi applies them as-is, fixed across themes.)
 
 The caveat: face indices are only meaningful for the generator build they were
 saved against. The editor embeds a verbatim port of `buildMountain` ("round
@@ -102,7 +110,7 @@ console and ignores the patch — re-port the generator into `index.html` here
 and redo the edits (or reload the old patch and fix up what moved).
 
 Small print: the editor bakes its display colours with the light palette, so
-what you see is the light theme; recolours you paint are absolute and will
-look the same in dark mode. A reloaded patch shows split/added faces as
-independent triangles (unwelded) — geometry is unchanged, they just select
-separately.
+what you see is the light theme; in Michi's dark mode both the procedural
+paint and your role recolours re-resolve from the dark tokens. A reloaded
+patch shows split/added faces as independent triangles (unwelded) — geometry
+is unchanged, they just select separately.

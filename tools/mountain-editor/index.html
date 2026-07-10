@@ -59,6 +59,11 @@
     font: inherit; color: var(--ink); background: #0f1d2b;
     border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px;
   }
+  .chip {
+    width: 22px; height: 22px; padding: 0; margin: 0;
+    border: 1px solid var(--line); border-radius: 5px; cursor: pointer;
+  }
+  .chip.on { outline: 2px solid var(--gold); outline-offset: 1px; }
   .sel { color: var(--gold); }
   .counts { color: var(--soft); margin-top: 4px; }
   #hint { color: var(--soft); margin: 8px 0 0; }
@@ -125,9 +130,12 @@
     <legend>Vertex</legend>
     <div>selected: <span id="vertLabel" class="sel">none</span></div>
     <label class="row">x <input type="number" id="vx" step="0.05"> y <input type="number" id="vy" step="0.05"> z <input type="number" id="vz" step="0.05"></label>
-    <label class="row">colour <input type="color" id="vertColour" value="#8a9aa0">
-      <button id="paintVertex">Paint vertex</button></label>
-    <label class="row"><button id="paintFaces">Paint touching faces</button></label>
+    <div class="counts">paint roles — the mountain's own colours plus three
+      greys, re-resolved from the live theme in Michi so painted spots
+      follow dark mode</div>
+    <div id="paintRoles" style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0"></div>
+    <label class="row"><button id="paintVertex">Paint vertex</button>
+      <button id="paintFaces">Paint touching faces</button></label>
     <label class="row"><button id="splitBtn">Split from corner</button>
       <button id="splitDone" disabled>Finish</button></label>
   </fieldset>
@@ -217,6 +225,36 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 const PAL = {
   paper: '#f7fbfa', ink: '#17293a', clay: '#c33c54', olive: '#2e8b74',
   kraft: '#d08770', cloud: '#90a5ab', liquid: '#c5e0dd',
+}
+
+// The paint roles the household can recolour vertices with: the paint
+// pass's own colours plus a small grey ramp. The patch stores the role
+// NAME — Michi re-resolves it from the live palette, so painted spots
+// follow light/dark mode. Colours here are the light theme, for display.
+const PAINT_ROLES = (() => {
+  const grass = new THREE.Color(PAL.olive)
+  return [
+    ['grass', grass],
+    ['grass-light', grass.clone().lerp(new THREE.Color('#ffffff'), 0.12)],
+    ['rock', new THREE.Color(PAL.cloud).lerp(new THREE.Color(PAL.ink), 0.42)],
+    ['snow', new THREE.Color('#f3f6f5')],
+    ['dirt', new THREE.Color(PAL.kraft).lerp(new THREE.Color(PAL.cloud), 0.08)],
+    ['water', new THREE.Color(PAL.liquid)],
+    ['cave-ink', new THREE.Color(PAL.ink).lerp(new THREE.Color('#000000'), 0.35)],
+    ['grey-light', new THREE.Color(PAL.cloud).lerp(new THREE.Color('#ffffff'), 0.3)],
+    ['grey', new THREE.Color(PAL.cloud)],
+    ['grey-dark', new THREE.Color(PAL.cloud).lerp(new THREE.Color(PAL.ink), 0.6)],
+  ].map(([id, c]) => ({ id, c }))
+})()
+const roleColour = (id) => (PAINT_ROLES.find((r) => r.id === id) ?? PAINT_ROLES.find((r) => r.id === 'grey')).c
+function nearestRole(r, g, b) {
+  let best = 'grey'
+  let bd = Infinity
+  for (const { id, c } of PAINT_ROLES) {
+    const d = (c.r - r) ** 2 + (c.g - g) ** 2 + (c.b - b) ** 2
+    if (d < bd) { bd = d; best = id }
+  }
+  return best
 }
 
 const TURNS = 3
@@ -889,6 +927,7 @@ function buildPatch() {
   const absFace = (face) => ({
     positions: face.v.flatMap((vi) => verts[vi].p.map((n) => round(n))),
     colors: face.col.flat().map((n) => round(n)),
+    roles: face.recol.map((r) => (typeof r === 'string' ? r : null)),
   })
   const round = (n) => Math.round(n * 1e6) / 1e6
   for (const face of faces) {
@@ -898,7 +937,7 @@ function buildPatch() {
         const v = verts[face.v[k]]
         const ci = face.base * 3 + k
         if (vertMoved(v)) moved.set(ci, v.p.map(round))
-        if (face.recol[k]) recoloured.push([ci, ...face.col[k].map(round)])
+        if (face.recol[k]) recoloured.push([ci, face.recol[k]])
       }
     } else {
       // faces that gained a split-off vertex can't be expressed as base
@@ -943,22 +982,35 @@ function applyEditRecord(rec) {
   for (const [ci, x, y, z] of rec.movedCorners ?? []) {
     verts[cornerVert(ci)].p = [x, y, z]
   }
-  for (const [ci, r, g, b] of rec.recoloredCorners ?? []) {
+  for (const rc of rec.recoloredCorners ?? []) {
+    const ci = rc[0]
     const face = faces[Math.floor(ci / 3)]
-    face.col[ci % 3] = [r, g, b]
-    face.recol[ci % 3] = true
+    if (!face) continue
+    // legacy pre-role patches stored absolute rgb — map to the nearest role
+    const role = typeof rc[1] === 'string' ? rc[1] : nearestRole(rc[1], rc[2], rc[3])
+    const c = roleColour(role)
+    face.col[ci % 3] = [c.r, c.g, c.b]
+    face.recol[ci % 3] = role
   }
   const drop = new Set(rec.deletedFaces ?? [])
   faces = faces.filter((f) => !drop.has(f.base))
   const lookup = new Map()
   verts.forEach((v, i) => lookup.set(vkey(...v.p), i))
   for (const af of rec.addedFaces ?? []) {
-    const v = [], col = []
+    const v = [], col = [], recol = []
     for (let k = 0; k < 3; k++) {
       v.push(vertAt(af.positions[k * 3], af.positions[k * 3 + 1], af.positions[k * 3 + 2], lookup))
-      col.push([af.colors[k * 3], af.colors[k * 3 + 1], af.colors[k * 3 + 2]])
+      const role = af.roles?.[k] ?? null
+      if (role) {
+        const c = roleColour(role)
+        col.push([c.r, c.g, c.b])
+        recol.push(role)
+      } else {
+        col.push([af.colors[k * 3], af.colors[k * 3 + 1], af.colors[k * 3 + 2]])
+        recol.push(false)
+      }
     }
-    faces.push({ v, col, recol: [true, true, true], base: -1 })
+    faces.push({ v, col, recol, base: -1 })
   }
 }
 
@@ -1309,12 +1361,6 @@ function updateMarkers() {
       const el = document.getElementById(axis)
       if (document.activeElement !== el) el.value = p[i].toFixed(3)
     }
-    const adj = vertAdj.get(selVert)
-    if (adj?.length) {
-      const c = faces[adj[0][0]].col[adj[0][1]]
-      document.getElementById('vertColour').value =
-        '#' + new THREE.Color(c[0], c[1], c[2]).getHexString()
-    }
   } else {
     vertMarker.visible = false
     document.getElementById('vertLabel').textContent = 'none'
@@ -1420,13 +1466,13 @@ function bridgeEdges() {
   const straight = P(a0).distanceTo(P(b0)) + P(a1).distanceTo(P(b1))
   const crossed = P(a0).distanceTo(P(b1)) + P(a1).distanceTo(P(b0))
   if (crossed < straight) [b0, b1] = [b1, b0]
-  // colour the new quad like a face beside edge A, or mid-grey rock
-  const src = facesOnEdge(selEdge)[0]
-  const col = src != null ? [...faces[src].col[0]] : [0.35, 0.4, 0.42]
+  // new faces paint as theme-aware rock; repaint with the role chips
+  const c = roleColour('rock')
+  const col = [c.r, c.g, c.b]
   const mk = (v) => ({
     v,
     col: [[...col], [...col], [...col]],
-    recol: [true, true, true],
+    recol: ['rock', 'rock', 'rock'],
     base: -1,
   })
   lastBridge = [faces.length, faces.length + 1]
@@ -1455,23 +1501,23 @@ function paint(vertexOnly) {
   const adj = vertAdj.get(selVert)
   if (!adj?.length) { setStatus('That vertex has no faces left.'); return }
   pushUndo()
-  const c = new THREE.Color().setStyle(document.getElementById('vertColour').value)
+  const c = roleColour(paintRole)
   const rgb = [c.r, c.g, c.b]
   for (const [fi, k] of adj) {
     const face = faces[fi]
     if (vertexOnly) {
       face.col[k] = [...rgb]
-      face.recol[k] = true
+      face.recol[k] = paintRole
     } else {
       for (let kk = 0; kk < 3; kk++) {
         face.col[kk] = [...rgb]
-        face.recol[kk] = true
+        face.recol[kk] = paintRole
       }
     }
   }
   setStatus(vertexOnly
-    ? 'Painted the vertex — colour blends across its faces (flat-lit faces stay faceted).'
-    : 'Painted every face touching the vertex.')
+    ? `Painted the vertex ${paintRole} — the colour blends across its faces, and re-themes in Michi.`
+    : `Painted every face touching the vertex ${paintRole} — re-themes in Michi.`)
   rebuild()
 }
 
@@ -1741,6 +1787,23 @@ for (const [axis, i] of [['vx', 0], ['vy', 1], ['vz', 2]]) {
     verts[selVert].p[i] = n
     rebuild()
   })
+}
+let paintRole = 'snow'
+{
+  const box = document.getElementById('paintRoles')
+  for (const r of PAINT_ROLES) {
+    const b = document.createElement('button')
+    b.className = 'chip' + (r.id === paintRole ? ' on' : '')
+    b.title = r.id
+    b.style.background = '#' + r.c.getHexString()
+    b.onclick = () => {
+      paintRole = r.id
+      box.querySelectorAll('.chip').forEach((el) => el.classList.remove('on'))
+      b.classList.add('on')
+      setStatus(`Paint role: <strong>${r.id}</strong> — Michi resolves it from the live theme, so it follows dark mode.`)
+    }
+    box.appendChild(b)
+  }
 }
 document.getElementById('paintVertex').onclick = () => paint(true)
 document.getElementById('paintFaces').onclick = () => paint(false)

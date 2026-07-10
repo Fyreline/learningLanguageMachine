@@ -86,19 +86,24 @@ interface SceneryPatch {
  * saved over src/mountainPatch.json. A patch is a diff against the generator's
  * output, keyed by face index: vertex moves land BEFORE the paint pass (so
  * moved faces re-band by their new altitude and stay theme-aware), while
- * recolours are absolute overrides and deletions/additions come last. Face
- * indices only mean something for the build they were saved against, hence
- * the baseFaceCount guard — if buildMountain changes shape, re-export the
- * patch from the editor after re-porting it there. (shape/camera overrides
- * don't disturb the guard: the grid's topology is fixed, only positions
- * move, and the editor always saves its mesh edits against its own shape.) */
+ * recolours name a PAINT ROLE — one of the pass's own colours or a grey —
+ * that resolves from the live palette at build time, so hand-painted corners
+ * follow light/dark mode too. Deletions/additions come last. Face indices
+ * only mean something for the build they were saved against, hence the
+ * baseFaceCount guard — if buildMountain changes shape, re-export the patch
+ * from the editor after re-porting it there. (shape/camera overrides don't
+ * disturb the guard: the grid's topology is fixed, only positions move, and
+ * the editor always saves its mesh edits against its own shape.) */
 interface MountainPatch {
   version: number
   baseFaceCount: number | null
   movedCorners: [number, number, number, number][]
-  recoloredCorners: [number, number, number, number][]
+  /** [cornerIndex, paintRole]; legacy absolute [ci, r, g, b] entries from
+   * pre-role patches are still applied, but cannot re-theme. */
+  recoloredCorners: ([number, string] | [number, number, number, number])[]
   deletedFaces: number[]
-  addedFaces: { positions: number[]; colors: number[] }[]
+  /** roles, when present, override colors per corner and re-theme. */
+  addedFaces: { positions: number[]; colors: number[]; roles?: (string | null)[] }[]
   shape?: Partial<MountainShape>
   camera?: Partial<CameraTuning>
   scenery?: SceneryPatch
@@ -517,6 +522,22 @@ export function buildMountain(
   const water = new THREE.Color(pal.liquid)
   const caveInk = new THREE.Color(pal.ink).lerp(new THREE.Color('#000000'), 0.35)
 
+  // the paint roles the household can recolour with (tools/mountain-editor):
+  // the pass's own colours plus a small grey ramp, all resolved from the
+  // live palette here so hand recolours re-theme like everything else
+  const roleColours: Record<string, THREE.Color> = {
+    grass,
+    'grass-light': grassLight,
+    rock,
+    snow,
+    dirt,
+    water,
+    'cave-ink': caveInk,
+    'grey-light': new THREE.Color(pal.cloud).lerp(new THREE.Color('#ffffff'), 0.3),
+    grey: new THREE.Color(pal.cloud),
+    'grey-dark': new THREE.Color(pal.cloud).lerp(new THREE.Color(pal.ink), 0.6),
+  }
+
   const cRnd = mulberry(99)
   const colours: number[] = []
   // float32-rounded reads, exactly as the old read-back-from-the-attribute
@@ -554,10 +575,23 @@ export function buildMountain(
   let finalPos: number[] = positions
   let finalCol: number[] = colours
   if (patchOk) {
-    for (const [ci, r, g, b] of patch.recoloredCorners) {
-      colours[ci * 3] = r
-      colours[ci * 3 + 1] = g
-      colours[ci * 3 + 2] = b
+    for (const rc of patch.recoloredCorners) {
+      const ci = rc[0]
+      let cr: number, cg: number, cb: number
+      if (typeof rc[1] === 'string') {
+        const c = roleColours[rc[1]] ?? roleColours.grey
+        cr = c.r
+        cg = c.g
+        cb = c.b
+      } else {
+        const abs = rc as [number, number, number, number]
+        cr = abs[1]
+        cg = abs[2]
+        cb = abs[3]
+      }
+      colours[ci * 3] = cr
+      colours[ci * 3 + 1] = cg
+      colours[ci * 3 + 2] = cb
     }
     if (patch.deletedFaces.length > 0 || patch.addedFaces.length > 0) {
       const drop = new Set(patch.deletedFaces)
@@ -572,7 +606,12 @@ export function buildMountain(
       }
       for (const af of patch.addedFaces) {
         finalPos.push(...af.positions)
-        finalCol.push(...af.colors)
+        for (let k = 0; k < 3; k++) {
+          const role = af.roles?.[k]
+          const c = role ? roleColours[role] : undefined
+          if (c) finalCol.push(c.r, c.g, c.b)
+          else finalCol.push(af.colors[k * 3], af.colors[k * 3 + 1], af.colors[k * 3 + 2])
+        }
       }
     }
   }
