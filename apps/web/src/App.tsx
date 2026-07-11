@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { bootstrap, getUser, subscribe, type AuthUser } from './auth'
 import { fetchReviewsDue } from './curriculum/loader'
+import { fetchStatsMe } from './pathData'
 import { dismissSettingsError, loadSettings, retrySettingsPatch, useSettingsError } from './settings'
 import { LoginScreen } from './components/LoginScreen'
 import { MichiMark } from './components/MichiMark'
@@ -186,6 +187,7 @@ function SettingsErrorBanner() {
 function AuthenticatedApp() {
   const [tab, setTab] = useState<Tab>('path')
   const [dueCount, setDueCount] = useState<number | null>(null)
+  const [streak, setStreak] = useState<number | null>(null)
   const [settingsReady, setSettingsReady] = useState(false)
   const [showPlacement, setShowPlacement] = useState(false)
   const [pathVersion, setPathVersion] = useState(0)
@@ -204,14 +206,29 @@ function AuthenticatedApp() {
     fetchReviewsDue().then((d) => setDueCount(d.counts.today), () => undefined)
   }, [])
 
-  useEffect(() => {
-    refreshDueCount()
-    const id = setInterval(refreshDueCount, 60_000)
-    return () => clearInterval(id)
-  }, [refreshDueCount])
+  // The streak pill was wired to nothing (household ask, 2026-07-11) —
+  // hardcoded text, never fetched. /api/stats/me already computes it
+  // (StatsPage reads the same field); this just plumbs it into the header.
+  // Refreshed alongside the due-review count: on mount, every 60s, and on
+  // every tab switch (so finishing a lesson and returning to Path shows
+  // today's streak immediately, not after a reload).
+  const refreshStreak = useCallback(() => {
+    fetchStatsMe().then((s) => setStreak(s.streak.current), () => undefined)
+  }, [])
 
   useEffect(() => {
     refreshDueCount()
+    refreshStreak()
+    const id = setInterval(() => {
+      refreshDueCount()
+      refreshStreak()
+    }, 60_000)
+    return () => clearInterval(id)
+  }, [refreshDueCount, refreshStreak])
+
+  useEffect(() => {
+    refreshDueCount()
+    refreshStreak()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
 
@@ -252,7 +269,8 @@ function AuthenticatedApp() {
               className="inline-flex items-center gap-1.5 rounded-full border border-line-strong px-2.5 py-1 font-mono text-[11px] tracking-[0.08em] text-clay"
               title="Day streak"
             >
-              <PawPrint />0
+              <PawPrint />
+              {streak ?? 0}
             </span>
             <ThemeToggle />
           </div>
