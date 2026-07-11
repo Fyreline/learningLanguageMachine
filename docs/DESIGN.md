@@ -50,8 +50,8 @@ the dark-mode block — copy from the *shipped file*, not the doc, it's newer).
              "Yu Gothic", sans-serif;
 
   /* path scene */
-  --color-trail: #dcc9ab;        /* = Mishka's `liquid` sand; the walking trail */
-  --color-trail-done: #788c5d;   /* olive — the ground you've covered */
+  --color-trail: #c5e0dd;        /* = the shared `liquid` mint; the walking trail */
+  --color-trail-done: #2e8b74;   /* olive — the ground you've covered */
   --path-node: 56px;             /* lesson node diameter */
   --path-node-gate: 72px;        /* unit checkpoint (torii) size */
 
@@ -59,10 +59,13 @@ the dark-mode block — copy from the *shipped file*, not the doc, it's newer).
      correct = olive, close = kraft, incorrect = fig (never a harsh red) */
 }
 .dark {
-  --color-trail: #3f3a31;        /* Mishka's dark `liquid` */
-  --color-trail-done: #9bb17c;   /* dark olive */
+  --color-trail: #2b4a5e;        /* lifted vs the dark `liquid` so the trail reads */
+  --color-trail-done: #5fcfae;   /* dark olive */
 }
 ```
+
+(Values above mirror the shipped `index.css`; if they ever disagree, the CSS wins —
+the palette story lives in `theme.css` and `docs/HOUSEHOLD-DESIGN.md`.)
 
 Japanese typography rules:
 
