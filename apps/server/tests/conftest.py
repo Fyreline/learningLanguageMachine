@@ -18,6 +18,15 @@ os.environ.setdefault("MICHI_JWT_SECRET", "test-secret-not-for-production-use-on
 os.environ.setdefault("MICHI_DATABASE_URL", f"sqlite:///{_TEST_DATA_DIR / 'michi-test.db'}")
 os.environ.setdefault("MICHI_MISHKA_BASE_URL", "http://127.0.0.1:8000")
 os.environ.setdefault("MICHI_ENVIRONMENT", "test")
+# Optional integrations start unconfigured in tests regardless of the real
+# .env — the household's live MICHI_SERVICE_TOKEN (Sukumo) would otherwise
+# flip the "unconfigured => 503" tests. An env var beats .env in
+# pydantic-settings even when empty; tests that need a configured path set
+# the cached Settings attribute themselves (test_service.service_creds,
+# test_converse.fake_key).
+os.environ.setdefault("MICHI_ANTHROPIC_API_KEY", "")
+os.environ.setdefault("MICHI_SERVICE_TOKEN", "")
+os.environ.setdefault("MICHI_SERVICE_USER_EMAIL", "")
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
